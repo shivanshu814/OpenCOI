@@ -26,6 +26,9 @@ Supabase project: `certshield-prod` (`zbpeqqqpaugtppphscem`, East US).
 
 Do **not** also enable Vercel Git “Production Branch” auto-deploy, or every push will deploy twice. Preview deploys via Vercel Git are optional; this Actions pipeline owns production.
 
+**Important:** never mark `NEXT_PUBLIC_*` as Sensitive on Vercel. Sensitive publics pull as empty during CLI builds and break Edge middleware (`MIDDLEWARE_INVOCATION_FAILED` / Invalid supabaseUrl). Deploy uses remote `vercel deploy --prod` so dashboard env is applied correctly.
+
+
 ---
 
 ## One-time secrets setup
