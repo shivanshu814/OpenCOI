@@ -36,52 +36,52 @@ export default async function VendorsPage() {
           actionLabel="Go to upload"
         />
       ) : (
-      <div className="rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Trade</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Action</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {vendors.map((v) => (
-              <TableRow key={v.id}>
-                <TableCell className="font-medium">
-                  <Link
-                    href={`/app/vendors/${v.id}`}
-                    className="hover:underline"
-                  >
-                    {v.name}
-                  </Link>
-                </TableCell>
-                <TableCell>{v.trade}</TableCell>
-                <TableCell className="text-muted-foreground">
-                  {v.email}
-                </TableCell>
-                <TableCell>
-                  <VendorStatusBadge status={v.status} />
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex flex-wrap items-center justify-end gap-2">
-                    <DownloadReportButton vendorId={v.id} label="Report" />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      render={<Link href={`/app/upload?vendor=${v.id}`} />}
-                    >
-                      Upload
-                    </Button>
-                  </div>
-                </TableCell>
+        <div className="rounded-lg border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Trade</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Action</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {vendors.map((v) => (
+                <TableRow key={v.id}>
+                  <TableCell className="font-medium">
+                    <Link
+                      href={`/app/vendors/${v.id}`}
+                      className="hover:underline"
+                    >
+                      {v.name}
+                    </Link>
+                  </TableCell>
+                  <TableCell>{v.trade}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {v.email}
+                  </TableCell>
+                  <TableCell>
+                    <VendorStatusBadge status={v.status} />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <DownloadReportButton vendorId={v.id} label="Report" />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        render={<Link href={`/app/upload?vendor=${v.id}`} />}
+                      >
+                        Upload
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
     </div>
   );

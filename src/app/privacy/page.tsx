@@ -12,7 +12,9 @@ export default function PrivacyPage() {
         <h1 className="text-3xl font-semibold tracking-tight text-[#0F2A43]">
           Privacy Policy
         </h1>
-        <p className="text-muted-foreground text-xs">Last updated: 2026-07-23</p>
+        <p className="text-muted-foreground text-xs">
+          Last updated: 2026-07-23
+        </p>
         <p>
           We collect account email, organization profile, vendor contact data,
           uploaded PDFs, extraction metadata (cost, latency, confidence, model
@@ -32,9 +34,9 @@ export default function PrivacyPage() {
           personal information.
         </p>
         <p>
-          Retention: after cancellation, tenant data is deleted per our retention
-          window (target ≤90 days) except records we must keep for legal or
-          billing disputes.
+          Retention: after cancellation, tenant data is deleted per our
+          retention window (target ≤90 days) except records we must keep for
+          legal or billing disputes.
         </p>
       </main>
     </MarketingShell>

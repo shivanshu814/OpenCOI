@@ -58,8 +58,8 @@ export default function SecurityPage() {
             Security
           </h1>
           <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
-            Answers to the questions buyers ask before trusting COI and W-9
-            data with CertShield.
+            Answers to the questions buyers ask before trusting COI and W-9 data
+            with CertShield.
           </p>
         </div>
         <ol className="space-y-8">

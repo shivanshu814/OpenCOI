@@ -1,12 +1,12 @@
 import { canAdminSensitive } from "@/lib/auth/roles";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
-import { createClient } from "@/lib/supabase/server";
 import {
   FIXTURE_GOLDEN_CASES,
   MONTH3_ACCURACY_GATE,
   scoreGoldenSet,
 } from "@/lib/golden/accuracy";
+import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 

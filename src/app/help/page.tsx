@@ -52,7 +52,9 @@ export default function HelpPage() {
         <div className="space-y-8">
           {SECTIONS.map((s) => (
             <section key={s.title} className="space-y-2">
-              <h2 className="text-sm font-semibold text-[#0F2A43]">{s.title}</h2>
+              <h2 className="text-sm font-semibold text-[#0F2A43]">
+                {s.title}
+              </h2>
               <p className="text-muted-foreground text-sm leading-relaxed">
                 {s.body}
               </p>

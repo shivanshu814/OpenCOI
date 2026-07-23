@@ -11,13 +11,15 @@ export default function TermsPage() {
         <h1 className="text-3xl font-semibold tracking-tight text-[#0F2A43]">
           Terms of Service
         </h1>
-        <p className="text-muted-foreground text-xs">Last updated: 2026-07-23</p>
+        <p className="text-muted-foreground text-xs">
+          Last updated: 2026-07-23
+        </p>
         <p>
           CertShield provides document review assistance for certificates of
           insurance and related vendor compliance documents. It is{" "}
           <strong>not</strong> legal, insurance, or professional advice. You
-          remain solely responsible for vendor selection, coverage decisions, and
-          final approval of every verdict.
+          remain solely responsible for vendor selection, coverage decisions,
+          and final approval of every verdict.
         </p>
         <p>
           Service is sold via Paddle (merchant of record). Liability for paid
