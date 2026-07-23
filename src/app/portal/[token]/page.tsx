@@ -1,3 +1,8 @@
+import {
+  CardLiveAccent,
+  LiveBadge,
+  LiveCount,
+} from "@/components/live-activity";
 import { VendorStatusBadge } from "@/components/status-badges";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import {
@@ -24,7 +29,12 @@ export default async function PortalPage({
   if (!isSupabaseConfigured()) {
     return (
       <div className="space-y-4">
-        <h1 className="text-xl font-semibold tracking-tight">Vendor portal</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-xl font-semibold tracking-tight">
+            Vendor portal
+          </h1>
+          <LiveBadge label="Demo" tone="warn" />
+        </div>
         <p className="text-muted-foreground text-sm">
           Demo mode — connect Supabase to enable magic-link uploads.
         </p>
@@ -69,25 +79,29 @@ export default async function PortalPage({
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-balance">
-          {title}
-        </h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-xl font-semibold tracking-tight text-balance">
+            {title}
+          </h1>
+          <LiveBadge label="Live" tone="ok" />
+        </div>
         <p className="text-muted-foreground mt-1.5 text-sm leading-relaxed">
           {intro}
         </p>
-        <div className="mt-3">
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           <VendorStatusBadge status={ctx.vendorStatus as never} />
         </div>
       </div>
 
       {gaps.length > 0 ? (
-        <Card className="gap-0 py-0">
+        <Card className="gap-0 overflow-hidden py-0">
+          <CardLiveAccent />
           <CardHeader className="border-b py-3 [.border-b]:pb-3">
             <CardTitle className="text-sm font-semibold">
               {locale === "es" ? "Lo que falta" : "What’s missing"}
             </CardTitle>
-            <CardAction className="text-muted-foreground self-center text-xs tabular-nums">
-              {gaps.length}
+            <CardAction className="self-center">
+              <LiveCount value={gaps.length} />
             </CardAction>
           </CardHeader>
           <ul className="divide-y">

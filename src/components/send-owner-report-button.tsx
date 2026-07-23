@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
 import { useState } from "react";
 
 export function SendOwnerReportButton({
@@ -34,7 +35,7 @@ export function SendOwnerReportButton({
       }
       setMsg(
         data.demo
-          ? `Demo send logged → ${data.to}`
+          ? `Demo send logged to ${data.to}`
           : `Sent to ${data.to} (${data.compliance_percent}% covered)`,
       );
     } catch (err) {
@@ -56,7 +57,10 @@ export function SendOwnerReportButton({
         {busy ? "Sending…" : "Email owner report"}
       </Button>
       {toHint ? (
-        <span className="text-muted-foreground text-xs">→ {toHint}</span>
+        <span className="text-muted-foreground inline-flex items-center gap-1 text-xs">
+          <ArrowRight className="size-3" strokeWidth={2.25} aria-hidden />
+          {toHint}
+        </span>
       ) : null}
       {msg ? (
         <span className="text-muted-foreground text-xs">{msg}</span>

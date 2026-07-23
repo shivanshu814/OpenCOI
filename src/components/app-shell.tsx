@@ -1,6 +1,8 @@
 "use client";
 
+import { CertShieldMark } from "@/components/certshield-logo";
 import { DisclaimerFooter } from "@/components/disclaimer-footer";
+import { AppLiveTicker, LiveBadge, LiveDot } from "@/components/live-activity";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Breadcrumb,
@@ -37,6 +39,8 @@ import {
   SidebarSeparator,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 import {
   Building2,
   ClipboardCheck,
@@ -54,7 +58,6 @@ import {
   Users,
   Wrench,
 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -70,7 +73,9 @@ type NavGroup = { label: string | null; items: NavItem[] };
 const NAV_GROUPS: NavGroup[] = [
   {
     label: null,
-    items: [{ href: "/app", label: "Dashboard", icon: LayoutGrid, exact: true }],
+    items: [
+      { href: "/app", label: "Dashboard", icon: LayoutGrid, exact: true },
+    ],
   },
   {
     label: "Compliance",
@@ -98,7 +103,11 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Settings",
     items: [
       { href: "/app/settings/team", label: "Team", icon: Users },
-      { href: "/app/settings/integrations", label: "API & integrations", icon: KeyRound },
+      {
+        href: "/app/settings/integrations",
+        label: "API & integrations",
+        icon: KeyRound,
+      },
       { href: "/app/settings/billing", label: "Billing", icon: CreditCard },
       { href: "/app/admin", label: "Admin", icon: ShieldCheck },
     ],
@@ -127,23 +136,22 @@ function AppSidebar({ live }: { live: boolean }) {
   const pathname = usePathname();
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader>
+    <Sidebar collapsible="icon" className="border-r">
+      <SidebarHeader className="border-b border-sidebar-border">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
               render={<Link href="/app" />}
               tooltip="CertShield"
+              className="gap-2.5"
             >
-              <span className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                <ShieldCheck className="size-4.5" />
-              </span>
+              <CertShieldMark size={28} />
               <span className="grid flex-1 text-left leading-tight">
-                <span className="truncate font-semibold tracking-tight">
+                <span className="truncate text-sm font-semibold tracking-tight">
                   CertShield
                 </span>
-                <span className="text-sidebar-foreground/60 truncate text-xs">
+                <span className="text-muted-foreground truncate text-[11px] font-medium">
                   COI compliance
                 </span>
               </span>
@@ -152,26 +160,35 @@ function AppSidebar({ live }: { live: boolean }) {
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="gap-1 px-2 py-3">
         {NAV_GROUPS.map((group) => (
-          <SidebarGroup key={group.label ?? "root"}>
+          <SidebarGroup key={group.label ?? "root"} className="px-0">
             {group.label ? (
-              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+              <SidebarGroupLabel className="text-muted-foreground px-2 text-[11px] font-semibold tracking-wider uppercase">
+                {group.label}
+              </SidebarGroupLabel>
             ) : null}
             <SidebarGroupContent>
               <SidebarMenu>
-                {group.items.map((item) => (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton
-                      isActive={isActive(pathname, item)}
-                      tooltip={item.label}
-                      render={<Link href={item.href} />}
-                    >
-                      <item.icon />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {group.items.map((item) => {
+                  const active = isActive(pathname, item);
+                  return (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton
+                        isActive={active}
+                        tooltip={item.label}
+                        render={<Link href={item.href} />}
+                        className={cn(
+                          "h-8 text-sm font-medium",
+                          active && "sidebar-active-indicator text-brand",
+                        )}
+                      >
+                        <item.icon />
+                        <span>{item.label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -185,6 +202,7 @@ function AppSidebar({ live }: { live: boolean }) {
             <SidebarMenuButton
               tooltip="Help & docs"
               render={<Link href="/help" />}
+              className="h-8 text-sm"
             >
               <LifeBuoy />
               <span>Help &amp; docs</span>
@@ -194,18 +212,13 @@ function AppSidebar({ live }: { live: boolean }) {
             <SidebarMenuButton
               tooltip={live ? "Workspace connected" : "Demo mode"}
               render={<Link href="/login" />}
+              className="h-8 text-sm"
             >
               <span className="flex size-4 items-center justify-center">
-                <span
-                  className={
-                    live
-                      ? "bg-sidebar-primary size-2 rounded-full"
-                      : "size-2 rounded-full bg-amber-400"
-                  }
-                />
+                <LiveDot tone={live ? "ok" : "warn"} />
               </span>
-              <span className="truncate text-xs">
-                {live ? "Workspace connected" : "Demo mode — connect Supabase"}
+              <span className="text-muted-foreground truncate text-xs">
+                {live ? "Workspace connected" : "Demo mode"}
               </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -232,7 +245,7 @@ function AppHeader({ live }: { live: boolean }) {
   }
 
   return (
-    <header className="bg-background/90 sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b px-4 backdrop-blur">
+    <header className="bg-background sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b px-4">
       <SidebarTrigger className="-ml-1" />
       <Breadcrumb className="min-w-0">
         <BreadcrumbList className="flex-nowrap">
@@ -267,6 +280,20 @@ function AppHeader({ live }: { live: boolean }) {
       </Breadcrumb>
 
       <div className="ml-auto flex items-center gap-2">
+        <AppLiveTicker demo={!live} />
+        {live ? (
+          <LiveBadge
+            label="Online"
+            tone="ok"
+            className="hidden lg:inline-flex"
+          />
+        ) : (
+          <LiveBadge
+            label="Demo"
+            tone="warn"
+            className="hidden sm:inline-flex"
+          />
+        )}
         <Button
           size="sm"
           className="hidden sm:inline-flex"
@@ -286,13 +313,12 @@ function AppHeader({ live }: { live: boolean }) {
             }
           >
             <Avatar className="size-8">
-              <AvatarFallback>
+              <AvatarFallback className="bg-brand-muted text-brand text-xs font-semibold">
                 <UserRound className="size-4" />
               </AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            {/* GroupLabel must live inside a Group — Base UI throws otherwise. */}
             <DropdownMenuGroup>
               <DropdownMenuLabel>
                 {live ? "Workspace connected" : "Demo mode"}
@@ -335,9 +361,9 @@ export function AppShell({
   return (
     <SidebarProvider>
       <AppSidebar live={live} />
-      <SidebarInset>
+      <SidebarInset className="bg-background">
         <AppHeader live={live} />
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <main className="mx-auto w-full max-w-6xl flex-1 space-y-6 px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
           {children}
         </main>
         <DisclaimerFooter />

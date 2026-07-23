@@ -1,6 +1,7 @@
 "use client";
 
 import { IntakeEmailCard } from "@/components/intake-email-card";
+import { LiveBadge } from "@/components/live-activity";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -138,12 +139,15 @@ function OnboardingWizardInner({
         <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
           Step {stepIdx + 1} of {STEPS.length}
         </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-          {step === "company" && "Your company"}
-          {step === "templates" && "Requirements templates"}
-          {step === "vendors" && "Add first vendors"}
-          {step === "intake" && "Connect intake email"}
-        </h1>
+        <div className="mt-1 flex flex-wrap items-center gap-2.5">
+          <h1 className="text-lg font-semibold tracking-tight">
+            {step === "company" && "Your company"}
+            {step === "templates" && "Requirements templates"}
+            {step === "vendors" && "Add first vendors"}
+            {step === "intake" && "Connect intake email"}
+          </h1>
+          <LiveBadge label="Setup" tone="info" />
+        </div>
         <p className="text-muted-foreground mt-1 text-sm">
           {step === "company" &&
             "We'll use this name on chase emails and compliance reports."}

@@ -1,5 +1,6 @@
 import { DownloadOwnerReportButton } from "@/components/download-owner-report-button";
 import { EmptyState } from "@/components/empty-state";
+import { PageHeader } from "@/components/page-header";
 import { SendOwnerReportButton } from "@/components/send-owner-report-button";
 import {
   Card,
@@ -50,15 +51,12 @@ export default async function ReportsPage() {
   const properties = await listProperties();
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Reports</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Owner reports (D3) — monthly branded PDF/email with compliance %,
-          documents on file, and risks flagged. PMs use these with building
-          owners.
-        </p>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Reports"
+        description="Owner reports (D3) — monthly branded PDF/email with compliance %, documents on file, and risks flagged. PMs use these with building owners."
+        live
+      />
 
       {properties.length === 0 ? (
         <EmptyState
@@ -66,9 +64,14 @@ export default async function ReportsPage() {
           description="Add a property, assign vendors, then generate an owner report — compliance %, documents on file, and risks flagged, ready for the building owner."
           actionHref="/app/properties"
           actionLabel="Go to Properties"
+          liveHint="Waiting for first property"
         />
       ) : (
-        <Card className="gap-0 py-0">
+        <Card className="gap-0 overflow-hidden py-0">
+          <div
+            className="from-brand via-brand/70 to-brand/20 h-1 w-full bg-gradient-to-r"
+            aria-hidden
+          />
           <CardHeader className="border-b pt-4">
             <CardTitle className="text-sm font-semibold">Properties</CardTitle>
             <CardDescription className="text-xs">
@@ -94,7 +97,9 @@ export default async function ReportsPage() {
                   </Link>
                   <p className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-2 text-xs">
                     {[p.city, p.state].filter(Boolean).length > 0 ? (
-                      <span>{[p.city, p.state].filter(Boolean).join(", ")}</span>
+                      <span>
+                        {[p.city, p.state].filter(Boolean).join(", ")}
+                      </span>
                     ) : null}
                     <span>
                       {p.owner_report_email

@@ -1,5 +1,6 @@
 import { AuditTimeline } from "@/components/audit-timeline";
 import { DownloadReportButton } from "@/components/download-report-button";
+import { CardLiveAccent, LiveBadge } from "@/components/live-activity";
 import { SendChaseButton } from "@/components/send-chase-button";
 import { VendorStatusBadge } from "@/components/status-badges";
 import { Button } from "@/components/ui/button";
@@ -14,11 +15,47 @@ import { listVendorAuditTrail } from "@/lib/audit/list";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { IssuePortalLinkButton } from "./issue-portal-link";
 import { VendorOnboardingPanel } from "./onboarding-panel";
 import { VendorSmsOptIn } from "./sms-opt-in";
+
+function BackLink() {
+  return (
+    <Link
+      href="/app/vendors"
+      className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm"
+    >
+      <ArrowLeft className="size-3.5" aria-hidden />
+      Vendors
+    </Link>
+  );
+}
+
+function VendorHeading({
+  name,
+  meta,
+  status,
+}: {
+  name: string;
+  meta?: string;
+  status?: string;
+}) {
+  return (
+    <div className="min-w-0">
+      <div className="flex flex-wrap items-center gap-2.5">
+        <h1 className="text-lg font-semibold tracking-tight">{name}</h1>
+        <LiveBadge label="Live" />
+        {status ? <VendorStatusBadge status={status as never} /> : null}
+      </div>
+      {meta ? (
+        <p className="text-muted-foreground mt-1 text-sm">{meta}</p>
+      ) : null}
+    </div>
+  );
+}
 
 export default async function VendorDetailPage({
   params,
@@ -30,27 +67,19 @@ export default async function VendorDetailPage({
   if (!isSupabaseConfigured()) {
     const events = await listVendorAuditTrail(id);
     return (
-      <div className="space-y-8">
+      <div className="space-y-6">
         <div className="space-y-4">
-          <Link
-            href="/app/vendors"
-            className="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
-          >
-            ← Vendors
-          </Link>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Demo Roofing LLC
-            </h1>
-            <p className="text-muted-foreground mt-1 text-sm">
-              Demo vendor detail
-            </p>
-          </div>
+          <BackLink />
+          <VendorHeading name="Demo Roofing LLC" meta="Demo vendor detail" />
         </div>
 
-        <Card className="gap-0 py-0">
+        <Card className="gap-0 overflow-hidden py-0">
+          <CardLiveAccent />
           <CardHeader className="border-b py-4">
-            <CardTitle>Vendor portal (no login)</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              Vendor portal (no login)
+              <LiveBadge label="Ready" tone="ok" />
+            </CardTitle>
             <CardDescription className="text-xs">
               Magic link for upload + status. Also embedded in chase emails.
             </CardDescription>
@@ -87,34 +116,26 @@ export default async function VendorDetailPage({
   const meta = [vendor.trade, vendor.email, vendor.agent_email].filter(Boolean);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="space-y-4">
-        <Link
-          href="/app/vendors"
-          className="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
-        >
-          ← Vendors
-        </Link>
+        <BackLink />
 
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl font-semibold tracking-tight">
-                {vendor.name}
-              </h1>
-              <VendorStatusBadge status={vendor.status as never} />
-            </div>
-            <p className="text-muted-foreground mt-1 text-sm">
-              {meta.join(" · ")}
-            </p>
-          </div>
+          <VendorHeading
+            name={vendor.name}
+            meta={meta.join(" · ")}
+            status={vendor.status}
+          />
           <div className="flex flex-wrap items-center gap-2">
             <DownloadReportButton vendorId={vendor.id} label="Report" />
             <Button
               variant="outline"
               size="sm"
               render={
-                <a href={`/api/vendors/${vendor.id}/litigation-pack`} download />
+                <a
+                  href={`/api/vendors/${vendor.id}/litigation-pack`}
+                  download
+                />
               }
             >
               Litigation pack
@@ -136,15 +157,22 @@ export default async function VendorDetailPage({
           <VendorOnboardingPanel vendorId={vendor.id} />
 
           <section className="min-w-0 space-y-3">
-            <h2 className="text-sm font-semibold">Audit trail</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-semibold">Audit trail</h2>
+              <LiveBadge label="Append-only" tone="info" />
+            </div>
             <AuditTimeline events={events} />
           </section>
         </div>
 
         <div className="min-w-0 space-y-6">
-          <Card className="gap-0 py-0">
+          <Card className="gap-0 overflow-hidden py-0">
+            <CardLiveAccent />
             <CardHeader className="border-b py-4">
-              <CardTitle>Vendor portal (no login)</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                Vendor portal (no login)
+                <LiveBadge label="Ready" tone="ok" />
+              </CardTitle>
               <CardDescription className="text-xs">
                 Magic link for upload + status. Also embedded in chase emails.
               </CardDescription>

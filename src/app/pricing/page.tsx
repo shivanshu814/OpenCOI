@@ -1,4 +1,6 @@
 import { CheckoutButton } from "@/components/checkout-button";
+import { INK_BG, InkAtmosphere, SURFACE_BG } from "@/components/ink-atmosphere";
+import { LiveOpsTicker } from "@/components/live-activity";
 import { MarketingShell } from "@/components/marketing-shell";
 import { PLANS } from "@/lib/billing/plans";
 import { Check } from "lucide-react";
@@ -54,112 +56,124 @@ export default async function PricingPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
-        <p className="text-sm font-semibold tracking-[0.14em] text-emerald-600 uppercase">
-          Pricing
-        </p>
-        <h1 className="text-foreground mt-3 max-w-2xl text-4xl font-semibold tracking-tight text-balance">
-          Simple pricing for vendor insurance tracking
-        </h1>
-        <p className="text-muted-foreground mt-3 max-w-2xl text-base leading-relaxed">
-          Starter $99, Pro $249, Business $499. No annual contract. 2-minute
-          setup, free COI audit included.
-        </p>
 
-        <div className="mt-12 grid items-start gap-6 md:grid-cols-3">
-          {PLANS.map((plan) => {
-            const featured = plan.id === "pro" || plan.id === highlight;
-            return (
-              <div
-                key={plan.id}
-                className={
-                  featured
-                    ? "bg-card ring-primary relative rounded-xl border p-6 shadow-sm ring-2"
-                    : "bg-card rounded-xl border p-6"
-                }
-              >
-                {featured ? (
-                  <span className="bg-primary text-primary-foreground absolute -top-3 left-6 rounded-full px-2.5 py-0.5 text-xs font-medium">
-                    Recommended
-                  </span>
-                ) : null}
-                <div className="flex items-baseline justify-between gap-2">
-                  <h2 className="text-foreground text-lg font-semibold">
-                    {plan.name}
-                  </h2>
-                  <p className="text-muted-foreground text-sm">
-                    {plan.vendorLimit == null
-                      ? "Unlimited vendors"
-                      : `${plan.vendorLimit} vendors`}
-                  </p>
-                </div>
-                <p className="text-foreground mt-3 text-3xl font-semibold tracking-tight tabular-nums">
-                  ${plan.priceMonthly}
-                  <span className="text-muted-foreground text-base font-normal">
-                    /mo
-                  </span>
-                </p>
-                <div className="mt-5">
-                  <CheckoutButton
-                    planId={plan.id}
-                    label={`Choose ${plan.name}`}
-                    variant={featured ? "default" : "outline"}
-                    className="w-full"
-                  />
-                </div>
-                <ul className="mt-6 space-y-2 border-t pt-5 text-sm leading-relaxed">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex gap-2">
-                      <Check
-                        className="mt-0.5 size-4 shrink-0 text-emerald-600"
-                        aria-hidden
-                      />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                  {plan.comingSoon?.map((f) => (
-                    <li key={f} className="text-muted-foreground flex gap-2">
-                      <span aria-hidden className="w-4 text-center">
-                        —
-                      </span>
-                      <span>{f} (coming soon)</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            );
-          })}
+      <section className={`relative overflow-hidden ${INK_BG}`}>
+        <InkAtmosphere variant="top" />
+        <div className="relative mx-auto max-w-5xl px-4 pt-14 pb-12 sm:px-6 md:pt-20 md:pb-16">
+          <p className="text-brand text-xs font-semibold tracking-[0.18em] uppercase">
+            Pricing
+          </p>
+          <div className="mt-4">
+            <LiveOpsTicker />
+          </div>
+          <h1 className="mt-5 max-w-2xl text-3xl font-semibold tracking-tight text-balance text-white md:text-4xl">
+            Simple pricing for vendor insurance tracking
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/60 md:text-base">
+            Starter $99, Pro $249, Business $499. No annual contract. 2-minute
+            setup, free COI audit included.
+          </p>
         </div>
+      </section>
 
-        <p className="text-muted-foreground mt-8 text-sm">
-          Prefer a free look first?{" "}
-          <Link
-            href="/login"
-            className="text-foreground font-medium underline-offset-2 hover:underline"
-          >
-            Request a free 3-cert audit
-          </Link>{" "}
-          — no card required.
-        </p>
+      <section className={`${SURFACE_BG} border-b border-border/60`}>
+        <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 md:py-16">
+          <div className="grid items-start gap-5 md:grid-cols-3">
+            {PLANS.map((plan) => {
+              const featured = plan.id === "pro" || plan.id === highlight;
+              return (
+                <div
+                  key={plan.id}
+                  className={
+                    featured
+                      ? "bg-card relative rounded-xl border border-brand/40 p-6 shadow-xs ring-2 ring-brand/30"
+                      : "bg-card rounded-xl border border-border/80 p-6 shadow-xs"
+                  }
+                >
+                  {featured ? (
+                    <span className="bg-brand text-brand-foreground absolute -top-3 left-6 rounded-md px-2.5 py-0.5 text-xs font-medium">
+                      Recommended
+                    </span>
+                  ) : null}
+                  <div className="flex items-baseline justify-between gap-2">
+                    <h2 className="text-lg font-semibold">{plan.name}</h2>
+                    <p className="text-muted-foreground text-sm">
+                      {plan.vendorLimit == null
+                        ? "Unlimited vendors"
+                        : `${plan.vendorLimit} vendors`}
+                    </p>
+                  </div>
+                  <p className="mt-3 text-3xl font-semibold tracking-tight tabular-nums">
+                    ${plan.priceMonthly}
+                    <span className="text-muted-foreground text-base font-normal">
+                      /mo
+                    </span>
+                  </p>
+                  <div className="mt-5">
+                    <CheckoutButton
+                      planId={plan.id}
+                      label={`Choose ${plan.name}`}
+                      variant={featured ? "default" : "outline"}
+                      className="w-full"
+                    />
+                  </div>
+                  <ul className="mt-6 space-y-2 border-t pt-5 text-sm leading-relaxed">
+                    {plan.features.map((f) => (
+                      <li key={f} className="flex gap-2">
+                        <Check
+                          className="text-brand mt-0.5 size-4 shrink-0"
+                          aria-hidden
+                        />
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                    {plan.comingSoon?.map((f) => (
+                      <li key={f} className="text-muted-foreground flex gap-2">
+                        <span aria-hidden className="w-4 text-center">
+                          —
+                        </span>
+                        <span>{f} (coming soon)</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
 
-        <section className="mt-16 max-w-3xl">
-          <h2 className="text-foreground text-xl font-semibold tracking-tight">
+          <p className="text-muted-foreground mt-8 text-sm">
+            Prefer a free look first?{" "}
+            <Link
+              href="/login"
+              className="text-foreground font-medium underline-offset-2 hover:underline"
+            >
+              Request a free 3-cert audit
+            </Link>{" "}
+            — no card required.
+          </p>
+        </div>
+      </section>
+
+      <section className={`${SURFACE_BG}`}>
+        <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 md:py-16">
+          <p className="text-brand text-xs font-semibold tracking-[0.18em] uppercase">
             FAQ
+          </p>
+          <h2 className="mt-3 text-xl font-semibold tracking-tight">
+            Common questions
           </h2>
-          <dl className="mt-6 divide-y rounded-xl border">
+          <dl className="bg-card mt-6 divide-y rounded-xl border border-border/80 shadow-xs">
             {faq.map((item) => (
               <div key={item.q} className="px-5 py-4">
-                <dt className="text-foreground text-sm font-semibold">
-                  {item.q}
-                </dt>
+                <dt className="text-sm font-semibold">{item.q}</dt>
                 <dd className="text-muted-foreground mt-1.5 text-sm leading-relaxed">
                   {item.a}
                 </dd>
               </div>
             ))}
           </dl>
-        </section>
-      </div>
+        </div>
+      </section>
     </MarketingShell>
   );
 }

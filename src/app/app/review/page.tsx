@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/page-header";
 import { VerdictBadge } from "@/components/status-badges";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,29 +21,30 @@ export default async function ReviewQueuePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Internal review queue
-          </h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Side-by-side PDF + extraction · corrections become golden-set
-            cases.
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          render={<Link href="/app/upload" />}
-        >
-          Upload COI
-        </Button>
-      </div>
+      <PageHeader
+        title="Internal review queue"
+        description="Side-by-side PDF + extraction · corrections become golden-set cases."
+        live
+        actions={
+          <Button variant="outline" render={<Link href="/app/upload" />}>
+            Upload COI
+          </Button>
+        }
+      />
 
-      <Card>
+      <Card className="gap-0 overflow-hidden py-0">
+        <div
+          className="from-brand via-brand/70 to-brand/20 h-1 w-full bg-gradient-to-r"
+          aria-hidden
+        />
         <CardHeader className="border-b">
           <CardTitle>Documents awaiting review</CardTitle>
           <CardAction>
-            <span className="text-muted-foreground text-xs tabular-nums">
+            <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs tabular-nums">
+              <span className="relative flex size-1.5">
+                <span className="bg-brand absolute inline-flex size-full animate-ping rounded-full opacity-40" />
+                <span className="bg-brand relative inline-flex size-1.5 rounded-full" />
+              </span>
               {queue.length}
             </span>
           </CardAction>
@@ -90,6 +92,13 @@ export default async function ReviewQueuePage() {
                 <p className="text-muted-foreground mx-auto mt-1 max-w-sm text-xs leading-relaxed">
                   Upload a COI and it lands here once extraction finishes —
                   every verdict passes review before publish.
+                </p>
+                <p className="text-muted-foreground mt-3 inline-flex items-center gap-1.5 text-xs">
+                  <span className="relative flex size-1.5">
+                    <span className="bg-emerald-500 absolute inline-flex size-full animate-ping rounded-full opacity-40" />
+                    <span className="bg-emerald-500 relative inline-flex size-1.5 rounded-full" />
+                  </span>
+                  Listening for extractions
                 </p>
               </div>
             ) : null}

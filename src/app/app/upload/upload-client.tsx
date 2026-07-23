@@ -1,5 +1,6 @@
 "use client";
 
+import { CardLiveAccent, LiveBadge, LiveDot } from "@/components/live-activity";
 import { SampleCoiPicker } from "@/components/sample-coi-picker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -96,123 +97,137 @@ export default function UploadPage({ vendors }: { vendors: Vendor[] }) {
   return (
     <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
       <form onSubmit={onSubmit}>
-        <Card>
-          <CardContent className="space-y-5 py-1">
-        <div className="space-y-1.5">
-          <Label htmlFor="vendor">Vendor</Label>
-          <select
-            id="vendor"
-            className="border-input bg-background h-9 w-full rounded-lg border px-2.5 text-sm"
-            value={vendorId}
-            onChange={(e) => setVendorId(e.target.value)}
-            required
-          >
-            <option value="" disabled>
-              Select vendor
-            </option>
-            {vendorOptions.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="file">Certificate (PDF, PNG, or JPEG)</Label>
-          <div
-            className={`relative rounded-xl border border-dashed transition-colors ${
-              dragging
-                ? "border-primary bg-primary/5"
-                : "hover:border-muted-foreground/40 bg-muted/30"
-            }`}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setDragging(true);
-            }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={(e) => {
-              e.preventDefault();
-              setDragging(false);
-              const dropped = e.dataTransfer.files?.[0];
-              if (dropped) setFile(dropped);
-            }}
-          >
-            {file ? (
-              <div className="flex items-center justify-between gap-3 px-4 py-4">
-                <div className="flex min-w-0 items-center gap-3">
-                  <span className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-lg">
-                    <FileText className="size-4" aria-hidden />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{file.name}</p>
-                    <p className="text-muted-foreground text-xs tabular-nums">
-                      {formatBytes(file.size)}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={clearFile}
-                  className="text-muted-foreground hover:text-foreground flex size-7 shrink-0 items-center justify-center rounded-md"
-                  aria-label="Remove file"
-                >
-                  <X className="size-4" />
-                </button>
-              </div>
-            ) : (
-              <label
-                htmlFor="file"
-                className="flex cursor-pointer flex-col items-center gap-1.5 px-4 py-8 text-center"
+        <Card className="gap-0 overflow-hidden py-0">
+          <CardLiveAccent />
+          <CardContent className="space-y-5 py-5">
+            <div className="space-y-1.5">
+              <Label htmlFor="vendor">Vendor</Label>
+              <select
+                id="vendor"
+                className="border-input bg-background h-9 w-full rounded-lg border px-2.5 text-sm"
+                value={vendorId}
+                onChange={(e) => setVendorId(e.target.value)}
+                required
               >
-                <FileUp className="text-muted-foreground size-6" aria-hidden />
-                <span className="text-sm font-medium">
-                  Drop the COI here, or browse
-                </span>
-                <span className="text-muted-foreground text-xs">
-                  ACORD 25 works best — we read limits, expirations, and
-                  endorsements
-                </span>
-              </label>
-            )}
-            <input
-              ref={fileInputRef}
-              id="file"
-              type="file"
-              accept="application/pdf,image/png,image/jpeg"
-              required={!file}
-              className="sr-only"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            />
-          </div>
-          <SampleCoiPicker
-            onSelect={(sampleFile) => {
-              setFile(sampleFile);
-              setMsg(`Sample attached: ${sampleFile.name}`);
-            }}
-          />
-        </div>
+                <option value="" disabled>
+                  Select vendor
+                </option>
+                {vendorOptions.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={busy || !file || !vendorId}
-        >
-          {busy ? "Uploading…" : "Queue extraction"}
-        </Button>
-        {msg ? (
-          <p className="text-muted-foreground text-xs leading-relaxed">{msg}</p>
-        ) : null}
+            <div className="space-y-1.5">
+              <Label htmlFor="file">Certificate (PDF, PNG, or JPEG)</Label>
+              <div
+                className={`relative rounded-xl border border-dashed transition-colors ${
+                  dragging
+                    ? "border-primary bg-primary/5"
+                    : "hover:border-muted-foreground/40 bg-muted/30"
+                }`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragging(true);
+                }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragging(false);
+                  const dropped = e.dataTransfer.files?.[0];
+                  if (dropped) setFile(dropped);
+                }}
+              >
+                {file ? (
+                  <div className="flex items-center justify-between gap-3 px-4 py-4">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-lg">
+                        <FileText className="size-4" aria-hidden />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">
+                          {file.name}
+                        </p>
+                        <p className="text-muted-foreground text-xs tabular-nums">
+                          {formatBytes(file.size)}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={clearFile}
+                      className="text-muted-foreground hover:text-foreground flex size-7 shrink-0 items-center justify-center rounded-md"
+                      aria-label="Remove file"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label
+                    htmlFor="file"
+                    className="flex cursor-pointer flex-col items-center gap-1.5 px-4 py-8 text-center"
+                  >
+                    <FileUp
+                      className="text-muted-foreground size-6"
+                      aria-hidden
+                    />
+                    <span className="text-sm font-medium">
+                      Drop the COI here, or browse
+                    </span>
+                    <span className="text-muted-foreground text-xs">
+                      ACORD 25 works best — we read limits, expirations, and
+                      endorsements
+                    </span>
+                  </label>
+                )}
+                <input
+                  ref={fileInputRef}
+                  id="file"
+                  type="file"
+                  accept="application/pdf,image/png,image/jpeg"
+                  required={!file}
+                  className="sr-only"
+                  onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                />
+              </div>
+              <SampleCoiPicker
+                onSelect={(sampleFile) => {
+                  setFile(sampleFile);
+                  setMsg(`Sample attached: ${sampleFile.name}`);
+                }}
+              />
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={busy || !file || !vendorId}
+            >
+              {busy ? "Uploading…" : "Queue extraction"}
+            </Button>
+            {msg ? (
+              <p className="text-muted-foreground text-xs leading-relaxed">
+                {msg}
+              </p>
+            ) : null}
           </CardContent>
         </Card>
       </form>
 
       <aside className="space-y-4 lg:pt-1">
-        <h2 className="text-sm font-semibold">What happens next</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-semibold">What happens next</h2>
+          <LiveBadge label="Pipeline" tone="info" />
+        </div>
         <ol className="space-y-4">
           {STEPS.map((step, i) => (
             <li key={step.title} className="flex gap-3">
-              <span className="bg-muted text-muted-foreground flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-medium tabular-nums">
+              <span className="bg-brand-muted text-brand relative flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-medium tabular-nums ring-1 ring-brand/15">
+                {i === 0 ? (
+                  <LiveDot className="absolute -top-0.5 -right-0.5" />
+                ) : null}
                 {i + 1}
               </span>
               <div className="space-y-0.5">

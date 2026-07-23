@@ -1,4 +1,5 @@
 import { CheckoutButton } from "@/components/checkout-button";
+import { PageHeader } from "@/components/page-header";
 import {
   Card,
   CardContent,
@@ -18,16 +19,18 @@ export default async function BillingSettingsPage() {
   const paddleReady = isPaddleCheckoutConfigured();
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Billing</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Paddle is merchant of record (US sales tax handled). Plans from
-          docs/01 §8.
-        </p>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Billing"
+        description="Paddle is merchant of record (US sales tax handled). Plans from docs/01 §8."
+        live
+      />
 
-      <Card className="gap-0 py-0">
+      <Card className="gap-0 overflow-hidden py-0">
+        <div
+          className="from-brand via-brand/70 to-brand/20 h-1 w-full bg-gradient-to-r"
+          aria-hidden
+        />
         <CardHeader className="border-b pt-4">
           <CardTitle className="text-sm font-semibold">
             Current subscription

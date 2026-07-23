@@ -1,4 +1,5 @@
 import { DownloadReportButton } from "@/components/download-report-button";
+import { PageHeader } from "@/components/page-header";
 import { VendorStatusBadge } from "@/components/status-badges";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,34 +35,41 @@ export default async function VendorsPage() {
   const counts = dashboardCounts(vendors);
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Vendors</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Track insurance status, W-9s, licenses, and chase renewals.
-          </p>
-        </div>
-        {vendors.length > 0 ? (
-          <dl className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
-            {STATUS_LEGEND.filter((s) => counts[s.key] > 0).map((s) => (
-              <div key={s.key} className="flex items-center gap-1.5 text-xs">
-                <span className={`size-2 rounded-full ${s.dot}`} />
-                <dt className="text-muted-foreground">{s.label}</dt>
-                <dd className="font-medium tabular-nums">{counts[s.key]}</dd>
-              </div>
-            ))}
-          </dl>
-        ) : null}
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Vendors"
+        description="Track insurance status, W-9s, licenses, and chase renewals."
+        live
+        actions={
+          vendors.length > 0 ? (
+            <dl className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+              {STATUS_LEGEND.filter((s) => counts[s.key] > 0).map((s) => (
+                <div key={s.key} className="flex items-center gap-1.5 text-xs">
+                  <span className={`size-2 rounded-full ${s.dot}`} />
+                  <dt className="text-muted-foreground">{s.label}</dt>
+                  <dd className="font-medium tabular-nums">{counts[s.key]}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : null
+        }
+      />
 
       <AddVendorForm />
 
-      <Card className="min-w-0 gap-0 py-0">
+      <Card className="min-w-0 gap-0 overflow-hidden py-0">
+        <div
+          className="from-brand via-brand/70 to-brand/20 h-1 w-full bg-gradient-to-r"
+          aria-hidden
+        />
         <CardHeader className="border-b py-4">
           <CardTitle>All vendors</CardTitle>
           <CardAction className="self-center">
-            <span className="text-muted-foreground text-xs tabular-nums">
+            <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs tabular-nums">
+              <span className="relative flex size-1.5">
+                <span className="bg-brand absolute inline-flex size-full animate-ping rounded-full opacity-40" />
+                <span className="bg-brand relative inline-flex size-1.5 rounded-full" />
+              </span>
               {vendors.length}
             </span>
           </CardAction>

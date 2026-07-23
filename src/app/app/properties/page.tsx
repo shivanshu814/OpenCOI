@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/page-header";
 import {
   Card,
   CardAction,
@@ -47,21 +48,27 @@ export default async function PropertiesPage() {
   const properties = await listProperties();
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Properties</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Per-property certificate holder, AI wording, and requirement overrides
-          (D1).
-        </p>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Properties"
+        description="Per-property certificate holder, AI wording, and requirement overrides (D1)."
+        live
+      />
 
-      <Card className="min-w-0 gap-0 py-0">
+      <Card className="min-w-0 gap-0 overflow-hidden py-0">
+        <div
+          className="from-brand via-brand/70 to-brand/20 h-1 w-full bg-gradient-to-r"
+          aria-hidden
+        />
         <CardHeader className="py-3">
           <CardTitle className="text-sm font-semibold">
             All properties
           </CardTitle>
-          <CardAction className="text-muted-foreground self-center text-xs tabular-nums">
+          <CardAction className="text-muted-foreground self-center inline-flex items-center gap-1.5 text-xs tabular-nums">
+            <span className="relative flex size-1.5">
+              <span className="bg-brand absolute inline-flex size-full animate-ping rounded-full opacity-40" />
+              <span className="bg-brand relative inline-flex size-1.5 rounded-full" />
+            </span>
             {properties.length}
           </CardAction>
         </CardHeader>

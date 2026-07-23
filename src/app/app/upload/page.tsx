@@ -1,4 +1,5 @@
 import { IntakeEmailCard } from "@/components/intake-email-card";
+import { PageHeader } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getSessionOrg } from "@/lib/auth/session";
 import { listVendors } from "@/lib/data/documents";
@@ -15,13 +16,12 @@ export default async function Page() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Upload COI</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Web upload path (email-in lands Week 2). Endorsement checks run on
-          every extract.
-        </p>
-      </div>
+      <PageHeader
+        title="Upload COI"
+        description="Web upload path (email-in lands Week 2). Endorsement checks run on every extract."
+        live
+        liveLabel="Ready"
+      />
 
       <Suspense
         fallback={

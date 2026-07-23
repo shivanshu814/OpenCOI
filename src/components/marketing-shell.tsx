@@ -1,6 +1,7 @@
+import { BrandMark } from "@/components/certshield-logo";
 import { DisclaimerFooter } from "@/components/disclaimer-footer";
-import { Button } from "@/components/ui/button";
-import { ShieldCheck } from "lucide-react";
+import { MarketingHeader } from "@/components/marketing-header";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 const nav = [
@@ -9,64 +10,54 @@ const nav = [
   { href: "/help", label: "Help" },
 ];
 
-export function BrandMark({ className }: { className?: string }) {
-  return (
-    <span className={className ?? "flex items-center gap-2"}>
-      <span className="bg-primary text-primary-foreground flex size-7 items-center justify-center rounded-md">
-        <ShieldCheck className="size-4" aria-hidden />
-      </span>
-      <span className="text-foreground text-lg font-semibold tracking-tight">
-        CertShield
-      </span>
-    </span>
-  );
-}
+export { BrandMark } from "@/components/certshield-logo";
 
 export function MarketingShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="bg-background flex min-h-full flex-col">
-      <header className="bg-background/95 sticky top-0 z-40 border-b backdrop-blur-sm">
-        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
-          <Link href="/" aria-label="CertShield home" className="shrink-0">
-            <BrandMark />
-          </Link>
-          <nav className="flex items-center gap-1 sm:gap-2">
+      <MarketingHeader />
+
+      <div className="flex-1">{children}</div>
+
+      <footer className="relative overflow-hidden border-t border-white/10 bg-[oklch(0.22_0.03_260)]">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-30"
+          style={{
+            backgroundImage:
+              "radial-gradient(ellipse 50% 80% at 10% 50%, oklch(0.68 0.14 163 / 0.25), transparent)",
+          }}
+          aria-hidden
+        />
+        <div className="relative mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-4 px-4 py-10 text-sm sm:px-6">
+          <div className="space-y-2">
+            <BrandMark markSize={24} wordmarkClassName="text-white text-sm" />
+            <p className="max-w-xs text-xs leading-relaxed text-white/40">
+              Never work with an uninsured vendor again.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-white/55">
             {nav.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-muted-foreground hover:text-foreground hover:bg-muted hidden rounded-md px-3 py-1.5 text-sm font-medium transition-colors sm:inline-block"
+                className="transition-colors hover:text-white"
               >
                 {item.label}
               </Link>
             ))}
-            <Link
-              href="/login"
-              className="text-muted-foreground hover:text-foreground hover:bg-muted rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
-            >
+            <Link href="/login" className="transition-colors hover:text-white">
               Sign in
             </Link>
-            <Button className="ml-1" render={<Link href="/pricing" />}>
-              Start from $99
-            </Button>
-          </nav>
-        </div>
-      </header>
-      <div className="flex-1">{children}</div>
-      <footer className="border-t">
-        <div className="text-muted-foreground mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-6 text-sm sm:px-6">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="size-4" aria-hidden />
-            <span className="text-foreground font-medium">CertShield</span>
+            <Link
+              href="/pricing"
+              className="inline-flex items-center gap-1 font-medium text-white transition-colors hover:text-brand"
+            >
+              See pricing
+              <ArrowRight className="size-3.5" strokeWidth={2.25} aria-hidden />
+            </Link>
           </div>
-          <Link
-            href="/pricing"
-            className="hover:text-foreground font-medium transition-colors"
-          >
-            See pricing →
-          </Link>
         </div>
-        <DisclaimerFooter />
+        <DisclaimerFooter className="relative border-white/10 bg-transparent text-white/40 [&_a]:text-white/50 [&_a:hover]:text-white" />
       </footer>
     </div>
   );

@@ -1,8 +1,10 @@
 "use client";
 
+import { LiveDot } from "@/components/live-activity";
 import { Button } from "@/components/ui/button";
 import type { PlanId } from "@/lib/billing/plans";
 import { initializePaddle, type Paddle } from "@paddle/paddle-js";
+import { ArrowRight, LoaderCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -99,9 +101,7 @@ export function CheckoutButton({
         customer: data.customerEmail
           ? { email: data.customerEmail }
           : undefined,
-        settings: data.successUrl
-          ? { successUrl: data.successUrl }
-          : undefined,
+        settings: data.successUrl ? { successUrl: data.successUrl } : undefined,
       });
     } catch (err) {
       setNote(err instanceof Error ? err.message : "Checkout failed");
@@ -120,10 +120,30 @@ export function CheckoutButton({
         disabled={busy}
         onClick={onClick}
       >
-        {busy ? "Opening…" : label}
+        {busy ? (
+          <>
+            <LoaderCircle
+              data-icon="inline-start"
+              className="size-4 animate-spin"
+            />
+            Opening…
+          </>
+        ) : (
+          <>
+            {label}
+            <ArrowRight
+              data-icon="inline-end"
+              className="size-4"
+              strokeWidth={2.25}
+            />
+          </>
+        )}
       </Button>
       {note ? (
-        <p className="text-muted-foreground text-xs leading-relaxed">{note}</p>
+        <p className="text-muted-foreground flex items-start gap-1.5 text-xs leading-relaxed">
+          <LiveDot tone="warn" className="mt-1" />
+          <span>{note}</span>
+        </p>
       ) : null}
     </div>
   );

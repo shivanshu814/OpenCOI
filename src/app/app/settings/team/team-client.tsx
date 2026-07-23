@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  CardLiveAccent,
+  LiveBadge,
+  LiveCount,
+} from "@/components/live-activity";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -83,16 +88,20 @@ export function TeamSettingsClient() {
   }
 
   return (
-    <div className="space-y-8">
-      <Card className="gap-0 py-0">
+    <div className="space-y-6">
+      <Card className="gap-0 overflow-hidden py-0">
+        <CardLiveAccent />
         <CardHeader className="border-b pt-4">
-          <CardTitle className="text-sm font-semibold">Team members</CardTitle>
+          <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+            Team members
+            <LiveBadge label="Org" tone="ok" />
+          </CardTitle>
           <CardDescription className="text-xs">
-            DB roles map to product: owner/admin → Admin, member → Manager,
-            viewer → Read-only.
+            DB roles map to product: owner/admin to Admin, member to Manager,
+            viewer to Read-only.
           </CardDescription>
-          <CardAction className="text-muted-foreground text-xs tabular-nums">
-            {members.length}
+          <CardAction className="self-center">
+            <LiveCount value={members.length} />
           </CardAction>
         </CardHeader>
 
@@ -168,10 +177,12 @@ export function TeamSettingsClient() {
         </CardFooter>
       </Card>
 
-      <Card className="gap-0 py-0">
+      <Card className="gap-0 overflow-hidden py-0">
+        <CardLiveAccent />
         <CardHeader className="border-b pt-4">
-          <CardTitle className="text-sm font-semibold">
+          <CardTitle className="flex items-center gap-2 text-sm font-semibold">
             White-label email (F2)
+            <LiveBadge label="Live" />
           </CardTitle>
           <CardDescription className="text-xs">
             Chase emails go out under your name. Custom from-address requires

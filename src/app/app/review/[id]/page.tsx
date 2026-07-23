@@ -1,4 +1,5 @@
 import { DownloadReportButton } from "@/components/download-report-button";
+import { CardLiveAccent, LiveBadge } from "@/components/live-activity";
 import { VerdictBadge } from "@/components/status-badges";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
@@ -55,10 +56,12 @@ export default async function ReviewDocumentPage({
         >
           <ArrowLeft className="size-4" /> Review queue
         </Link>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+        <Card className="gap-0 overflow-hidden py-0">
+          <CardLiveAccent />
+          <CardHeader className="pt-4">
+            <CardTitle className="flex flex-wrap items-center gap-2">
               <Clock className="size-4" /> Extraction pending
+              <LiveBadge label="Waiting" tone="warn" />
             </CardTitle>
             <CardDescription>
               {doc.file_name} uploaded successfully, but AI extraction hasn’t
@@ -115,8 +118,9 @@ export default async function ReviewDocumentPage({
             <ArrowLeft className="size-3" aria-hidden />
             Review queue
           </Link>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">
+          <h1 className="mt-1 flex flex-wrap items-center gap-2 text-lg font-semibold tracking-tight">
             {vendor?.name ?? "Vendor"}
+            <LiveBadge label="In review" tone="info" />
           </h1>
           <p className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-2 text-sm">
             <span className="truncate">{doc.file_name}</span>

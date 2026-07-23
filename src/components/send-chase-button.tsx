@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Check } from "lucide-react";
 import { useState } from "react";
 
 export function SendChaseButton({
@@ -43,9 +44,7 @@ export function SendChaseButton({
       const subject = data.rendered?.subject ?? "Chase sent";
       setSent(!data.demo);
       setMsg(
-        data.demo
-          ? `Demo: ${subject}`
-          : `Sent to ${vendorName}: ${subject}`,
+        data.demo ? `Demo: ${subject}` : `Sent to ${vendorName}: ${subject}`,
       );
     } catch {
       setMsg("Network error");
@@ -80,11 +79,17 @@ export function SendChaseButton({
         <p
           className={
             sent
-              ? "max-w-xs text-right text-xs text-emerald-700"
+              ? "flex max-w-xs items-center justify-end gap-1 text-right text-xs text-emerald-700"
               : "text-muted-foreground max-w-xs text-right text-xs"
           }
         >
-          {sent ? "✓ " : ""}
+          {sent ? (
+            <Check
+              className="size-3.5 shrink-0"
+              strokeWidth={2.5}
+              aria-hidden
+            />
+          ) : null}
           {msg}
         </p>
       ) : null}

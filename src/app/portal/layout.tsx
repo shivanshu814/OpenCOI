@@ -1,5 +1,6 @@
+import { BrandMark } from "@/components/certshield-logo";
 import { DisclaimerFooter } from "@/components/disclaimer-footer";
-import { ShieldCheck } from "lucide-react";
+import { LiveBadge, PortalLiveTicker } from "@/components/live-activity";
 import Link from "next/link";
 
 export default function PortalLayout({
@@ -10,21 +11,18 @@ export default function PortalLayout({
   return (
     <div className="bg-background flex min-h-full flex-col">
       <header className="bg-card border-b">
-        <div className="mx-auto flex max-w-lg items-center justify-between px-4 py-3.5">
-          <span className="flex items-center gap-2">
-            <span className="bg-primary text-primary-foreground flex size-7 items-center justify-center rounded-md">
-              <ShieldCheck className="size-4" aria-hidden />
+        <div className="mx-auto flex max-w-lg flex-wrap items-center justify-between gap-3 px-4 py-3.5">
+          <BrandMark markSize={26} />
+          <div className="flex flex-col items-end gap-1.5">
+            <LiveBadge label="No login" tone="ok" />
+            <span className="text-muted-foreground text-right text-xs leading-snug">
+              Vendor portal · Portal de proveedores
             </span>
-            <span className="text-sm font-semibold tracking-tight">
-              CertShield
-            </span>
-          </span>
-          <span className="text-muted-foreground text-xs">
-            Vendor portal · Portal de proveedores
-          </span>
+          </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-lg flex-1 px-4 py-8 sm:py-10">
+      <main className="mx-auto w-full max-w-lg flex-1 space-y-4 px-4 py-8 sm:py-10">
+        <PortalLiveTicker />
         {children}
       </main>
       <DisclaimerFooter />

@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  CardLiveAccent,
+  LiveBadge,
+  LiveCount,
+} from "@/components/live-activity";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -91,10 +96,14 @@ export function IntegrationsClient() {
   }
 
   return (
-    <div className="space-y-8">
-      <Card className="gap-0 py-0">
+    <div className="space-y-6">
+      <Card className="gap-0 overflow-hidden py-0">
+        <CardLiveAccent />
         <CardHeader className="border-b pt-4">
-          <CardTitle className="text-sm font-semibold">API keys (E4)</CardTitle>
+          <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+            API keys (E4)
+            <LiveBadge label="Live" />
+          </CardTitle>
           <CardDescription className="text-xs">
             Use{" "}
             <code className="text-foreground">
@@ -102,8 +111,8 @@ export function IntegrationsClient() {
             </code>{" "}
             against <code className="text-foreground">/api/v1/vendors</code>.
           </CardDescription>
-          <CardAction className="text-muted-foreground text-xs tabular-nums">
-            {keys.length}
+          <CardAction className="self-center">
+            <LiveCount value={keys.length} />
           </CardAction>
         </CardHeader>
 
@@ -199,18 +208,20 @@ export function IntegrationsClient() {
         </ul>
       </Card>
 
-      <Card className="gap-0 py-0">
+      <Card className="gap-0 overflow-hidden py-0">
+        <CardLiveAccent />
         <CardHeader className="border-b pt-4">
-          <CardTitle className="text-sm font-semibold">
+          <CardTitle className="flex items-center gap-2 text-sm font-semibold">
             Outbound webhooks
+            <LiveBadge label="Live" tone="info" />
           </CardTitle>
           <CardDescription className="text-xs">
             Events: vendor.status_changed, document.published. Verify{" "}
             <code className="text-foreground">X-CertShield-Signature</code>{" "}
             (HMAC SHA-256 of body).
           </CardDescription>
-          <CardAction className="text-muted-foreground text-xs tabular-nums">
-            {webhooks.length}
+          <CardAction className="self-center">
+            <LiveCount value={webhooks.length} />
           </CardAction>
         </CardHeader>
 

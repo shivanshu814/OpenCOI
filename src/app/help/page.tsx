@@ -1,3 +1,5 @@
+import { INK_BG, InkAtmosphere, SURFACE_BG } from "@/components/ink-atmosphere";
+import { LiveOpsTicker } from "@/components/live-activity";
 import { MarketingShell } from "@/components/marketing-shell";
 import Link from "next/link";
 
@@ -9,7 +11,7 @@ export const metadata = {
 const SECTIONS = [
   {
     title: "Upload a COI",
-    body: "App → Upload, pick a vendor, drop the PDF (or tap Use on a sample COI). Same samples appear on the vendor portal. Extraction runs in the background; every verdict goes to internal review before publish until the Month 3 accuracy gate.",
+    body: "In the app, open Upload, pick a vendor, drop the PDF (or tap Use on a sample COI). Same samples appear on the vendor portal. Extraction runs in the background; every verdict goes to internal review before publish until the Month 3 accuracy gate.",
   },
   {
     title: "Review & publish",
@@ -25,29 +27,33 @@ const SECTIONS = [
   },
   {
     title: "API & Zapier",
-    body: "Settings → API: create a cs_live_ key. GET /api/v1/vendors with Authorization: Bearer … Webhooks fire on document.published and vendor.status_changed.",
+    body: "In Settings, open API and create a cs_live_ key. GET /api/v1/vendors with Authorization: Bearer … Webhooks fire on document.published and vendor.status_changed.",
   },
   {
     title: "Export packs",
-    body: "Vendor → Litigation pack (ZIP). Property → Audit pack (ZIP). For owners, audits, or counsel.",
+    body: "Vendor: Litigation pack (ZIP). Property: Audit pack (ZIP). For owners, audits, or counsel.",
   },
 ];
 
 export default function HelpPage() {
   return (
     <MarketingShell>
-      <main className="mx-auto max-w-3xl space-y-10 px-4 py-16 sm:px-6">
-        <div>
-          <p className="text-sm font-semibold tracking-[0.14em] text-emerald-600 uppercase">
+      <section className={`relative overflow-hidden ${INK_BG}`}>
+        <InkAtmosphere variant="top" />
+        <div className="relative mx-auto max-w-3xl px-4 pt-14 pb-12 sm:px-6 md:pt-20 md:pb-14">
+          <p className="text-brand text-xs font-semibold tracking-[0.18em] uppercase">
             Support
           </p>
-          <h1 className="text-foreground mt-3 text-3xl font-semibold tracking-tight">
+          <div className="mt-4">
+            <LiveOpsTicker />
+          </div>
+          <h1 className="mt-5 text-3xl font-semibold tracking-tight text-white">
             Help center
           </h1>
-          <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
+          <p className="mt-3 text-sm leading-relaxed text-white/60">
             Short answers for day-one operators. Need a human?{" "}
             <a
-              className="text-foreground font-medium underline-offset-2 hover:underline"
+              className="font-medium text-white underline-offset-2 hover:underline"
               href="mailto:support@getcertshield.com"
             >
               support@getcertshield.com
@@ -55,12 +61,15 @@ export default function HelpPage() {
             (24h weekday SLA).
           </p>
         </div>
-        <div className="divide-y rounded-xl border">
+      </section>
+
+      <main
+        className={`${SURFACE_BG} mx-auto max-w-3xl space-y-8 px-4 py-12 sm:px-6 md:py-16`}
+      >
+        <div className="bg-card divide-y rounded-xl border border-border/80 shadow-xs">
           {SECTIONS.map((s) => (
             <section key={s.title} className="space-y-1.5 px-5 py-4">
-              <h2 className="text-foreground text-sm font-semibold">
-                {s.title}
-              </h2>
+              <h2 className="text-sm font-semibold">{s.title}</h2>
               <p className="text-muted-foreground text-sm leading-relaxed">
                 {s.body}
               </p>

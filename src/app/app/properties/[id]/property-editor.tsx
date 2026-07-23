@@ -146,7 +146,7 @@ export function PropertyEditor({
   }
 
   return (
-    <form onSubmit={onSave} className="space-y-8">
+    <form onSubmit={onSave} className="space-y-6">
       <section className="space-y-4">
         <SectionHeading title="Property details" />
         <div className="grid gap-4 sm:grid-cols-2">

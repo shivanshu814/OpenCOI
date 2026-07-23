@@ -160,7 +160,7 @@ export function ReviewActions({
       setMsg(
         data.demo
           ? (data.message ?? "Demo correction")
-          : `Correction saved → golden set. Re-check overall: ${data.overall}`,
+          : `Correction saved to golden set. Re-check overall: ${data.overall}`,
       );
       router.refresh();
     } catch (err) {
@@ -335,9 +335,7 @@ export function ReviewActions({
         </div>
 
         {msg ? (
-          <p className="text-muted-foreground text-xs leading-relaxed">
-            {msg}
-          </p>
+          <p className="text-muted-foreground text-xs leading-relaxed">{msg}</p>
         ) : null}
       </CardContent>
     </Card>

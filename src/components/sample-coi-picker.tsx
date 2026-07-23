@@ -1,5 +1,6 @@
 "use client";
 
+import { LiveBadge } from "@/components/live-activity";
 import { Button } from "@/components/ui/button";
 import {
   SAMPLE_COIS,
@@ -61,8 +62,11 @@ export function SampleCoiPicker({ onSelect, locale = "en", className }: Props) {
           className="text-muted-foreground mt-0.5 size-4 shrink-0"
           aria-hidden
         />
-        <div>
-          <p className="text-sm font-medium">{t.title}</p>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-medium">{t.title}</p>
+            <LiveBadge label="Samples" tone="info" />
+          </div>
           <p className="text-muted-foreground text-xs leading-relaxed">
             {t.body}
           </p>

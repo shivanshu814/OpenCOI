@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/page-header";
 import {
   Card,
   CardAction,
@@ -9,7 +10,7 @@ import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import type { ProjectStatus } from "@/lib/projects/types";
 import { createClient } from "@/lib/supabase/server";
-import { ChevronRight } from "lucide-react";
+import { ArrowRight, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { AddProjectForm } from "./add-project-form";
 
@@ -54,19 +55,25 @@ export default async function ProjectsPage() {
   const projects = await listProjects();
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Projects</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          GC project mode (D2) — attach subs, set job-specific limits, export a
-          closeout compliance pack.
-        </p>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Projects"
+        description="GC project mode (D2) — attach subs, set job-specific limits, export a closeout compliance pack."
+        live
+      />
 
-      <Card className="min-w-0 gap-0 py-0">
+      <Card className="min-w-0 gap-0 overflow-hidden py-0">
+        <div
+          className="from-brand via-brand/70 to-brand/20 h-1 w-full bg-gradient-to-r"
+          aria-hidden
+        />
         <CardHeader className="py-3">
           <CardTitle className="text-sm font-semibold">All projects</CardTitle>
-          <CardAction className="text-muted-foreground self-center text-xs tabular-nums">
+          <CardAction className="text-muted-foreground self-center inline-flex items-center gap-1.5 text-xs tabular-nums">
+            <span className="relative flex size-1.5">
+              <span className="bg-brand absolute inline-flex size-full animate-ping rounded-full opacity-40" />
+              <span className="bg-brand relative inline-flex size-1.5 rounded-full" />
+            </span>
             {projects.length}
           </CardAction>
         </CardHeader>
@@ -81,10 +88,20 @@ export default async function ProjectsPage() {
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{p.name}</p>
-                  <p className="text-muted-foreground truncate text-xs tabular-nums">
-                    {p.start_date && p.end_date
-                      ? `${p.start_date} → ${p.end_date}`
-                      : p.start_date || p.end_date || "Dates TBD"}
+                  <p className="text-muted-foreground flex items-center gap-1 truncate text-xs tabular-nums">
+                    {p.start_date && p.end_date ? (
+                      <>
+                        {p.start_date}
+                        <ArrowRight
+                          className="size-3 shrink-0 opacity-60"
+                          strokeWidth={2.25}
+                          aria-hidden
+                        />
+                        {p.end_date}
+                      </>
+                    ) : (
+                      p.start_date || p.end_date || "Dates TBD"
+                    )}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-3">

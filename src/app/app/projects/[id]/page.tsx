@@ -1,3 +1,4 @@
+import { LiveBadge } from "@/components/live-activity";
 import { Button } from "@/components/ui/button";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
@@ -21,6 +22,24 @@ function BackLink() {
   );
 }
 
+function ProjectHeading({
+  name,
+  description,
+}: {
+  name: string;
+  description: string;
+}) {
+  return (
+    <div>
+      <div className="flex flex-wrap items-center gap-2.5">
+        <h1 className="text-lg font-semibold tracking-tight">{name}</h1>
+        <LiveBadge label="Live" />
+      </div>
+      <p className="text-muted-foreground mt-1 text-sm">{description}</p>
+    </div>
+  );
+}
+
 export default async function ProjectDetailPage({
   params,
 }: {
@@ -30,19 +49,14 @@ export default async function ProjectDetailPage({
 
   if (!isSupabaseConfigured()) {
     return (
-      <div className="space-y-8">
+      <div className="space-y-6">
         <div className="space-y-4">
           <BackLink />
           <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight">
-                Roof Replace — Building A
-              </h1>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Job-specific requirements merge over global / trade / property
-                rules.
-              </p>
-            </div>
+            <ProjectHeading
+              name="Roof Replace — Building A"
+              description="Job-specific requirements merge over global / trade / property rules."
+            />
             <Button
               variant="outline"
               size="sm"
@@ -106,19 +120,14 @@ export default async function ProjectDetailPage({
     ]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="space-y-4">
         <BackLink />
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              {project.name}
-            </h1>
-            <p className="text-muted-foreground mt-1 text-sm">
-              Job-specific requirements merge over global / trade / property
-              rules.
-            </p>
-          </div>
+          <ProjectHeading
+            name={project.name}
+            description="Job-specific requirements merge over global / trade / property rules."
+          />
           <Button
             variant="outline"
             size="sm"

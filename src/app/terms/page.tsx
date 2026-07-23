@@ -1,45 +1,95 @@
+import { INK_BG, InkAtmosphere, SURFACE_BG } from "@/components/ink-atmosphere";
+import { LiveBadge, LiveOpsTicker } from "@/components/live-activity";
 import { MarketingShell } from "@/components/marketing-shell";
+import Link from "next/link";
 
 export const metadata = {
   title: "Terms of Service — CertShield",
+  description:
+    "CertShield terms of service: document review assistance, Paddle billing, liability cap, and acceptable use.",
 };
+
+const SECTIONS = [
+  {
+    title: "What CertShield is",
+    body: "CertShield provides document review assistance for certificates of insurance and related vendor compliance documents. It is not legal, insurance, or professional advice. You remain solely responsible for vendor selection, coverage decisions, and final approval of every verdict.",
+  },
+  {
+    title: "Billing & liability",
+    body: "Service is sold via Paddle (merchant of record). Liability for paid service is capped at fees paid in the prior 12 months. No warranty of compliance outcomes or guaranteed detection of mid-term cancellations.",
+  },
+  {
+    title: "Acceptable use",
+    body: "No unlawful content, no attempting to bypass multi-tenant isolation, and no SMS without TCPA consent logged in-product.",
+  },
+];
 
 export default function TermsPage() {
   return (
     <MarketingShell>
-      <main className="mx-auto max-w-3xl px-4 py-16 text-sm leading-relaxed sm:px-6">
-        <p className="text-sm font-semibold tracking-[0.14em] text-emerald-600 uppercase">
-          Legal
-        </p>
-        <h1 className="text-foreground mt-3 text-3xl font-semibold tracking-tight">
-          Terms of Service
-        </h1>
-        <p className="text-muted-foreground mt-2 text-xs">
-          Last updated: 2026-07-23
-        </p>
-        <div className="mt-8 max-w-2xl space-y-6">
-          <p>
-            CertShield provides document review assistance for certificates of
-            insurance and related vendor compliance documents. It is{" "}
-            <strong>not</strong> legal, insurance, or professional advice. You
-            remain solely responsible for vendor selection, coverage decisions,
-            and final approval of every verdict.
+      <section className={`relative overflow-hidden ${INK_BG}`}>
+        <InkAtmosphere variant="top" />
+        <div className="relative mx-auto max-w-3xl px-4 pt-14 pb-12 sm:px-6 md:pt-20 md:pb-14">
+          <p className="text-brand text-xs font-semibold tracking-[0.18em] uppercase">
+            Legal
           </p>
-          <p>
-            Service is sold via Paddle (merchant of record). Liability for paid
-            service is capped at fees paid in the prior 12 months. No warranty
-            of compliance outcomes or guaranteed detection of mid-term
-            cancellations.
-          </p>
-          <p>
-            Acceptable use: no unlawful content, no attempting to bypass
-            multi-tenant isolation, no SMS without TCPA consent logged
-            in-product.
-          </p>
-          <p className="text-muted-foreground border-t pt-6 text-xs">
-            Questions about these terms? Email support@getcertshield.com.
+          <div className="mt-4">
+            <LiveOpsTicker />
+          </div>
+          <div className="mt-5 flex flex-wrap items-center gap-2.5">
+            <h1 className="text-3xl font-semibold tracking-tight text-white">
+              Terms of Service
+            </h1>
+            <LiveBadge
+              label="Live"
+              className="border-white/15 bg-white/10 text-white ring-white/20"
+            />
+          </div>
+          <p className="mt-3 text-sm leading-relaxed text-white/60">
+            Last updated: 2026-07-23 · Binding for all CertShield workspaces
           </p>
         </div>
+      </section>
+
+      <main
+        className={`${SURFACE_BG} mx-auto max-w-3xl space-y-8 px-4 py-12 sm:px-6 md:py-16`}
+      >
+        <div className="bg-card divide-y overflow-hidden rounded-xl border border-border/80 shadow-xs">
+          <div className="from-brand via-brand/70 to-brand/20 h-1 w-full bg-gradient-to-r" />
+          {SECTIONS.map((s) => (
+            <section key={s.title} className="space-y-1.5 px-5 py-5">
+              <h2 className="text-sm font-semibold">{s.title}</h2>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                {s.body}
+              </p>
+            </section>
+          ))}
+        </div>
+
+        <p className="text-muted-foreground text-xs leading-relaxed">
+          Questions about these terms? Email{" "}
+          <a
+            className="text-foreground font-medium underline-offset-2 hover:underline"
+            href="mailto:support@getcertshield.com"
+          >
+            support@getcertshield.com
+          </a>
+          . Also see{" "}
+          <Link
+            href="/privacy"
+            className="text-foreground font-medium underline-offset-2 hover:underline"
+          >
+            Privacy
+          </Link>{" "}
+          and{" "}
+          <Link
+            href="/security"
+            className="text-foreground font-medium underline-offset-2 hover:underline"
+          >
+            Security
+          </Link>
+          .
+        </p>
       </main>
     </MarketingShell>
   );

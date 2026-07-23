@@ -1,3 +1,5 @@
+import { INK_BG, InkAtmosphere, SURFACE_BG } from "@/components/ink-atmosphere";
+import { LiveOpsTicker } from "@/components/live-activity";
 import { MarketingShell } from "@/components/marketing-shell";
 
 export const metadata = {
@@ -37,7 +39,7 @@ const QUESTIONS: { q: string; a: string }[] = [
   },
   {
     q: "Subprocessors?",
-    a: "Vercel, Supabase/AWS (US), OpenRouter → Anthropic, Resend, Postmark, Twilio (SMS), Paddle (billing), Documenso (e-sign), Sentry (when enabled).",
+    a: "Vercel, Supabase/AWS (US), OpenRouter to Anthropic, Resend, Postmark, Twilio (SMS), Paddle (billing), Documenso (e-sign), Sentry (when enabled).",
   },
   {
     q: "Deletion / export?",
@@ -52,32 +54,39 @@ const QUESTIONS: { q: string; a: string }[] = [
 export default function SecurityPage() {
   return (
     <MarketingShell>
-      <main className="mx-auto max-w-3xl space-y-10 px-4 py-16 sm:px-6">
-        <div>
-          <p className="text-sm font-semibold tracking-[0.14em] text-emerald-600 uppercase">
+      <section className={`relative overflow-hidden ${INK_BG}`}>
+        <InkAtmosphere variant="top" />
+        <div className="relative mx-auto max-w-3xl px-4 pt-14 pb-12 sm:px-6 md:pt-20 md:pb-14">
+          <p className="text-brand text-xs font-semibold tracking-[0.18em] uppercase">
             Trust
           </p>
-          <h1 className="text-foreground mt-3 text-3xl font-semibold tracking-tight">
+          <div className="mt-4">
+            <LiveOpsTicker />
+          </div>
+          <h1 className="mt-5 text-3xl font-semibold tracking-tight text-white">
             Security
           </h1>
-          <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
-            Answers to the questions buyers ask before trusting COI and W-9
-            data with CertShield.
+          <p className="mt-3 text-sm leading-relaxed text-white/60">
+            Answers to the questions buyers ask before trusting COI and W-9 data
+            with CertShield.
           </p>
         </div>
-        <ol className="divide-y rounded-xl border">
+      </section>
+
+      <main
+        className={`${SURFACE_BG} mx-auto max-w-3xl px-4 py-12 sm:px-6 md:py-16`}
+      >
+        <ol className="bg-card divide-y rounded-xl border border-border/80 shadow-xs">
           {QUESTIONS.map((item, i) => (
             <li key={item.q} className="flex gap-4 px-5 py-4">
               <span
-                className="text-muted-foreground w-5 shrink-0 pt-px text-sm font-medium tabular-nums"
+                className="text-brand w-5 shrink-0 pt-px text-sm font-semibold tabular-nums"
                 aria-hidden
               >
-                {i + 1}
+                {String(i + 1).padStart(2, "0")}
               </span>
               <div className="space-y-1.5">
-                <h2 className="text-foreground text-sm font-semibold">
-                  {item.q}
-                </h2>
+                <h2 className="text-sm font-semibold">{item.q}</h2>
                 <p className="text-muted-foreground text-sm leading-relaxed">
                   {item.a}
                 </p>

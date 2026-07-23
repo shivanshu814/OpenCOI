@@ -1,9 +1,10 @@
-import { BrandMark } from "@/components/marketing-shell";
+import { BrandMark } from "@/components/certshield-logo";
+import { CardLiveAccent, LiveBadge } from "@/components/live-activity";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 import { resolveAgentConfirmation } from "@/lib/agent-confirm/issue";
 import { isSupabaseConfigured } from "@/lib/config";
+import { cn } from "@/lib/utils";
 import { CircleCheck, CircleX } from "lucide-react";
 import Link from "next/link";
 
@@ -117,12 +118,14 @@ export default async function ConfirmPage({
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="bg-background flex min-h-full flex-col">
-      <header className="bg-card border-b px-4 py-3 sm:px-6">
+      <header className="bg-card flex items-center justify-between border-b px-4 py-3 sm:px-6">
         <BrandMark />
+        <LiveBadge label="Secure link" tone="ok" />
       </header>
       <main className="mx-auto w-full max-w-lg flex-1 px-4 py-12">
-        <Card className="[--card-spacing:--spacing(6)]">
-          <CardContent className="py-2">{children}</CardContent>
+        <Card className="gap-0 overflow-hidden py-0 [--card-spacing:--spacing(6)]">
+          <CardLiveAccent />
+          <CardContent className="py-6">{children}</CardContent>
         </Card>
       </main>
     </div>

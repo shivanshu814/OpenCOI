@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/page-header";
 import {
   Card,
   CardContent,
@@ -20,15 +21,13 @@ import { redirect } from "next/navigation";
 export default async function AdminMetricsPage() {
   if (!isSupabaseConfigured()) {
     return (
-      <div className="space-y-8">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Admin metrics
-          </h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Demo mode — connect Supabase for live AI cost / queue metrics.
-          </p>
-        </div>
+      <div className="space-y-6">
+        <PageHeader
+          title="Admin metrics"
+          description="Demo mode — connect Supabase for live AI cost / queue metrics."
+          live
+          liveLabel="Demo"
+        />
         <FixtureAccuracyCard />
       </div>
     );
@@ -37,12 +36,7 @@ export default async function AdminMetricsPage() {
   const session = await getSessionOrg();
   if (!session) redirect("/login");
   if (!canAdminSensitive(session.role)) {
-    return (
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Admin metrics</h1>
-        <p className="text-muted-foreground mt-1 text-sm">Admins only.</p>
-      </div>
-    );
+    return <PageHeader title="Admin metrics" description="Admins only." />;
   }
 
   const supabase = await createClient();
@@ -94,16 +88,18 @@ export default async function AdminMetricsPage() {
         rows.length;
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Admin metrics</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Founder / Admin ops view for {session.orgName}. Until Month 3, 100% of
-          verdicts still pass internal review before publish.
-        </p>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Admin metrics"
+        description={`Founder / Admin ops view for ${session.orgName}. Until Month 3, 100% of verdicts still pass internal review before publish.`}
+        live
+      />
 
-      <Card className="gap-0 py-0">
+      <Card className="gap-0 overflow-hidden py-0">
+        <div
+          className="from-brand via-brand/70 to-brand/20 h-1 w-full bg-gradient-to-r"
+          aria-hidden
+        />
         <CardHeader className="border-b pt-4">
           <CardTitle className="text-sm font-semibold">
             Document pipeline

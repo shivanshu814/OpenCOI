@@ -1,4 +1,5 @@
 import { DownloadOwnerReportButton } from "@/components/download-owner-report-button";
+import { LiveBadge } from "@/components/live-activity";
 import { SendOwnerReportButton } from "@/components/send-owner-report-button";
 import { Button } from "@/components/ui/button";
 import { getSessionOrg } from "@/lib/auth/session";
@@ -22,6 +23,24 @@ function BackLink() {
   );
 }
 
+function PropertyHeading({
+  name,
+  description,
+}: {
+  name: string;
+  description: string;
+}) {
+  return (
+    <div>
+      <div className="flex flex-wrap items-center gap-2.5">
+        <h1 className="text-lg font-semibold tracking-tight">{name}</h1>
+        <LiveBadge label="Live" />
+      </div>
+      <p className="text-muted-foreground mt-1 text-sm">{description}</p>
+    </div>
+  );
+}
+
 export default async function PropertyDetailPage({
   params,
 }: {
@@ -31,19 +50,14 @@ export default async function PropertyDetailPage({
 
   if (!isSupabaseConfigured()) {
     return (
-      <div className="space-y-8">
+      <div className="space-y-6">
         <div className="space-y-4">
           <BackLink />
           <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight">
-                Oak Street Apartments
-              </h1>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Certificate holder + AI wording + overrides merge over
-                global/trade rules.
-              </p>
-            </div>
+            <PropertyHeading
+              name="Oak Street Apartments"
+              description="Certificate holder + AI wording + overrides merge over global/trade rules."
+            />
             <div className="flex flex-wrap items-center gap-2">
               <DownloadOwnerReportButton propertyId={id} />
               <SendOwnerReportButton
@@ -118,19 +132,14 @@ export default async function PropertyDetailPage({
     : [];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="space-y-4">
         <BackLink />
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              {property.name}
-            </h1>
-            <p className="text-muted-foreground mt-1 text-sm">
-              Certificate holder + AI wording + overrides merge over
-              global/trade rules.
-            </p>
-          </div>
+          <PropertyHeading
+            name={property.name}
+            description="Certificate holder + AI wording + overrides merge over global/trade rules."
+          />
           <div className="flex flex-wrap items-center gap-2">
             <DownloadOwnerReportButton propertyId={property.id} />
             <SendOwnerReportButton

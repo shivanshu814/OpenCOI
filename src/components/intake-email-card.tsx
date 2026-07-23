@@ -1,5 +1,6 @@
 "use client";
 
+import { CardLiveAccent, LiveBadge, LiveDot } from "@/components/live-activity";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -31,11 +32,17 @@ export function IntakeEmailCard({
   }
 
   return (
-    <Card>
-      <CardHeader className="gap-1">
-        <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+    <Card className="gap-0 overflow-hidden py-0">
+      <CardLiveAccent />
+      <CardHeader className="gap-1 border-b pt-4">
+        <CardTitle className="flex flex-wrap items-center gap-2 text-sm font-semibold">
           <Inbox className="text-muted-foreground size-4" />
           Email-in intake
+          {demo ? (
+            <LiveBadge label="Demo" tone="warn" />
+          ) : (
+            <LiveBadge label="Listening" tone="ok" />
+          )}
         </CardTitle>
         <CardDescription>
           Forward COI PDFs to this address. We attach them to a vendor by name
@@ -43,8 +50,9 @@ export function IntakeEmailCard({
           {demo ? " Demo address — connect Supabase for your org token." : null}
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-wrap items-center gap-2">
-        <code className="bg-muted rounded px-2 py-1.5 text-sm break-all">
+      <CardContent className="flex flex-wrap items-center gap-2 py-4">
+        <code className="bg-muted inline-flex items-center gap-2 rounded px-2 py-1.5 text-sm break-all">
+          {!demo ? <LiveDot tone="ok" /> : null}
           {email}
         </code>
         <Button type="button" variant="outline" size="sm" onClick={copy}>
