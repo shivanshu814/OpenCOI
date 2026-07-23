@@ -1,4 +1,4 @@
-# CertShield web app (Week 1 thin path)
+# CertShield web app
 
 ## Run
 
@@ -10,26 +10,29 @@ npm run dev
 
 Open http://localhost:3000 → **Open app**. Demo mode works without env vars.
 
+## CI/CD (GitHub → Supabase → Vercel)
+
+Production ships via GitHub Actions: quality gate → `supabase db push` → Vercel prod.
+
+Full setup (secrets, environments, manual runbooks): **[`.github/CI_CD.md`](./.github/CI_CD.md)**
+
+```bash
+npm run ci          # lint + typecheck + test + build (same as Actions)
+npm run db:push     # apply migrations to linked Supabase project
+```
+
+Prod: https://getcertshield.vercel.app
+
 ## Connect real stack (founder checklist)
 
 1. Create Supabase project (**US region**).
-2. Run SQL in order:
-   - `supabase/migrations/001_week1_core.sql`
-   - `supabase/migrations/002_storage_golden_org_bootstrap.sql` (creates `cois` bucket + RLS, `create_org` RPC, `golden_set_cases`)
+2. Apply migrations (`npm run db:push` once linked, or run SQL in `supabase/migrations/` in order).
 3. Fill `.env.local` from `.env.example` (URL, anon, service role, `OPENROUTER_API_KEY`).
-4. Enable Email magic-link in Supabase Auth → URL config allow `http://localhost:3000/auth/callback`.
-5. Optional: `npx inngest-cli@latest dev` for async extract (`/api/inngest`). Without Inngest, upload runs Claude sync via OpenRouter if `OPENROUTER_API_KEY` is set.
+4. Enable Email magic-link in Supabase Auth → allow `http://localhost:3000/auth/callback` (+ prod callback).
+5. Optional: `npx inngest-cli@latest dev` for async extract (`/api/inngest`).
 
 Then: `/login` → magic link → first login auto-creates org → vendors → upload → internal review → Approve & publish / Save correction.
 
-## What shipped (docs/01 §9 Week 1)
+## Status
 
-- Schema + RLS + append-only `audit_events` + golden-set stub
-- Appendix A Zod schema + requirements engine v1
-- Claude extract + Inngest `document/uploaded` → `in_internal_review`
-- Data layer with demo fallback; live: vendor CRUD, Storage upload, review publish/correct
-- Auth: magic-link login + org bootstrap
-
-## Not yet (Week 2+)
-
-Email-in, chase EN/ES, report PDF, Paddle, customer-accept flow, SMS, vendor portal.
+See company-os root `STATUS.md` — Weeks 1–6 + D2/D3 live; next is real ACORD golden-set expansion.

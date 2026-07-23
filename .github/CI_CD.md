@@ -1,0 +1,105 @@
+# CertShield CI/CD — GitHub Actions + Supabase + Vercel
+
+**App repo root:** this `web/` directory (GitHub: `shivanshu814/Certshield`).
+
+## Pipeline
+
+```
+PR / push ──► CI (lint · tsc · test · build)
+                    │
+push main ──────────┼──► Deploy Production
+                    │       1. quality gate
+                    │       2. supabase db push   (always; no-op if synced)
+                    │       3. vercel build --prod → deploy --prebuilt --prod
+                    │
+migration-only ─────┴──► DB Migrate workflow (path filter)
+```
+
+| Workflow | Trigger | What it does |
+| -------- | ------- | ------------ |
+| `ci.yml` | PR + push `main` | Quality gate only |
+| `db-migrate.yml` | `main` when `supabase/migrations/**` changes, or manual | `supabase db push` |
+| `deploy.yml` | push `main` + manual | Quality → migrate → Vercel prod |
+
+Prod URL: https://getcertshield.vercel.app  
+Supabase project: `certshield-prod` (`zbpeqqqpaugtppphscem`, East US).
+
+Do **not** also enable Vercel Git “Production Branch” auto-deploy, or every push will deploy twice. Preview deploys via Vercel Git are optional; this Actions pipeline owns production.
+
+---
+
+## One-time secrets setup
+
+### 1. GitHub → Settings → Secrets and variables → Actions
+
+Create these **repository** secrets (or on the `production` environment):
+
+| Secret | Where to get it |
+| ------ | --------------- |
+| `VERCEL_TOKEN` | https://vercel.com/account/tokens → Create |
+| `VERCEL_ORG_ID` | `team_UOULDDo4WR46P8Gi13sEss9K` (from `.vercel/project.json`) |
+| `VERCEL_PROJECT_ID` | `prj_65CfexW4M1nFcYWh4LV8omW2HqjP` |
+| `SUPABASE_ACCESS_TOKEN` | https://supabase.com/dashboard/account/tokens |
+| `SUPABASE_DB_PASSWORD` | Supabase project → Settings → Database → Database password |
+| `SUPABASE_PROJECT_ID` | `zbpeqqqpaugtppphscem` |
+
+CLI helper (from a machine already logged into `gh` / `vercel` / `supabase`):
+
+```bash
+# From web/
+gh secret set VERCEL_ORG_ID -b 'team_UOULDDo4WR46P8Gi13sEss9K'
+gh secret set VERCEL_PROJECT_ID -b 'prj_65CfexW4M1nFcYWh4LV8omW2HqjP'
+gh secret set SUPABASE_PROJECT_ID -b 'zbpeqqqpaugtppphscem'
+
+# Paste when prompted:
+gh secret set VERCEL_TOKEN
+gh secret set SUPABASE_ACCESS_TOKEN
+gh secret set SUPABASE_DB_PASSWORD
+```
+
+### 2. GitHub Environment `Production`
+
+Workflows reference `environment: Production` (already exists on this repo).  
+Optional: require manual approval before deploy under Environment protection rules.
+
+### 3. Vercel project env
+
+Keep all runtime secrets in the Vercel dashboard (Production + Preview) — Actions only needs deploy tokens. Do not put `SUPABASE_SERVICE_ROLE_KEY` / `OPENROUTER_API_KEY` in GitHub unless a job truly needs them.
+
+---
+
+## Local commands (same as CI)
+
+```bash
+cd web
+npm ci
+npm run lint
+npm run typecheck
+npm test
+npm run build
+
+# DB (linked project)
+npm run db:push   # → supabase db push --yes
+```
+
+---
+
+## Manual / emergency
+
+```bash
+# Deploy without waiting for Actions
+vercel --prod --yes
+
+# Migrate only
+supabase db push --yes
+
+# Re-run Actions
+gh workflow run "Deploy Production"
+gh workflow run "DB Migrate"
+```
+
+---
+
+## Branch protection (recommended)
+
+On `main`: require status check **CI / Lint · Typecheck · Test · Build** before merge.

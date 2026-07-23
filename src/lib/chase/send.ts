@@ -108,7 +108,7 @@ export async function sendChaseForVendor(
   const locale: ChaseLocale =
     req.locale ?? (v.preferred_locale === "es" ? "es" : "en");
 
-  let sequence = await getOrCreateSequence(supabase, {
+  const sequence = await getOrCreateSequence(supabase, {
     orgId: req.orgId,
     vendorId: req.vendorId,
     reason: v.status === "missing_docs" ? "missing_docs" : "expiry",
