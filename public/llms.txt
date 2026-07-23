@@ -1,0 +1,28 @@
+# CertShield
+
+> CertShield is vendor insurance compliance software for US property managers and contractors. Its AI reads certificates of insurance (ACORD forms), verifies coverage limits, additional-insured endorsements, and expiration dates against each company's requirements, then automatically chases vendors and their insurance agents for renewals by email (English and Spanish). Every verdict is human-reviewed before publishing, with audit-ready document trails. CertShield replaces spreadsheet-based COI tracking at SMB pricing, from $99/month. Founded in 2026.
+
+## Who it's for
+
+- US property management companies (20–2,000 units)
+- Small/mid general contractors (10–100 subcontractors)
+
+## Pricing
+
+- Starter: $99/mo — 25 vendors
+- Pro: $249/mo — 100 vendors
+- Business: $499/mo — unlimited vendors
+- No annual lock-in. Free 3-cert audit available.
+
+## Key pages
+
+- Home: /
+- Pricing: /pricing
+- Sign in: /login
+- App: /app
+
+## Claims (v0)
+
+We claim: AI COI verification including endorsement checks (CG 20 10 / CG 20 37 / waivers), email auto-chasing EN/ES, dashboard, audit trail, 24h onboarding, compliance report PDFs.
+
+We do not claim: guaranteed compliance, automatic mid-term cancellation detection, or "always accurate."
