@@ -41,6 +41,12 @@ export type DocumentRow = {
   overall_verdict: Verdict | null;
   customer_decision?: CustomerDecision | null;
   customer_decision_reason?: string | null;
+  /** B7 risk signals — never presented as a guarantee. */
+  fraud_signals?: {
+    code: string;
+    severity: string;
+    message: string;
+  }[];
 };
 
 export function dashboardCounts(vendors: Vendor[]) {

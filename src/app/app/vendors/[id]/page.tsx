@@ -10,6 +10,7 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { IssuePortalLinkButton } from "./issue-portal-link";
+import { VendorSmsOptIn } from "./sms-opt-in";
 
 export default async function VendorDetailPage({
   params,
@@ -46,7 +47,7 @@ export default async function VendorDetailPage({
   const { data: vendor } = await supabase
     .from("vendors")
     .select(
-      "id, name, email, trade, status, preferred_locale, agent_email, phone",
+      "id, name, email, trade, status, preferred_locale, agent_email, phone, sms_opt_in_at, sms_opt_out_at",
     )
     .eq("id", id)
     .eq("org_id", session.orgId)
@@ -96,6 +97,13 @@ export default async function VendorDetailPage({
           <IssuePortalLinkButton vendorId={vendor.id} />
         </div>
       </div>
+
+      <VendorSmsOptIn
+        vendorId={vendor.id}
+        phone={vendor.phone}
+        smsOptInAt={vendor.sms_opt_in_at}
+        smsOptOutAt={vendor.sms_opt_out_at}
+      />
 
       <div>
         <h2 className="mb-3 text-sm font-medium">Audit trail</h2>

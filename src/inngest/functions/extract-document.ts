@@ -1,9 +1,17 @@
 import { inngest } from "@/inngest/client";
 import { extractCoiFromPdfBase64, MODEL_VERSION } from "@/lib/ai/extract";
+import type { Extraction } from "@/lib/extraction/schema";
 import { PROMPT_VERSION } from "@/lib/extraction/schema";
+import {
+  analyzePdfMetadata,
+  insuredNameMismatchSignal,
+  policyReuseSignals,
+  type FraudSignal,
+} from "@/lib/fraud/signals";
 import { runRequirementsEngine } from "@/lib/requirements/engine";
 import { loadMergedRulesForDocument } from "@/lib/requirements/merge";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { nameSimilarity } from "@/lib/vendors/fuzzy-match";
 
 export const extractDocument = inngest.createFunction(
   {
@@ -19,6 +27,15 @@ export const extractDocument = inngest.createFunction(
 
     const extraction = await step.run("claude-extract", async () => {
       return extractCoiFromPdfBase64({ pdfBase64 });
+    });
+
+    const fraudSignals = await step.run("fraud-signals", async () => {
+      return collectFraudSignals({
+        orgId,
+        documentId,
+        pdfBase64,
+        extraction,
+      });
     });
 
     const checks = await step.run("requirements-engine", async () => {
@@ -75,6 +92,7 @@ export const extractDocument = inngest.createFunction(
         .from("documents")
         .update({
           status: "in_internal_review",
+          fraud_signals: fraudSignals,
           updated_at: new Date().toISOString(),
         })
         .eq("id", documentId);
@@ -99,6 +117,7 @@ export const extractDocument = inngest.createFunction(
           overall: checks.overall,
           model_version: MODEL_VERSION,
           prompt_version: PROMPT_VERSION,
+          fraud_signal_count: fraudSignals.length,
         },
       });
     });
@@ -106,3 +125,98 @@ export const extractDocument = inngest.createFunction(
     return { documentId, overall: checks.overall };
   },
 );
+
+async function collectFraudSignals(input: {
+  orgId: string;
+  documentId: string;
+  pdfBase64: string;
+  extraction: Extraction;
+}): Promise<FraudSignal[]> {
+  const supabase = createAdminClient();
+  const bytes = Buffer.from(input.pdfBase64, "base64");
+  const signals = await analyzePdfMetadata(bytes);
+
+  const { data: doc } = await supabase
+    .from("documents")
+    .select("vendor_id")
+    .eq("id", input.documentId)
+    .maybeSingle();
+
+  if (doc?.vendor_id) {
+    const { data: vendor } = await supabase
+      .from("vendors")
+      .select("name")
+      .eq("id", doc.vendor_id)
+      .maybeSingle();
+
+    if (vendor?.name && input.extraction.insured?.name) {
+      const sim = nameSimilarity(input.extraction.insured.name, vendor.name);
+      const mismatch = insuredNameMismatchSignal({
+        insuredName: input.extraction.insured.name,
+        vendorName: vendor.name,
+        similarity: sim,
+      });
+      if (mismatch) signals.push(mismatch);
+    }
+
+    const policyNumbers = input.extraction.policies
+      .map((p) => p.policy_number?.trim())
+      .filter((p): p is string => Boolean(p));
+
+    if (policyNumbers.length) {
+      const { data: otherDocs } = await supabase
+        .from("documents")
+        .select("id, vendor_id")
+        .eq("org_id", input.orgId)
+        .neq("vendor_id", doc.vendor_id)
+        .limit(200);
+
+      const otherIds = (otherDocs ?? []).map((d) => d.id);
+      if (otherIds.length) {
+        const { data: exts } = await supabase
+          .from("extractions")
+          .select("document_id, payload")
+          .in("document_id", otherIds)
+          .limit(400);
+
+        const vendorIds = new Set(
+          (otherDocs ?? []).map((d) => d.vendor_id as string),
+        );
+        const { data: otherVendors } = await supabase
+          .from("vendors")
+          .select("id, name")
+          .in("id", Array.from(vendorIds));
+
+        const nameById = new Map(
+          (otherVendors ?? []).map((v) => [v.id as string, v.name as string]),
+        );
+        const vendorByDoc = new Map(
+          (otherDocs ?? []).map((d) => [
+            d.id as string,
+            d.vendor_id as string,
+          ]),
+        );
+
+        const hits: { vendorName: string; policyNumber: string }[] = [];
+        for (const ext of exts ?? []) {
+          const payload = ext.payload as Extraction;
+          for (const p of payload.policies ?? []) {
+            const pn = p.policy_number?.trim();
+            if (!pn || !policyNumbers.includes(pn)) continue;
+            const vid = vendorByDoc.get(ext.document_id as string);
+            const vname = vid ? nameById.get(vid) : undefined;
+            if (vname) hits.push({ vendorName: vname, policyNumber: pn });
+          }
+        }
+        signals.push(
+          ...policyReuseSignals({
+            policyNumbers,
+            otherVendorPolicyHits: hits,
+          }),
+        );
+      }
+    }
+  }
+
+  return signals;
+}

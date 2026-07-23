@@ -15,6 +15,11 @@ import { intakeEmailForToken } from "@/lib/email/intake-address";
 import { sendOutboundEmail } from "@/lib/email/resend";
 import type { Extraction } from "@/lib/extraction/schema";
 import { issuePortalToken } from "@/lib/portal/tokens";
+import {
+  renderChaseSms,
+  smsKeyFromChaseTemplate,
+} from "@/lib/sms/templates";
+import { sendOutboundSms } from "@/lib/sms/twilio";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type ChaseSendRequest = {
@@ -43,9 +48,12 @@ type VendorRow = {
   org_id: string;
   name: string;
   email: string | null;
+  phone: string | null;
   agent_email: string | null;
   preferred_locale: string;
   status: string;
+  sms_opt_in_at: string | null;
+  sms_opt_out_at: string | null;
 };
 
 type OrgRow = {
@@ -62,7 +70,9 @@ export async function sendChaseForVendor(
 
   const { data: vendor, error: vendorErr } = await supabase
     .from("vendors")
-    .select("id, org_id, name, email, agent_email, preferred_locale, status")
+    .select(
+      "id, org_id, name, email, phone, agent_email, preferred_locale, status, sms_opt_in_at, sms_opt_out_at",
+    )
     .eq("id", req.vendorId)
     .eq("org_id", req.orgId)
     .maybeSingle();
@@ -226,6 +236,62 @@ export async function sendChaseForVendor(
       message_id: msg?.id,
     },
   });
+
+  // C3 SMS — TCPA: only when logged opt-in and not opted out (docs/08 §4).
+  const smsKey = smsKeyFromChaseTemplate(templateKey);
+  const canSms =
+    Boolean(v.phone) &&
+    Boolean(v.sms_opt_in_at) &&
+    !v.sms_opt_out_at &&
+    smsKey != null;
+
+  if (canSms && smsKey) {
+    const smsBody = renderChaseSms({
+      templateKey: smsKey,
+      locale,
+      vars: {
+        vendorName: v.name,
+        orgName: o.name,
+        portalUrl,
+        expirationDate: earliest,
+        daysUntilExpiry: days,
+      },
+    });
+    const smsResult = await sendOutboundSms({
+      to: v.phone!,
+      body: smsBody,
+    });
+    if (smsResult.ok) {
+      await supabase.from("messages").insert({
+        org_id: req.orgId,
+        vendor_id: req.vendorId,
+        chase_sequence_id: sequence.id,
+        channel: "sms",
+        direction: "outbound",
+        template_key: smsKey,
+        locale,
+        to_phone: v.phone,
+        body_text: smsBody,
+        provider: smsResult.demo ? "demo" : "twilio",
+        provider_message_id: smsResult.id,
+        status: smsResult.demo ? "demo" : "sent",
+      });
+      await supabase.from("audit_events").insert({
+        org_id: req.orgId,
+        actor_type: "system",
+        actor_id: "chase:sms",
+        entity_type: "vendor",
+        entity_id: req.vendorId,
+        action: "chase_sms_sent",
+        after_state: {
+          template_key: smsKey,
+          locale,
+          provider_message_id: smsResult.id,
+          demo: smsResult.demo,
+        },
+      });
+    }
+  }
 
   let escalation: RenderedChaseEmail | undefined;
   let escalationMessageId: string | undefined;

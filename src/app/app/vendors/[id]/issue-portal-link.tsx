@@ -23,7 +23,15 @@ export function IssuePortalLinkButton({ vendorId }: { vendorId: string }) {
         setErr(data.error ?? "Failed");
         return;
       }
-      setUrl(data.url ?? null);
+      const next = data.url ?? null;
+      setUrl(next);
+      if (next && typeof navigator !== "undefined" && navigator.clipboard) {
+        try {
+          await navigator.clipboard.writeText(next);
+        } catch {
+          /* URL still shown below for manual copy */
+        }
+      }
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Failed");
     } finally {
@@ -40,7 +48,11 @@ export function IssuePortalLinkButton({ vendorId }: { vendorId: string }) {
         disabled={busy}
         onClick={onClick}
       >
-        {busy ? "Issuing…" : "Copy portal magic link"}
+        {busy
+          ? "Issuing…"
+          : url
+            ? "Copied — issue again"
+            : "Copy portal magic link"}
       </Button>
       {url ? (
         <p className="break-all rounded border bg-muted/30 p-2 font-mono text-xs">

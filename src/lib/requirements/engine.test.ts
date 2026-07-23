@@ -21,7 +21,12 @@ function baseExtraction(
     },
     insured: { name: "Vendor LLC", address: null, confidence: 0.95 },
     insurers: [
-      { letter: "A", name: "Carrier", naic: "1", confidence: 0.9 },
+      {
+        letter: "A",
+        name: "Travelers Indemnity",
+        naic: "25674",
+        confidence: 0.9,
+      },
     ],
     policies: [
       {
@@ -205,24 +210,25 @@ describe("B4 endorsement checks", () => {
     assert.equal(line(result, "gl_primary_noncontributory").verdict, "PASS");
   });
 
-  it("default global rules include B4 wedge forms", () => {
+  it("default global rules include B4 wedge forms and B6 carrier floor", () => {
     const ids = DEFAULT_GLOBAL_RULES.map((r: RequirementRule) => r.id);
-    assert.deepEqual(
-      ids.filter((id) =>
-        [
-          "gl_ai_cg_20_10",
-          "gl_ai_cg_20_37",
-          "gl_waiver",
-          "gl_primary_noncontributory",
-        ].includes(id),
-      ),
-      [
-        "gl_ai_cg_20_10",
-        "gl_ai_cg_20_37",
-        "gl_waiver",
-        "gl_primary_noncontributory",
-      ],
-    );
+    assert.ok(ids.includes("gl_ai_cg_20_10"));
+    assert.ok(ids.includes("gl_ai_cg_20_37"));
+    assert.ok(ids.includes("gl_waiver"));
+    assert.ok(ids.includes("gl_primary_noncontributory"));
+    assert.ok(ids.includes("carrier_am_best"));
+  });
+
+  it("B6 passes when NAIC maps to A+ above floor", () => {
+    const result = runRequirementsEngine(baseExtraction(), [
+      {
+        id: "carrier_am_best",
+        line: "general_liability",
+        min_am_best_rating: "A-",
+        label: "Carrier AM Best ≥ A-",
+      },
+    ]);
+    assert.equal(line(result, "carrier_am_best").verdict, "PASS");
   });
 
   it("overall is FAIL when any endorsement line fails", () => {

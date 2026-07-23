@@ -5,6 +5,7 @@ import { getDocument, listVendors } from "@/lib/data/documents";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { RequestAgentConfirmButton } from "./request-agent-confirm";
 import { ReviewActions } from "./review-actions";
 
 export default async function ReviewDocumentPage({
@@ -142,6 +143,29 @@ export default async function ReviewDocumentPage({
               ))}
             </ul>
           </div>
+
+          {(doc.fraud_signals?.length ?? 0) > 0 ? (
+            <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-4">
+              <h2 className="mb-2 text-xs font-medium tracking-wide uppercase">
+                Risk signals (not a guarantee)
+              </h2>
+              <p className="text-muted-foreground mb-3 text-xs">
+                Heuristics only — never proof of fraud.
+              </p>
+              <ul className="space-y-2 text-sm">
+                {doc.fraud_signals!.map((s) => (
+                  <li key={`${s.code}-${s.message.slice(0, 24)}`}>
+                    <span className="text-xs font-medium uppercase tracking-wide text-amber-900">
+                      {s.severity}
+                    </span>
+                    <p className="text-xs leading-relaxed">{s.message}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          <RequestAgentConfirmButton documentId={doc.id} />
 
           <ReviewActions
             documentId={doc.id}
