@@ -121,7 +121,7 @@ export async function getDocument(id: string): Promise<DocumentRow | null> {
   const supabase = await createClient();
   const { data: doc, error } = await supabase
     .from("documents")
-    .select("id, org_id, vendor_id, file_name, storage_path, status")
+    .select("id, org_id, vendor_id, file_name, storage_path, status, fraud_signals")
     .eq("id", id)
     .eq("org_id", session.orgId)
     .maybeSingle();
@@ -141,6 +141,7 @@ async function hydrateDocument(doc: {
   file_name: string;
   storage_path: string | null;
   status: string;
+  fraud_signals?: DocumentRow["fraud_signals"];
 }): Promise<DocumentRow> {
   const supabase = await createClient();
 
@@ -176,6 +177,7 @@ async function hydrateDocument(doc: {
     customer_decision:
       (check?.customer_decision as DocumentRow["customer_decision"]) ?? null,
     customer_decision_reason: check?.customer_decision_reason ?? null,
+    fraud_signals: Array.isArray(doc.fraud_signals) ? doc.fraud_signals : [],
   };
 }
 

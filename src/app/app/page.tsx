@@ -12,6 +12,10 @@ import {
 } from "@/lib/data/documents";
 import { dashboardCounts } from "@/lib/data/types";
 import { DEMO_INTAKE_EMAIL } from "@/lib/email/intake-address";
+import {
+  portfolioComplianceScore,
+  vendorComplianceScore,
+} from "@/lib/scores/compute";
 import Link from "next/link";
 
 export default async function DashboardPage() {
@@ -22,6 +26,7 @@ export default async function DashboardPage() {
     getSessionOrg(),
   ]);
   const counts = dashboardCounts(vendors);
+  const portfolio = portfolioComplianceScore(vendors);
   const attention = vendors.filter((v) => v.status !== "compliant");
   const vendorById = new Map(vendors.map((v) => [v.id, v]));
   const intakeEmail = session?.intakeEmail ?? DEMO_INTAKE_EMAIL;
@@ -35,13 +40,33 @@ export default async function DashboardPage() {
             Needs attention today
           </h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Traffic-light portfolio · chase emails EN/ES
+            Portfolio score {portfolio.score}/100 · chase email + SMS (opt-in)
           </p>
         </div>
         <Button render={<Link href="/app/upload" />}>Upload COI</Button>
       </div>
 
       <IntakeEmailCard email={intakeEmail} demo={intakeDemo} />
+
+      <Card size="sm">
+        <CardHeader>
+          <CardTitle className="text-muted-foreground text-xs font-medium">
+            Portfolio compliance score
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-3xl font-semibold tabular-nums">
+            {portfolio.score}
+            <span className="text-muted-foreground text-base font-normal">
+              /100
+            </span>
+          </p>
+          <p className="text-muted-foreground mt-1 text-xs">
+            Average across {portfolio.counted} vendors (screenshot-ready for
+            owner meetings).
+          </p>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {[
@@ -168,7 +193,11 @@ export default async function DashboardPage() {
             >
               <div>
                 <p className="text-sm font-medium">{v.name}</p>
-                <p className="text-muted-foreground text-xs">{v.trade}</p>
+                <p className="text-muted-foreground text-xs">
+                  {[v.trade, `score ${vendorComplianceScore(v.status)}`]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 <VendorStatusBadge status={v.status} />

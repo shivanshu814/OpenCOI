@@ -1,3 +1,8 @@
+import {
+  evaluateCarriersAgainstFloor,
+  parseAmBestRating,
+  type AmBestRating,
+} from "@/lib/carriers/ratings";
 import type { Extraction } from "@/lib/extraction/schema";
 
 const CONFIDENCE_THRESHOLD = 0.9;
@@ -17,6 +22,8 @@ export type RequirementRule = {
   require_primary_noncontributory?: boolean;
   /** When true, also evaluate policy expiration on this line. */
   check_expiration?: boolean;
+  /** B6: minimum AM Best rating for insurers on the cert (default A-). */
+  min_am_best_rating?: AmBestRating;
   label: string;
 };
 
@@ -175,6 +182,12 @@ export const DEFAULT_GLOBAL_RULES: RequirementRule[] = [
     require_primary_noncontributory: true,
     label: "Primary & non-contributory wording",
   },
+  {
+    id: "carrier_am_best",
+    line: "general_liability",
+    min_am_best_rating: "A-",
+    label: "Carrier AM Best ≥ A-",
+  },
 ];
 
 export function runRequirementsEngine(
@@ -184,6 +197,46 @@ export function runRequirementsEngine(
   const lines: CheckLine[] = [];
 
   for (const rule of rules) {
+    if (rule.min_am_best_rating) {
+      const floor =
+        parseAmBestRating(rule.min_am_best_rating) ?? ("A-" as AmBestRating);
+      const evald = evaluateCarriersAgainstFloor(
+        extraction.insurers.map((i) => ({ name: i.name, naic: i.naic })),
+        floor,
+      );
+      let verdict: Verdict = "PASS";
+      let reason = `All listed carriers meet AM Best ≥ ${floor}.`;
+      let low_confidence = false;
+
+      if (extraction.insurers.length === 0) {
+        verdict = "MISSING";
+        reason = "No insurers / NAIC numbers found on certificate.";
+        low_confidence = true;
+      } else if (evald.anyBelow) {
+        const bad = evald.results.filter((r) => !r.unknown && !r.meets);
+        verdict = "FAIL";
+        reason = `Carrier(s) below AM Best ${floor}: ${bad
+          .map((r) => `${r.name} (${r.rating ?? "NR"})`)
+          .join("; ")}.`;
+      } else if (evald.anyUnknown) {
+        verdict = "MISSING";
+        reason = `NAIC not in AM Best lookup table for: ${evald.results
+          .filter((r) => r.unknown)
+          .map((r) => `${r.name}${r.naic ? ` #${r.naic}` : ""}`)
+          .join("; ")}. Manual carrier check required.`;
+        low_confidence = true;
+      }
+
+      lines.push({
+        rule_id: rule.id,
+        label: rule.label,
+        verdict,
+        reason,
+        low_confidence,
+      });
+      continue;
+    }
+
     const policy = extraction.policies.find((p) => p.line === rule.line);
     let verdict: Verdict = "PASS";
     let reason = "Meets requirement.";
