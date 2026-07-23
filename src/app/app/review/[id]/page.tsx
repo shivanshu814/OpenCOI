@@ -55,7 +55,43 @@ export default async function ReviewDocumentPage({
 }) {
   const { id } = await params;
   const [doc, vendors] = await Promise.all([getDocument(id), listVendors()]);
-  if (!doc || !doc.extraction) notFound();
+  if (!doc) notFound();
+
+  // Uploaded but extraction hasn't landed yet — show why, don't 404.
+  if (!doc.extraction) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-4">
+        <Link
+          href="/app/review"
+          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm"
+        >
+          <ArrowLeft className="size-4" /> Review queue
+        </Link>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="size-4" /> Extraction pending
+            </CardTitle>
+            <CardDescription>
+              {doc.file_name} uploaded successfully, but AI extraction hasn’t
+              completed yet. This page will show the verdict once it lands.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Alert>
+              <TriangleAlert />
+              <AlertTitle>Extraction worker may not be running</AlertTitle>
+              <AlertDescription>
+                Document status is <code>{doc.status}</code>. If it stays here,
+                the background job never ran — check that the Inngest worker is
+                started and OPENROUTER_API_KEY is set.
+              </AlertDescription>
+            </Alert>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const vendor = vendors.find((v) => v.id === doc.vendor_id);
   const ex = doc.extraction;

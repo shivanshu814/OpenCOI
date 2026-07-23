@@ -95,16 +95,24 @@ export async function ingestPdfDocument(
   let queued = false;
 
   if (isInngestConfigured()) {
-    await inngest.send({
-      name: "document/uploaded",
-      data: {
-        documentId: doc.id,
-        orgId: args.orgId,
-        pdfBase64,
-      },
-    });
-    queued = true;
-  } else if (isClaudeConfigured()) {
+    try {
+      await inngest.send({
+        name: "document/uploaded",
+        data: {
+          documentId: doc.id,
+          orgId: args.orgId,
+          pdfBase64,
+        },
+      });
+      queued = true;
+    } catch (err) {
+      // Unreachable dev server / bad event key must not silently strand the
+      // document at status "uploaded" — fall through to inline extraction.
+      console.error("[ingest] inngest send failed, falling back to inline", err);
+    }
+  }
+
+  if (!queued && isClaudeConfigured()) {
     await runExtractInline({
       documentId: doc.id,
       orgId: args.orgId,

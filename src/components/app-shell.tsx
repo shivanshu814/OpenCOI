@@ -46,6 +46,7 @@ import {
   KeyRound,
   LayoutGrid,
   LifeBuoy,
+  LogOut,
   ScrollText,
   ShieldCheck,
   Upload,
@@ -53,8 +54,9 @@ import {
   Users,
   Wrench,
 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 type NavItem = {
   href: string;
@@ -216,7 +218,18 @@ function AppSidebar({ live }: { live: boolean }) {
 
 function AppHeader({ live }: { live: boolean }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { current, isDetail } = useBreadcrumb(pathname);
+
+  async function onSignOut() {
+    try {
+      await createClient().auth.signOut();
+    } catch {
+      // Cookie may already be gone — fall through to /login either way.
+    }
+    router.push("/login");
+    router.refresh();
+  }
 
   return (
     <header className="bg-background/90 sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b px-4 backdrop-blur">
@@ -279,11 +292,11 @@ function AppHeader({ live }: { live: boolean }) {
             </Avatar>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>
-              {live ? "Workspace connected" : "Demo mode"}
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
+            {/* GroupLabel must live inside a Group — Base UI throws otherwise. */}
             <DropdownMenuGroup>
+              <DropdownMenuLabel>
+                {live ? "Workspace connected" : "Demo mode"}
+              </DropdownMenuLabel>
               <DropdownMenuItem render={<Link href="/app/settings/team" />}>
                 <Users /> Team
               </DropdownMenuItem>
@@ -300,9 +313,11 @@ function AppHeader({ live }: { live: boolean }) {
             <DropdownMenuItem render={<Link href="/help" />}>
               <LifeBuoy /> Help &amp; docs
             </DropdownMenuItem>
-            <DropdownMenuItem render={<Link href="/login" />}>
-              <UserRound /> Account
-            </DropdownMenuItem>
+            {live ? (
+              <DropdownMenuItem variant="destructive" onClick={onSignOut}>
+                <LogOut /> Sign out
+              </DropdownMenuItem>
+            ) : null}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

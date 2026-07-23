@@ -12,10 +12,12 @@ export function SendChaseButton({
 }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
 
   async function send(locale: "en" | "es") {
     setBusy(true);
     setMsg(null);
+    setSent(false);
     try {
       const res = await fetch("/api/chase/send", {
         method: "POST",
@@ -39,6 +41,7 @@ export function SendChaseButton({
         return;
       }
       const subject = data.rendered?.subject ?? "Chase sent";
+      setSent(!data.demo);
       setMsg(
         data.demo
           ? `Demo: ${subject}`
@@ -74,7 +77,14 @@ export function SendChaseButton({
         </Button>
       </div>
       {msg ? (
-        <p className="text-muted-foreground max-w-xs text-right text-xs">
+        <p
+          className={
+            sent
+              ? "max-w-xs text-right text-xs text-emerald-700"
+              : "text-muted-foreground max-w-xs text-right text-xs"
+          }
+        >
+          {sent ? "✓ " : ""}
           {msg}
         </p>
       ) : null}

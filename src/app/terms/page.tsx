@@ -37,7 +37,7 @@ export default function TermsPage() {
             in-product.
           </p>
           <p className="text-muted-foreground border-t pt-6 text-xs">
-            Template terms for launch — counsel review planned at ~$5K MRR.
+            Questions about these terms? Email support@getcertshield.com.
           </p>
         </div>
       </main>

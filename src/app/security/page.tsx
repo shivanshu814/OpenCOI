@@ -21,7 +21,7 @@ const QUESTIONS: { q: string; a: string }[] = [
   },
   {
     q: "Do you train models on our PDFs?",
-    a: "No. Extractions fields stay in your tenant. Human corrections become golden-set regression cases for accuracy testing — not public model training.",
+    a: "No. Extracted fields stay in your tenant. Human corrections become golden-set regression cases for accuracy testing — not public model training.",
   },
   {
     q: "How are W-9 / TIN numbers protected?",
