@@ -39,22 +39,26 @@ Create these **repository** secrets (or on the `production` environment):
 | `VERCEL_TOKEN` | https://vercel.com/account/tokens → Create |
 | `VERCEL_ORG_ID` | `team_UOULDDo4WR46P8Gi13sEss9K` (from `.vercel/project.json`) |
 | `VERCEL_PROJECT_ID` | `prj_65CfexW4M1nFcYWh4LV8omW2HqjP` |
-| `SUPABASE_ACCESS_TOKEN` | https://supabase.com/dashboard/account/tokens |
-| `SUPABASE_DB_PASSWORD` | Supabase project → Settings → Database → Database password |
+| `SUPABASE_DB_URL` | Supabase → Project Settings → Database → **Direct connection** URI (`postgresql://postgres.[ref]:[password]@db.[ref].supabase.co:5432/postgres`) |
+
+Optional (local CLI / dashboard only — not required by Actions migrate):
+
+| Secret | Notes |
+| ------ | ----- |
+| `SUPABASE_ACCESS_TOKEN` | Dashboard → Account → Access Tokens (`sbp_…`) — only if you use `supabase link` |
+| `SUPABASE_DB_PASSWORD` | DB password alone |
 | `SUPABASE_PROJECT_ID` | `zbpeqqqpaugtppphscem` |
 
-CLI helper (from a machine already logged into `gh` / `vercel` / `supabase`):
+CLI helper:
 
 ```bash
 # From web/
 gh secret set VERCEL_ORG_ID -b 'team_UOULDDo4WR46P8Gi13sEss9K'
 gh secret set VERCEL_PROJECT_ID -b 'prj_65CfexW4M1nFcYWh4LV8omW2HqjP'
-gh secret set SUPABASE_PROJECT_ID -b 'zbpeqqqpaugtppphscem'
 
 # Paste when prompted:
 gh secret set VERCEL_TOKEN
-gh secret set SUPABASE_ACCESS_TOKEN
-gh secret set SUPABASE_DB_PASSWORD
+gh secret set SUPABASE_DB_URL   # full direct Postgres URI from .env.local DIRECT_URL
 ```
 
 ### 2. GitHub Environment `Production`

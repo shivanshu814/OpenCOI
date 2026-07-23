@@ -1,5 +1,4 @@
-# Production release: CI → DB migrate (if needed) → Vercel prod deploy.
-# Prefer this over ad-hoc `vercel --prod` so migrations always land first.
+# Production release: CI → DB migrate → Vercel prod deploy.
 name: Deploy Production
 
 on:
@@ -40,9 +39,7 @@ jobs:
     timeout-minutes: 15
     environment: Production
     env:
-      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-      SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -51,14 +48,11 @@ jobs:
       - run: npm install -g supabase@latest
       - name: Verify secrets
         run: |
-          for k in SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD SUPABASE_PROJECT_ID; do
-            if [ -z "${!k}" ]; then
-              echo "::error::$k missing — see .github/CI_CD.md"
-              exit 1
-            fi
-          done
-      - run: supabase link --project-ref "$SUPABASE_PROJECT_ID" -p "$SUPABASE_DB_PASSWORD"
-      - run: supabase db push --yes -p "$SUPABASE_DB_PASSWORD"
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::error::SUPABASE_DB_URL missing — see .github/CI_CD.md"
+            exit 1
+          fi
+      - run: supabase db push --yes --db-url "$SUPABASE_DB_URL"
 
   deploy:
     name: Vercel production
