@@ -14,6 +14,7 @@ import type {
 import { intakeEmailForToken } from "@/lib/email/intake-address";
 import { sendOutboundEmail } from "@/lib/email/resend";
 import type { Extraction } from "@/lib/extraction/schema";
+import { issuePortalToken } from "@/lib/portal/tokens";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type ChaseSendRequest = {
@@ -125,6 +126,17 @@ export async function sendChaseForVendor(
 
   const days = earliest != null ? daysUntil(earliest) : null;
 
+  let portalUrl = "";
+  try {
+    const issued = await issuePortalToken({
+      orgId: req.orgId,
+      vendorId: req.vendorId,
+    });
+    portalUrl = issued.url;
+  } catch (err) {
+    console.error("issuePortalToken", err);
+  }
+
   const vars: ChaseTemplateVars = {
     vendorName: v.name,
     orgName: o.name,
@@ -133,6 +145,7 @@ export async function sendChaseForVendor(
     intakeEmail: o.intake_token
       ? intakeEmailForToken(o.intake_token)
       : "",
+    portalUrl,
     agentName: extraction?.producer?.name ?? null,
     physicalAddress: DEFAULT_PHYSICAL_ADDRESS,
   };
@@ -372,6 +385,7 @@ export function renderDemoChase(input: {
   expirationDate?: string | null;
   daysUntilExpiry?: number | null;
   intakeEmail?: string;
+  portalUrl?: string;
 }): ChaseSendResult {
   const rendered = renderChaseEmail({
     templateKey: input.templateKey,
@@ -382,6 +396,9 @@ export function renderDemoChase(input: {
       expirationDate: input.expirationDate ?? "2026-08-15",
       daysUntilExpiry: input.daysUntilExpiry ?? 23,
       intakeEmail: input.intakeEmail ?? "demo@in.certshield.com",
+      portalUrl:
+        input.portalUrl ??
+        "https://getcertshield.vercel.app/portal/demo-token",
       agentName: null,
       physicalAddress: DEFAULT_PHYSICAL_ADDRESS,
     },

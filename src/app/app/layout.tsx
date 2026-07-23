@@ -1,15 +1,17 @@
 import { DisclaimerFooter } from "@/components/disclaimer-footer";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
-import Link from "next/link";
 import { headers } from "next/headers";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 const nav = [
   { href: "/app", label: "Dashboard" },
   { href: "/app/vendors", label: "Vendors" },
+  { href: "/app/properties", label: "Properties" },
   { href: "/app/review", label: "Review queue" },
   { href: "/app/upload", label: "Upload" },
+  { href: "/app/audit", label: "Audit" },
   { href: "/app/settings/billing", label: "Billing" },
 ];
 

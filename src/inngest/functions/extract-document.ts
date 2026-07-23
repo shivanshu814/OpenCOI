@@ -2,6 +2,7 @@ import { inngest } from "@/inngest/client";
 import { extractCoiFromPdfBase64, MODEL_VERSION } from "@/lib/ai/extract";
 import { PROMPT_VERSION } from "@/lib/extraction/schema";
 import { runRequirementsEngine } from "@/lib/requirements/engine";
+import { loadMergedRulesForDocument } from "@/lib/requirements/merge";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const extractDocument = inngest.createFunction(
@@ -21,7 +22,20 @@ export const extractDocument = inngest.createFunction(
     });
 
     const checks = await step.run("requirements-engine", async () => {
-      return runRequirementsEngine(extraction);
+      const supabase = createAdminClient();
+      const { data: doc } = await supabase
+        .from("documents")
+        .select("vendor_id, property_id")
+        .eq("id", documentId)
+        .single();
+      if (!doc) throw new Error("document not found");
+      const rules = await loadMergedRulesForDocument({
+        orgId,
+        vendorId: doc.vendor_id,
+        propertyId: doc.property_id,
+        supabase,
+      });
+      return runRequirementsEngine(extraction, rules);
     });
 
     await step.run("persist-and-queue-review", async () => {

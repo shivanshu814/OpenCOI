@@ -125,6 +125,7 @@ describe("chase templates EN/ES", () => {
     expirationDate: "2026-08-15",
     daysUntilExpiry: 23,
     intakeEmail: "abc@in.certshield.com",
+    portalUrl: "https://getcertshield.vercel.app/portal/test-token",
     agentName: "Harbor Insurance",
     physicalAddress: "CertShield · US",
   };
@@ -142,9 +143,9 @@ describe("chase templates EN/ES", () => {
         assert.ok(rendered.html.includes("<p"));
         assert.ok(
           rendered.text.includes("not legal") ||
-            rendered.text.includes("no es asesoría") ||
-            rendered.text.includes("Document review") ||
-            rendered.text.includes("Asistencia de revisión"),
+          rendered.text.includes("no es asesoría") ||
+          rendered.text.includes("Document review") ||
+          rendered.text.includes("Asistencia de revisión"),
         );
       }
     });

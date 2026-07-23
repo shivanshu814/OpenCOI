@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --test src/lib/requirements/engine.test.ts src/lib/chase/cadence.test.ts src/lib/reports/build.test.ts src/lib/verdicts/customer-decision.test.ts src/lib/billing/checkout.test.ts"
+    "test": "tsx --test src/lib/requirements/engine.test.ts src/lib/requirements/merge.test.ts src/lib/chase/cadence.test.ts src/lib/reports/build.test.ts src/lib/verdicts/customer-decision.test.ts src/lib/billing/checkout.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.113.0",

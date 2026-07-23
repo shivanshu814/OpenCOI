@@ -41,7 +41,14 @@ export default async function VendorsPage() {
           <TableBody>
             {vendors.map((v) => (
               <TableRow key={v.id}>
-                <TableCell className="font-medium">{v.name}</TableCell>
+                <TableCell className="font-medium">
+                  <Link
+                    href={`/app/vendors/${v.id}`}
+                    className="hover:underline"
+                  >
+                    {v.name}
+                  </Link>
+                </TableCell>
                 <TableCell>{v.trade}</TableCell>
                 <TableCell className="text-muted-foreground">
                   {v.email}

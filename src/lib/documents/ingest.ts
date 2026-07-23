@@ -6,20 +6,22 @@ import {
 } from "@/lib/config";
 import { PROMPT_VERSION } from "@/lib/extraction/schema";
 import { runRequirementsEngine } from "@/lib/requirements/engine";
+import { loadMergedRulesForDocument } from "@/lib/requirements/merge";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type IngestPdfArgs = {
   orgId: string;
   vendorId: string;
+  propertyId?: string | null;
   fileName: string;
   mimeType?: string;
   pdfBytes: Buffer;
-  /** User id when human upload; omit for system/email-in. */
-  actor?: { type: "admin" | "system"; id: string };
+  /** User id when human upload; omit for system/email-in / vendor portal. */
+  actor?: { type: "admin" | "system" | "vendor"; id: string };
   /** Extra audit payload (e.g. Postmark MessageID). */
   auditExtra?: Record<string, unknown>;
-  /** DB client — user-scoped for web upload, admin for webhooks. */
+  /** DB client — user-scoped for web upload, admin for webhooks/portal. */
   supabase: SupabaseClient;
 };
 
@@ -41,6 +43,7 @@ export async function ingestPdfDocument(
     .insert({
       org_id: args.orgId,
       vendor_id: args.vendorId,
+      property_id: args.propertyId ?? null,
       storage_path: "pending",
       file_name: args.fileName,
       mime_type: mime,
@@ -119,8 +122,23 @@ export async function runExtractInline(args: {
   const extraction = await extractCoiFromPdfBase64({
     pdfBase64: args.pdfBase64,
   });
-  const checks = runRequirementsEngine(extraction);
   const admin = createAdminClient();
+
+  const { data: doc } = await admin
+    .from("documents")
+    .select("vendor_id, property_id")
+    .eq("id", args.documentId)
+    .single();
+
+  if (!doc) throw new Error("document not found");
+
+  const rules = await loadMergedRulesForDocument({
+    orgId: args.orgId,
+    vendorId: doc.vendor_id,
+    propertyId: doc.property_id,
+    supabase: admin,
+  });
+  const checks = runRequirementsEngine(extraction, rules);
 
   await admin.from("extractions").insert({
     org_id: args.orgId,
@@ -132,14 +150,6 @@ export async function runExtractInline(args: {
     cost_usd: extraction.extraction_meta.cost_usd,
     latency_ms: extraction.extraction_meta.latency_ms,
   });
-
-  const { data: doc } = await admin
-    .from("documents")
-    .select("vendor_id")
-    .eq("id", args.documentId)
-    .single();
-
-  if (!doc) throw new Error("document not found");
 
   await admin.from("compliance_checks").insert({
     org_id: args.orgId,

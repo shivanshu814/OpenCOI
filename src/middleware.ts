@@ -48,7 +48,8 @@ export async function middleware(request: NextRequest) {
     path.startsWith("/api/vendors") ||
     path.startsWith("/api/documents") ||
     path.startsWith("/api/onboarding") ||
-    path.startsWith("/api/billing");
+    path.startsWith("/api/billing") ||
+    path.startsWith("/api/properties");
 
   if ((isApp || isAuthApi) && !user) {
     const login = new URL("/login", request.url);
@@ -68,8 +69,11 @@ export const config = {
     "/app/:path*",
     "/login",
     "/api/vendors",
+    "/api/vendors/:path*",
     "/api/documents/:path*",
     "/api/onboarding",
     "/api/billing/:path*",
+    "/api/properties",
+    "/api/properties/:path*",
   ],
 };

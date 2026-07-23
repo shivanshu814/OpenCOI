@@ -13,7 +13,9 @@ const FOOTER_EN = (v: ChaseTemplateVars) =>
     v.physicalAddress,
     "",
     "Document review assistance — not legal, insurance, or professional advice.",
-    "Reply to this email with your updated COI, or forward to your insurance agent.",
+    v.portalUrl
+      ? `Upload or check status (no login): ${v.portalUrl}`
+      : "Reply to this email with your updated COI, or forward to your insurance agent.",
   ].join("\n");
 
 const FOOTER_ES = (v: ChaseTemplateVars) =>
@@ -24,8 +26,23 @@ const FOOTER_ES = (v: ChaseTemplateVars) =>
     v.physicalAddress,
     "",
     "Asistencia de revisión documental — no es asesoría legal, de seguros ni profesional.",
-    "Responda a este correo con su COI actualizado, o reenvíelo a su agente de seguros.",
+    v.portalUrl
+      ? `Suba o consulte el estado (sin contraseña): ${v.portalUrl}`
+      : "Responda a este correo con su COI actualizado, o reenvíelo a su agente de seguros.",
   ].join("\n");
+
+function uploadHintEn(v: ChaseTemplateVars): string | null {
+  if (v.portalUrl) return `Easiest: open your portal (no login) → ${v.portalUrl}`;
+  if (v.intakeEmail) return `You can also send the PDF to: ${v.intakeEmail}`;
+  return null;
+}
+
+function uploadHintEs(v: ChaseTemplateVars): string | null {
+  if (v.portalUrl)
+    return `Lo más fácil: abra su portal (sin contraseña) → ${v.portalUrl}`;
+  if (v.intakeEmail) return `También puede enviar el PDF a: ${v.intakeEmail}`;
+  return null;
+}
 
 function expiryLineEn(v: ChaseTemplateVars): string {
   if (v.expirationDate && v.daysUntilExpiry !== null) {
@@ -60,9 +77,7 @@ const EN: Record<ChaseTemplateKey, TemplateBody> = {
         `${v.orgName} needs a current Certificate of Insurance (ACORD 25) before work can continue.`,
         "",
         "Please reply with a PDF of your COI, or forward this email to your insurance agent.",
-        v.intakeEmail
-          ? `You can also send the PDF to: ${v.intakeEmail}`
-          : null,
+        uploadHintEn(v),
         FOOTER_EN(v),
       ]
         .filter(Boolean)
@@ -78,7 +93,7 @@ const EN: Record<ChaseTemplateKey, TemplateBody> = {
         expiryLineEn(v),
         "",
         "Please send a renewed Certificate of Insurance when available so we can keep you on the approved vendor list.",
-        v.intakeEmail ? `Reply with the PDF or email it to: ${v.intakeEmail}` : null,
+        uploadHintEn(v),
         FOOTER_EN(v),
       ]
         .filter(Boolean)
@@ -94,7 +109,7 @@ const EN: Record<ChaseTemplateKey, TemplateBody> = {
         expiryLineEn(v),
         "",
         "Two weeks left. Please ask your agent for a renewed COI and send it to us as soon as it is issued.",
-        v.intakeEmail ? `Send the PDF to: ${v.intakeEmail}` : null,
+        uploadHintEn(v),
         FOOTER_EN(v),
       ]
         .filter(Boolean)
@@ -110,7 +125,7 @@ const EN: Record<ChaseTemplateKey, TemplateBody> = {
         expiryLineEn(v),
         "",
         "One week remaining. Without a renewed certificate on file, we may need to pause work assignments.",
-        v.intakeEmail ? `Please send your renewed COI to: ${v.intakeEmail}` : null,
+        uploadHintEn(v),
         FOOTER_EN(v),
       ]
         .filter(Boolean)
@@ -126,7 +141,7 @@ const EN: Record<ChaseTemplateKey, TemplateBody> = {
         expiryLineEn(v),
         "",
         "This is a final reminder. Please send a renewed Certificate of Insurance today.",
-        v.intakeEmail ? `Email the PDF to: ${v.intakeEmail}` : null,
+        uploadHintEn(v),
         FOOTER_EN(v),
       ]
         .filter(Boolean)
@@ -142,7 +157,7 @@ const EN: Record<ChaseTemplateKey, TemplateBody> = {
         expiryLineEn(v),
         "",
         "Your certificate is past expiration. Please send a renewed COI so we can restore your compliant status.",
-        v.intakeEmail ? `Send the PDF to: ${v.intakeEmail}` : null,
+        uploadHintEn(v),
         FOOTER_EN(v),
       ]
         .filter(Boolean)
@@ -193,9 +208,7 @@ const ES: Record<ChaseTemplateKey, TemplateBody> = {
         `${v.orgName} necesita un Certificado de Seguro vigente (ACORD 25) antes de continuar el trabajo.`,
         "",
         "Por favor responda con el PDF de su COI, o reenvíe este correo a su agente de seguros.",
-        v.intakeEmail
-          ? `También puede enviar el PDF a: ${v.intakeEmail}`
-          : null,
+        uploadHintEs(v),
         FOOTER_ES(v),
       ]
         .filter(Boolean)
@@ -211,9 +224,7 @@ const ES: Record<ChaseTemplateKey, TemplateBody> = {
         expiryLineEs(v),
         "",
         "Por favor envíe un Certificado de Seguro renovado cuando esté disponible para mantenerlo en la lista de proveedores aprobados.",
-        v.intakeEmail
-          ? `Responda con el PDF o envíelo a: ${v.intakeEmail}`
-          : null,
+        uploadHintEs(v),
         FOOTER_ES(v),
       ]
         .filter(Boolean)
@@ -229,7 +240,7 @@ const ES: Record<ChaseTemplateKey, TemplateBody> = {
         expiryLineEs(v),
         "",
         "Quedan dos semanas. Pida a su agente un COI renovado y envíenoslo tan pronto como se emita.",
-        v.intakeEmail ? `Envíe el PDF a: ${v.intakeEmail}` : null,
+        uploadHintEs(v),
         FOOTER_ES(v),
       ]
         .filter(Boolean)
@@ -245,9 +256,7 @@ const ES: Record<ChaseTemplateKey, TemplateBody> = {
         expiryLineEs(v),
         "",
         "Queda una semana. Sin un certificado renovado en archivo, es posible que debamos pausar asignaciones de trabajo.",
-        v.intakeEmail
-          ? `Por favor envíe su COI renovado a: ${v.intakeEmail}`
-          : null,
+        uploadHintEs(v),
         FOOTER_ES(v),
       ]
         .filter(Boolean)
@@ -263,7 +272,7 @@ const ES: Record<ChaseTemplateKey, TemplateBody> = {
         expiryLineEs(v),
         "",
         "Este es un recordatorio final. Por favor envíe un Certificado de Seguro renovado hoy.",
-        v.intakeEmail ? `Envíe el PDF a: ${v.intakeEmail}` : null,
+        uploadHintEs(v),
         FOOTER_ES(v),
       ]
         .filter(Boolean)
@@ -279,7 +288,7 @@ const ES: Record<ChaseTemplateKey, TemplateBody> = {
         expiryLineEs(v),
         "",
         "Su certificado ya venció. Por favor envíe un COI renovado para restaurar su estado de cumplimiento.",
-        v.intakeEmail ? `Envíe el PDF a: ${v.intakeEmail}` : null,
+        uploadHintEs(v),
         FOOTER_ES(v),
       ]
         .filter(Boolean)

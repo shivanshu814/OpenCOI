@@ -18,6 +18,8 @@ export type ChaseTemplateVars = {
   expirationDate: string | null;
   daysUntilExpiry: number | null;
   intakeEmail: string;
+  /** Week 3: no-login vendor portal magic link. */
+  portalUrl: string;
   agentName: string | null;
   physicalAddress: string;
 };
