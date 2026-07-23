@@ -27,7 +27,13 @@ export async function POST(request: Request) {
 
   const session = await getSessionOrg();
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      {
+        error: "Unauthorized",
+        hint: "Sign in again, then retry checkout. If this persists, org bootstrap failed — contact support.",
+      },
+      { status: 401 },
+    );
   }
 
   const appUrl =
