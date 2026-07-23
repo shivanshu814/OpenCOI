@@ -2,7 +2,7 @@ import { inngest } from "@/inngest/client";
 import { extractCoiFromPdfBase64, MODEL_VERSION } from "@/lib/ai/extract";
 import {
   isClaudeConfigured,
-  isInngestConfigured,
+  shouldQueueViaInngest,
 } from "@/lib/config";
 import { PROMPT_VERSION } from "@/lib/extraction/schema";
 import { runRequirementsEngine } from "@/lib/requirements/engine";
@@ -94,7 +94,7 @@ export async function ingestPdfDocument(
   const pdfBase64 = args.pdfBytes.toString("base64");
   let queued = false;
 
-  if (isInngestConfigured()) {
+  if (shouldQueueViaInngest()) {
     try {
       await inngest.send({
         name: "document/uploaded",
@@ -122,6 +122,46 @@ export async function ingestPdfDocument(
   }
 
   return { documentId: doc.id, storagePath, queued };
+}
+
+/** Re-run extraction for a stuck `uploaded` doc (download PDF from Storage). */
+export async function extractDocumentFromStorage(args: {
+  documentId: string;
+  orgId: string;
+}) {
+  if (!isClaudeConfigured()) {
+    throw new Error("OPENROUTER_API_KEY is not set");
+  }
+
+  const admin = createAdminClient();
+  const { data: doc, error } = await admin
+    .from("documents")
+    .select("id, org_id, storage_path, status")
+    .eq("id", args.documentId)
+    .eq("org_id", args.orgId)
+    .maybeSingle();
+
+  if (error || !doc) throw new Error(error?.message ?? "Document not found");
+  if (doc.status !== "uploaded") {
+    throw new Error(`Cannot extract from status ${doc.status}`);
+  }
+  if (!doc.storage_path || doc.storage_path === "pending") {
+    throw new Error("PDF not in storage yet");
+  }
+
+  const { data: file, error: dlErr } = await admin.storage
+    .from("cois")
+    .download(doc.storage_path);
+  if (dlErr || !file) {
+    throw new Error(dlErr?.message ?? "Failed to download PDF");
+  }
+
+  const pdfBase64 = Buffer.from(await file.arrayBuffer()).toString("base64");
+  await runExtractInline({
+    documentId: doc.id,
+    orgId: args.orgId,
+    pdfBase64,
+  });
 }
 
 export async function runExtractInline(args: {

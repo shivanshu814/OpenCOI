@@ -1,10 +1,6 @@
 import { DownloadReportButton } from "@/components/download-report-button";
 import { VerdictBadge } from "@/components/status-badges";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Card,
   CardAction,
@@ -25,28 +21,20 @@ import { isSupabaseConfigured } from "@/lib/config";
 import { getDocument, listVendors } from "@/lib/data/documents";
 import type { Verdict } from "@/lib/requirements/engine";
 import { createClient } from "@/lib/supabase/server";
-import {
-  ArrowLeft,
-  Check,
-  Clock,
-  Minus,
-  TriangleAlert,
-  X,
-} from "lucide-react";
+import { ArrowLeft, Check, Clock, Minus, TriangleAlert, X } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { RequestAgentConfirmButton } from "./request-agent-confirm";
 import { ReviewActions } from "./review-actions";
+import { RunExtractionButton } from "./run-extraction-button";
 
-const VERDICT_ICON: Record<
-  Verdict,
-  { Icon: typeof Check; className: string }
-> = {
-  PASS: { Icon: Check, className: "bg-emerald-100 text-emerald-700" },
-  FAIL: { Icon: X, className: "bg-red-100 text-red-700" },
-  EXPIRING: { Icon: Clock, className: "bg-amber-100 text-amber-700" },
-  MISSING: { Icon: Minus, className: "bg-slate-100 text-slate-600" },
-};
+const VERDICT_ICON: Record<Verdict, { Icon: typeof Check; className: string }> =
+  {
+    PASS: { Icon: Check, className: "bg-emerald-100 text-emerald-700" },
+    FAIL: { Icon: X, className: "bg-red-100 text-red-700" },
+    EXPIRING: { Icon: Clock, className: "bg-amber-100 text-amber-700" },
+    MISSING: { Icon: Minus, className: "bg-slate-100 text-slate-600" },
+  };
 
 export default async function ReviewDocumentPage({
   params,
@@ -77,16 +65,19 @@ export default async function ReviewDocumentPage({
               completed yet. This page will show the verdict once it lands.
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <Alert>
               <TriangleAlert />
-              <AlertTitle>Extraction worker may not be running</AlertTitle>
+              <AlertTitle>Extraction hasn’t finished</AlertTitle>
               <AlertDescription>
-                Document status is <code>{doc.status}</code>. If it stays here,
-                the background job never ran — check that the Inngest worker is
-                started and OPENROUTER_API_KEY is set.
+                Document status is <code>{doc.status}</code>. Locally,
+                extraction runs inline via OpenRouter (no Inngest worker
+                needed). On production, Inngest handles it in the background.
               </AlertDescription>
             </Alert>
+            {doc.status === "uploaded" ? (
+              <RunExtractionButton documentId={doc.id} />
+            ) : null}
           </CardContent>
         </Card>
       </div>
@@ -106,12 +97,8 @@ export default async function ReviewDocumentPage({
           ? "Internal review"
           : doc.status;
 
-  const failCount = doc.check_lines.filter(
-    (l) => l.verdict === "FAIL",
-  ).length;
-  const passCount = doc.check_lines.filter(
-    (l) => l.verdict === "PASS",
-  ).length;
+  const failCount = doc.check_lines.filter((l) => l.verdict === "FAIL").length;
+  const passCount = doc.check_lines.filter((l) => l.verdict === "PASS").length;
 
   const glEachOccurrence = ex.policies[0]?.limits.find(
     (l) => l.name === "each_occurrence",

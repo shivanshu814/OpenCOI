@@ -1,7 +1,7 @@
 export function isSupabaseConfigured() {
   return Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   );
 }
 
@@ -14,6 +14,24 @@ export function isInngestConfigured() {
   return Boolean(process.env.INNGEST_EVENT_KEY || process.env.INNGEST_DEV);
 }
 
+/**
+ * Whether uploads should queue via Inngest (vs run Claude inline).
+ *
+ * Local default is inline: having INNGEST_EVENT_KEY in `.env.local` sends
+ * events to Inngest Cloud, which cannot reach localhost — docs strand at
+ * `uploaded`. Opt into queueing locally with INNGEST_FORCE_QUEUE=1 and
+ * `npx inngest-cli@latest dev`.
+ */
+export function shouldQueueViaInngest() {
+  if (process.env.INNGEST_FORCE_QUEUE === "1") {
+    return isInngestConfigured();
+  }
+  if (process.env.VERCEL === "1" || process.env.NODE_ENV === "production") {
+    return Boolean(process.env.INNGEST_EVENT_KEY?.trim());
+  }
+  return false;
+}
+
 export function isResendConfigured() {
   return Boolean(process.env.RESEND_API_KEY?.trim());
 }
@@ -22,8 +40,8 @@ export function isPaddleCheckoutConfigured() {
   const token = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN?.trim();
   const hasPrice = Boolean(
     process.env.NEXT_PUBLIC_PADDLE_PRICE_STARTER?.trim() ||
-      process.env.NEXT_PUBLIC_PADDLE_PRICE_PRO?.trim() ||
-      process.env.NEXT_PUBLIC_PADDLE_PRICE_BUSINESS?.trim(),
+    process.env.NEXT_PUBLIC_PADDLE_PRICE_PRO?.trim() ||
+    process.env.NEXT_PUBLIC_PADDLE_PRICE_BUSINESS?.trim(),
   );
   return Boolean(token && hasPrice);
 }
