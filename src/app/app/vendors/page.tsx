@@ -1,4 +1,5 @@
 import { DownloadReportButton } from "@/components/download-report-button";
+import { EmptyState } from "@/components/empty-state";
 import { VendorStatusBadge } from "@/components/status-badges";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,12 +22,20 @@ export default async function VendorsPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Vendors</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          CRUD for Week 1 audits. CSV import lands with email-in (Week 2).
+          Track insurance status, W-9s, licenses, and chase renewals.
         </p>
       </div>
 
       <AddVendorForm />
 
+      {vendors.length === 0 ? (
+        <EmptyState
+          title="No vendors yet"
+          description="Add your first vendor above, then upload a COI to start the review pipeline."
+          actionHref="/app/upload"
+          actionLabel="Go to upload"
+        />
+      ) : (
       <div className="rounded-lg border">
         <Table>
           <TableHeader>
@@ -70,19 +79,10 @@ export default async function VendorsPage() {
                 </TableCell>
               </TableRow>
             ))}
-            {vendors.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={5}
-                  className="text-muted-foreground py-8 text-center text-sm"
-                >
-                  No vendors yet.
-                </TableCell>
-              </TableRow>
-            ) : null}
           </TableBody>
         </Table>
       </div>
+      )}
     </div>
   );
 }

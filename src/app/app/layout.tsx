@@ -12,6 +12,7 @@ const nav = [
   { href: "/app/review", label: "Review queue" },
   { href: "/app/upload", label: "Upload" },
   { href: "/app/audit", label: "Audit" },
+  { href: "/app/admin", label: "Admin" },
   { href: "/app/settings/team", label: "Team" },
   { href: "/app/settings/integrations", label: "API" },
   { href: "/app/settings/billing", label: "Billing" },

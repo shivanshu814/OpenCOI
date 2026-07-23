@@ -18,11 +18,15 @@
 
 - Home: /
 - Pricing: /pricing
+- Security: /security
+- Help: /help
+- Terms: /terms
+- Privacy: /privacy
 - Sign in: /login
 - App: /app
 
-## Claims (v0)
+## Claims
 
-We claim: AI COI verification including endorsement checks (CG 20 10 / CG 20 37 / waivers), email auto-chasing EN/ES, dashboard, audit trail, 24h onboarding, compliance report PDFs.
+We claim: AI COI verification including endorsement checks, email auto-chasing EN/ES, SMS (TCPA opt-in), vendor portal, agent confirmations, fraud risk signals, carrier AM Best checks, API/webhooks, audit/litigation packs.
 
 We do not claim: guaranteed compliance, automatic mid-term cancellation detection, or "always accurate."
