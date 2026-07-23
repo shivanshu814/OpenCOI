@@ -36,23 +36,29 @@ const SECTIONS = [
 export default function HelpPage() {
   return (
     <MarketingShell>
-      <main className="mx-auto max-w-3xl space-y-10 px-4 py-14">
+      <main className="mx-auto max-w-3xl space-y-10 px-4 py-16 sm:px-6">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-[#0F2A43]">
+          <p className="text-sm font-semibold tracking-[0.14em] text-emerald-600 uppercase">
+            Support
+          </p>
+          <h1 className="text-foreground mt-3 text-3xl font-semibold tracking-tight">
             Help center
           </h1>
           <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
             Short answers for day-one operators. Need a human?{" "}
-            <a className="underline" href="mailto:support@getcertshield.com">
+            <a
+              className="text-foreground font-medium underline-offset-2 hover:underline"
+              href="mailto:support@getcertshield.com"
+            >
               support@getcertshield.com
             </a>{" "}
             (24h weekday SLA).
           </p>
         </div>
-        <div className="space-y-8">
+        <div className="divide-y rounded-xl border">
           {SECTIONS.map((s) => (
-            <section key={s.title} className="space-y-2">
-              <h2 className="text-sm font-semibold text-[#0F2A43]">
+            <section key={s.title} className="space-y-1.5 px-5 py-4">
+              <h2 className="text-foreground text-sm font-semibold">
                 {s.title}
               </h2>
               <p className="text-muted-foreground text-sm leading-relaxed">
@@ -63,11 +69,17 @@ export default function HelpPage() {
         </div>
         <p className="text-muted-foreground text-xs">
           Also see{" "}
-          <Link href="/security" className="underline">
+          <Link
+            href="/security"
+            className="hover:text-foreground underline underline-offset-2"
+          >
             Security
           </Link>
           ,{" "}
-          <Link href="/pricing" className="underline">
+          <Link
+            href="/pricing"
+            className="hover:text-foreground underline underline-offset-2"
+          >
             Pricing
           </Link>
           , and the disclaimer on every report.

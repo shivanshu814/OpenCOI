@@ -12,6 +12,13 @@ import { Suspense, useState } from "react";
 const STEPS = ["company", "templates", "vendors", "intake"] as const;
 type Step = (typeof STEPS)[number];
 
+const STEP_LABELS: Record<Step, string> = {
+  company: "Company",
+  templates: "Templates",
+  vendors: "Vendors",
+  intake: "Intake",
+};
+
 function OnboardingWizardInner({
   defaultOrgName,
   intakeEmail,
@@ -102,8 +109,36 @@ function OnboardingWizardInner({
 
   return (
     <div className="mx-auto max-w-xl space-y-6">
+      {/* Step indicator */}
+      <ol className="flex items-center gap-2" aria-label="Setup progress">
+        {STEPS.map((s, i) => {
+          const state =
+            i < stepIdx ? "done" : i === stepIdx ? "current" : "upcoming";
+          return (
+            <li key={s} className="flex flex-1 flex-col gap-1.5">
+              <span
+                className={
+                  state === "upcoming"
+                    ? "bg-border h-1 rounded-full"
+                    : "bg-primary h-1 rounded-full"
+                }
+              />
+              <span
+                className={
+                  state === "current"
+                    ? "text-foreground text-[11px] font-medium"
+                    : "text-muted-foreground text-[11px]"
+                }
+              >
+                {STEP_LABELS[s]}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+
       <div>
-        <p className="text-muted-foreground text-xs tracking-wide uppercase">
+        <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
           Step {stepIdx + 1} of {STEPS.length}
         </p>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">
@@ -146,13 +181,21 @@ function OnboardingWizardInner({
                 <button
                   type="button"
                   onClick={() => toggleTemplate(t.id)}
+                  aria-pressed={on}
                   className={
                     on
-                      ? "w-full rounded-lg border-2 border-[#0F2A43] bg-[#0F2A43]/[0.03] px-4 py-3 text-left"
-                      : "w-full rounded-lg border px-4 py-3 text-left hover:bg-muted/40"
+                      ? "border-primary bg-primary/5 w-full rounded-lg border-2 px-4 py-3 text-left"
+                      : "hover:bg-muted/40 w-full rounded-lg border px-4 py-3 text-left"
                   }
                 >
-                  <span className="font-medium">{t.name}</span>
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium">{t.name}</span>
+                    {on ? (
+                      <span className="text-primary text-xs font-medium">
+                        Selected
+                      </span>
+                    ) : null}
+                  </span>
                   <span className="text-muted-foreground mt-0.5 block text-xs">
                     {t.summary}
                   </span>
@@ -212,7 +255,7 @@ function OnboardingWizardInner({
         <IntakeEmailCard email={intakeEmail} demo={intakeEmail.includes("demo")} />
       ) : null}
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 border-t pt-4">
         {stepIdx > 0 ? (
           <Button
             type="button"
@@ -243,7 +286,13 @@ export function OnboardingWizard(props: {
   intakeEmail: string;
 }) {
   return (
-    <Suspense fallback={<p className="text-sm">Loading…</p>}>
+    <Suspense
+      fallback={
+        <p className="text-muted-foreground mx-auto max-w-xl text-sm">
+          Loading…
+        </p>
+      }
+    >
       <OnboardingWizardInner {...props} />
     </Suspense>
   );

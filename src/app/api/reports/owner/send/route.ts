@@ -81,9 +81,15 @@ export async function POST(request: Request) {
 
   const result = await sendOwnerReportEmail({ propertyId, to, report });
   if (!result.ok) {
+    const reason = result.reason ?? "Send failed";
+    // Client/config issues (Resend sandbox, blocked fixture domains) → 400
+    const clientError =
+      /test mode|cannot send to|owner report email|missing or invalid|resend/i.test(
+        reason,
+      );
     return NextResponse.json(
-      { error: result.reason ?? "Send failed" },
-      { status: 500 },
+      { error: reason },
+      { status: clientError ? 400 : 500 },
     );
   }
 

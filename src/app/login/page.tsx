@@ -1,9 +1,11 @@
 "use client";
 
+import { BrandMark } from "@/components/marketing-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 
@@ -58,7 +60,10 @@ function LoginForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4 rounded-lg border p-6">
+    <form
+      onSubmit={onSubmit}
+      className="bg-card space-y-4 rounded-xl border p-6 shadow-sm"
+    >
       <div className="space-y-1.5">
         <Label htmlFor="email">Work email</Label>
         <Input
@@ -70,7 +75,7 @@ function LoginForm() {
           placeholder="you@propertymgmt.com"
         />
       </div>
-      <Button type="submit" className="w-full" disabled={busy}>
+      <Button type="submit" size="lg" className="w-full" disabled={busy}>
         {busy ? "Sending…" : "Send magic link"}
       </Button>
       {msg ? (
@@ -82,17 +87,29 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="mx-auto flex min-h-full max-w-md flex-col justify-center gap-6 px-4 py-16">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">CertShield</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Sign in to review COIs. Demo mode skips this when Supabase env is
-          unset.
+    <div className="bg-background flex min-h-full flex-col px-4 py-16">
+      <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6">
+        <div className="space-y-3">
+          <Link href="/" aria-label="CertShield home" className="inline-block">
+            <BrandMark />
+          </Link>
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight">Sign in</h1>
+            <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
+              Sign in to review COIs. Demo mode skips this when Supabase env is
+              unset.
+            </p>
+          </div>
+        </div>
+        <Suspense
+          fallback={<p className="text-muted-foreground text-sm">Loading…</p>}
+        >
+          <LoginForm />
+        </Suspense>
+        <p className="text-muted-foreground text-xs">
+          No password needed — we email you a magic link.
         </p>
       </div>
-      <Suspense fallback={<p className="text-sm">Loading…</p>}>
-        <LoginForm />
-      </Suspense>
     </div>
   );
 }

@@ -8,10 +8,10 @@ export function AuditTimeline({ events }: { events: AuditEventRow[] }) {
   }
 
   return (
-    <ol className="relative space-y-0 border-l pl-4">
+    <ol className="relative space-y-0 border-l pl-5">
       {events.map((e) => (
         <li key={e.id} className="relative pb-6 last:pb-0">
-          <span className="bg-foreground absolute top-1.5 -left-[5px] size-2 rounded-full" />
+          <span className="border-background bg-primary absolute top-1 -left-[9.5px] size-2.5 rounded-full border-2" />
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <p className="text-sm font-medium">{formatAction(e.action)}</p>
             <time className="text-muted-foreground text-xs">

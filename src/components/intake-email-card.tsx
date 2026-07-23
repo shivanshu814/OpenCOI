@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, Inbox } from "lucide-react";
 import { useState } from "react";
 
 export function IntakeEmailCard({
@@ -24,8 +24,11 @@ export function IntakeEmailCard({
   }
 
   return (
-    <section className="rounded-lg border px-4 py-4">
-      <h2 className="text-sm font-medium">Email-in intake</h2>
+    <section className="bg-card rounded-xl border px-5 py-4">
+      <div className="flex items-center gap-2">
+        <Inbox className="text-muted-foreground size-4" />
+        <h2 className="text-sm font-semibold">Email-in intake</h2>
+      </div>
       <p className="text-muted-foreground mt-1 text-sm">
         Forward COI PDFs to this address. We attach them to a vendor by name
         match (or create a new vendor for review).

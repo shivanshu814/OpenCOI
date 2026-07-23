@@ -1,6 +1,7 @@
 import { CheckoutButton } from "@/components/checkout-button";
 import { MarketingShell } from "@/components/marketing-shell";
 import { PLANS } from "@/lib/billing/plans";
+import { Check } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -53,11 +54,11 @@ export default async function PricingPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <div className="mx-auto max-w-5xl px-4 py-16">
-        <p className="text-sm font-semibold tracking-[0.14em] text-[#16A34A] uppercase">
+      <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+        <p className="text-sm font-semibold tracking-[0.14em] text-emerald-600 uppercase">
           Pricing
         </p>
-        <h1 className="mt-3 max-w-2xl text-4xl font-semibold tracking-tight text-[#0F2A43]">
+        <h1 className="text-foreground mt-3 max-w-2xl text-4xl font-semibold tracking-tight text-balance">
           Simple pricing for vendor insurance tracking
         </h1>
         <p className="text-muted-foreground mt-3 max-w-2xl text-base leading-relaxed">
@@ -65,7 +66,7 @@ export default async function PricingPage({
           setup, free COI audit included.
         </p>
 
-        <div className="mt-12 grid gap-6 md:grid-cols-3">
+        <div className="mt-12 grid items-start gap-6 md:grid-cols-3">
           {PLANS.map((plan) => {
             const featured = plan.id === "pro" || plan.id === highlight;
             return (
@@ -73,48 +74,58 @@ export default async function PricingPage({
                 key={plan.id}
                 className={
                   featured
-                    ? "rounded-xl border-2 border-[#0F2A43] bg-white p-6 shadow-sm"
-                    : "rounded-xl border border-[#0F2A43]/15 bg-white p-6"
+                    ? "bg-card ring-primary relative rounded-xl border p-6 shadow-sm ring-2"
+                    : "bg-card rounded-xl border p-6"
                 }
               >
-                <h2 className="text-lg font-semibold text-[#0F2A43]">
-                  {plan.name}
-                </h2>
-                <p className="mt-2 text-3xl font-semibold tracking-tight text-[#0F2A43]">
+                {featured ? (
+                  <span className="bg-primary text-primary-foreground absolute -top-3 left-6 rounded-full px-2.5 py-0.5 text-xs font-medium">
+                    Recommended
+                  </span>
+                ) : null}
+                <div className="flex items-baseline justify-between gap-2">
+                  <h2 className="text-foreground text-lg font-semibold">
+                    {plan.name}
+                  </h2>
+                  <p className="text-muted-foreground text-sm">
+                    {plan.vendorLimit == null
+                      ? "Unlimited vendors"
+                      : `${plan.vendorLimit} vendors`}
+                  </p>
+                </div>
+                <p className="text-foreground mt-3 text-3xl font-semibold tracking-tight tabular-nums">
                   ${plan.priceMonthly}
                   <span className="text-muted-foreground text-base font-normal">
                     /mo
                   </span>
                 </p>
-                <p className="text-muted-foreground mt-1 text-sm">
-                  {plan.vendorLimit == null
-                    ? "Unlimited vendors"
-                    : `${plan.vendorLimit} vendors`}
-                </p>
-                <ul className="mt-5 space-y-2 text-sm leading-relaxed">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex gap-2">
-                      <span className="text-[#16A34A]">✓</span>
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                  {plan.comingSoon?.map((f) => (
-                    <li
-                      key={f}
-                      className="text-muted-foreground flex gap-2"
-                    >
-                      <span>—</span>
-                      <span>{f} (coming soon)</span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-6">
+                <div className="mt-5">
                   <CheckoutButton
                     planId={plan.id}
                     label={`Choose ${plan.name}`}
                     variant={featured ? "default" : "outline"}
+                    className="w-full"
                   />
                 </div>
+                <ul className="mt-6 space-y-2 border-t pt-5 text-sm leading-relaxed">
+                  {plan.features.map((f) => (
+                    <li key={f} className="flex gap-2">
+                      <Check
+                        className="mt-0.5 size-4 shrink-0 text-emerald-600"
+                        aria-hidden
+                      />
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                  {plan.comingSoon?.map((f) => (
+                    <li key={f} className="text-muted-foreground flex gap-2">
+                      <span aria-hidden className="w-4 text-center">
+                        —
+                      </span>
+                      <span>{f} (coming soon)</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             );
           })}
@@ -122,19 +133,26 @@ export default async function PricingPage({
 
         <p className="text-muted-foreground mt-8 text-sm">
           Prefer a free look first?{" "}
-          <Link href="/login" className="text-[#0F2A43] underline-offset-2 hover:underline">
+          <Link
+            href="/login"
+            className="text-foreground font-medium underline-offset-2 hover:underline"
+          >
             Request a free 3-cert audit
           </Link>{" "}
           — no card required.
         </p>
 
         <section className="mt-16 max-w-3xl">
-          <h2 className="text-xl font-semibold text-[#0F2A43]">FAQ</h2>
-          <dl className="mt-6 space-y-6">
+          <h2 className="text-foreground text-xl font-semibold tracking-tight">
+            FAQ
+          </h2>
+          <dl className="mt-6 divide-y rounded-xl border">
             {faq.map((item) => (
-              <div key={item.q}>
-                <dt className="font-medium text-[#0F2A43]">{item.q}</dt>
-                <dd className="text-muted-foreground mt-1 text-sm leading-relaxed">
+              <div key={item.q} className="px-5 py-4">
+                <dt className="text-foreground text-sm font-semibold">
+                  {item.q}
+                </dt>
+                <dd className="text-muted-foreground mt-1.5 text-sm leading-relaxed">
                   {item.a}
                 </dd>
               </div>

@@ -13,11 +13,15 @@ import { redirect } from "next/navigation";
 export default async function AdminMetricsPage() {
   if (!isSupabaseConfigured()) {
     return (
-      <div className="space-y-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Admin metrics</h1>
-        <p className="text-muted-foreground text-sm">
-          Demo mode — connect Supabase for live AI cost / queue metrics.
-        </p>
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Admin metrics
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Demo mode — connect Supabase for live AI cost / queue metrics.
+          </p>
+        </div>
         <FixtureAccuracyCard />
       </div>
     );
@@ -27,9 +31,9 @@ export default async function AdminMetricsPage() {
   if (!session) redirect("/login");
   if (!canAdminSensitive(session.role)) {
     return (
-      <div className="space-y-2">
+      <div>
         <h1 className="text-2xl font-semibold tracking-tight">Admin metrics</h1>
-        <p className="text-muted-foreground text-sm">Admins only.</p>
+        <p className="text-muted-foreground mt-1 text-sm">Admins only.</p>
       </div>
     );
   }
@@ -92,29 +96,49 @@ export default async function AdminMetricsPage() {
         </p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Metric label="Vendors" value={String(vendors ?? 0)} />
-        <Metric label="In internal review" value={String(inReview ?? 0)} />
-        <Metric label="Published docs" value={String(published ?? 0)} />
-        <Metric label="Golden-set cases" value={String(golden ?? 0)} />
-        <Metric label="AI cost (last 100)" value={`$${cost.toFixed(4)}`} />
-        <Metric label="Avg latency (ms)" value={String(avgLatency)} />
-        <Metric
-          label="Avg confidence"
-          value={`${Math.round(avgConf * 100)}%`}
-        />
-        <Metric
-          label="Models seen"
-          value={String(
-            new Set(rows.map((r) => r.model_version).filter(Boolean)).size,
-          )}
-        />
-      </div>
+      <section className="bg-card rounded-xl border">
+        <div className="border-b px-4 py-3">
+          <h2 className="text-sm font-semibold">Document pipeline</h2>
+          <p className="text-muted-foreground mt-0.5 text-xs">
+            Org-scoped counts across the verification flow.
+          </p>
+        </div>
+        <dl className="grid grid-cols-2 gap-x-8 gap-y-5 px-4 py-4 sm:grid-cols-4 sm:px-5">
+          <Metric label="Vendors" value={String(vendors ?? 0)} />
+          <Metric label="In internal review" value={String(inReview ?? 0)} />
+          <Metric label="Published docs" value={String(published ?? 0)} />
+          <Metric label="Golden-set cases" value={String(golden ?? 0)} />
+        </dl>
+      </section>
+
+      <section className="bg-card rounded-xl border">
+        <div className="border-b px-4 py-3">
+          <h2 className="text-sm font-semibold">AI extraction ops</h2>
+          <p className="text-muted-foreground mt-0.5 text-xs">
+            Last {rows.length || 100} extractions — cost, latency, confidence,
+            and model versions are logged on every call.
+          </p>
+        </div>
+        <dl className="grid grid-cols-2 gap-x-8 gap-y-5 px-4 py-4 sm:grid-cols-4 sm:px-5">
+          <Metric label="AI cost (last 100)" value={`$${cost.toFixed(4)}`} />
+          <Metric label="Avg latency (ms)" value={String(avgLatency)} />
+          <Metric
+            label="Avg confidence"
+            value={`${Math.round(avgConf * 100)}%`}
+          />
+          <Metric
+            label="Models seen"
+            value={String(
+              new Set(rows.map((r) => r.model_version).filter(Boolean)).size,
+            )}
+          />
+        </dl>
+      </section>
 
       <FixtureAccuracyCard />
 
       <p className="text-muted-foreground text-xs">
-        <Link href="/security" className="underline">
+        <Link href="/security" className="underline-offset-4 hover:underline">
           Security page
         </Link>{" "}
         · Document review assistance — not legal, insurance, or professional
@@ -126,9 +150,9 @@ export default async function AdminMetricsPage() {
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border p-4">
-      <p className="text-muted-foreground text-xs font-medium">{label}</p>
-      <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
+    <div>
+      <dt className="text-muted-foreground text-xs font-medium">{label}</dt>
+      <dd className="mt-1 text-2xl font-semibold tabular-nums">{value}</dd>
     </div>
   );
 }
@@ -138,20 +162,27 @@ function FixtureAccuracyCard() {
   const pct = Math.round(result.accuracy * 100);
   const gate = Math.round(MONTH3_ACCURACY_GATE * 100);
   return (
-    <div className="rounded-lg border p-4">
-      <h2 className="text-sm font-medium">Golden-set fixture accuracy</h2>
-      <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
-        CI harness on seeded date/limit fixtures. Month 3 SCALE gate is ≥{gate}%
-        on a 100-cert real ACORD corpus (charging already allowed under 100%
-        internal review).
-      </p>
-      <p className="mt-3 text-3xl font-semibold tabular-nums">
-        {pct}%
-        <span className="text-muted-foreground text-sm font-normal">
-          {" "}
-          ({result.matched}/{result.total} fields)
-        </span>
-      </p>
-    </div>
+    <section className="bg-card rounded-xl border">
+      <div className="border-b px-4 py-3">
+        <h2 className="text-sm font-semibold">Golden-set fixture accuracy</h2>
+        <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">
+          CI harness on seeded date/limit fixtures. Month 3 SCALE gate is ≥
+          {gate}% on a 100-cert real ACORD corpus (charging already allowed
+          under 100% internal review).
+        </p>
+      </div>
+      <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3 px-4 py-4 sm:px-5">
+        <p className="text-3xl font-semibold tabular-nums">
+          {pct}%
+          <span className="text-muted-foreground text-sm font-normal">
+            {" "}
+            ({result.matched}/{result.total} fields)
+          </span>
+        </p>
+        <p className="text-muted-foreground text-xs">
+          Gate: ≥{gate}% automated accuracy
+        </p>
+      </div>
+    </section>
   );
 }

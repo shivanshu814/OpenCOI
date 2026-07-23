@@ -52,25 +52,36 @@ const QUESTIONS: { q: string; a: string }[] = [
 export default function SecurityPage() {
   return (
     <MarketingShell>
-      <main className="mx-auto max-w-3xl space-y-10 px-4 py-14">
+      <main className="mx-auto max-w-3xl space-y-10 px-4 py-16 sm:px-6">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-[#0F2A43]">
+          <p className="text-sm font-semibold tracking-[0.14em] text-emerald-600 uppercase">
+            Trust
+          </p>
+          <h1 className="text-foreground mt-3 text-3xl font-semibold tracking-tight">
             Security
           </h1>
           <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
-            Answers to the questions buyers ask before trusting COI and W-9 data
-            with CertShield.
+            Answers to the questions buyers ask before trusting COI and W-9
+            data with CertShield.
           </p>
         </div>
-        <ol className="space-y-8">
+        <ol className="divide-y rounded-xl border">
           {QUESTIONS.map((item, i) => (
-            <li key={item.q} className="space-y-2">
-              <h2 className="text-sm font-semibold text-[#0F2A43]">
-                {i + 1}. {item.q}
-              </h2>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                {item.a}
-              </p>
+            <li key={item.q} className="flex gap-4 px-5 py-4">
+              <span
+                className="text-muted-foreground w-5 shrink-0 pt-px text-sm font-medium tabular-nums"
+                aria-hidden
+              >
+                {i + 1}
+              </span>
+              <div className="space-y-1.5">
+                <h2 className="text-foreground text-sm font-semibold">
+                  {item.q}
+                </h2>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  {item.a}
+                </p>
+              </div>
             </li>
           ))}
         </ol>

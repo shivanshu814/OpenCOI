@@ -3,6 +3,7 @@ import { isSupabaseConfigured } from "@/lib/config";
 import { resolvePortalToken } from "@/lib/portal/tokens";
 import type { Verdict } from "@/lib/requirements/engine";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { CheckCircle2, CircleAlert } from "lucide-react";
 import { PortalActions } from "./portal-actions";
 
 export default async function PortalPage({
@@ -26,9 +27,13 @@ export default async function PortalPage({
   const ctx = await resolvePortalToken(token);
   if (!ctx) {
     return (
-      <div className="space-y-3">
+      <div className="bg-card space-y-3 rounded-xl border px-5 py-8 text-center">
+        <CircleAlert
+          className="text-muted-foreground mx-auto size-8"
+          aria-hidden
+        />
         <h1 className="text-xl font-semibold tracking-tight">Link expired</h1>
-        <p className="text-muted-foreground text-sm">
+        <p className="text-muted-foreground mx-auto max-w-sm text-sm leading-relaxed">
           This portal link is invalid or expired. Ask{" "}
           <span className="text-foreground font-medium">
             your property manager
@@ -52,32 +57,67 @@ export default async function PortalPage({
       : `Hi ${ctx.vendorName}. No login needed — upload your COI or forward to your agent.`;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
-        <p className="text-muted-foreground mt-1 text-sm">{intro}</p>
+        <h1 className="text-xl font-semibold tracking-tight text-balance">
+          {title}
+        </h1>
+        <p className="text-muted-foreground mt-1.5 text-sm leading-relaxed">
+          {intro}
+        </p>
         <div className="mt-3">
           <VendorStatusBadge status={ctx.vendorStatus as never} />
         </div>
       </div>
 
       {gaps.length > 0 ? (
-        <div className="rounded-lg border p-4">
-          <h2 className="text-sm font-medium">
-            {locale === "es" ? "Lo que falta" : "What’s missing"}
-          </h2>
-          <ul className="text-muted-foreground mt-2 list-inside list-disc space-y-1 text-sm">
-            {gaps.map((g) => (
-              <li key={g}>{g}</li>
-            ))}
+        <section className="bg-card rounded-xl border">
+          <div className="border-b px-4 py-3">
+            <div className="flex items-baseline justify-between gap-2">
+              <h2 className="text-sm font-semibold">
+                {locale === "es" ? "Lo que falta" : "What’s missing"}
+              </h2>
+              <span className="text-muted-foreground text-xs tabular-nums">
+                {gaps.length}
+              </span>
+            </div>
+          </div>
+          <ul className="divide-y">
+            {gaps.map((g) => {
+              const sep = g.indexOf(": ");
+              const label = sep > 0 ? g.slice(0, sep) : g;
+              const reason = sep > 0 ? g.slice(sep + 2) : null;
+              return (
+                <li key={g} className="flex items-start gap-3 px-4 py-3">
+                  <CircleAlert
+                    className="mt-0.5 size-4 shrink-0 text-amber-600"
+                    aria-hidden
+                  />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">{label}</p>
+                    {reason ? (
+                      <p className="text-muted-foreground mt-0.5 text-sm leading-relaxed">
+                        {reason}
+                      </p>
+                    ) : null}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
-        </div>
+        </section>
       ) : (
-        <p className="text-muted-foreground text-sm">
-          {locale === "es"
-            ? "No hay hallazgos publicados todavía, o está al día."
-            : "No published gaps yet — or you’re up to date."}
-        </p>
+        <div className="bg-card flex items-start gap-3 rounded-xl border px-4 py-4">
+          <CheckCircle2
+            className="mt-0.5 size-5 shrink-0 text-emerald-600"
+            aria-hidden
+          />
+          <p className="text-sm leading-relaxed">
+            {locale === "es"
+              ? "No hay hallazgos publicados todavía, o está al día."
+              : "No published gaps yet — or you’re up to date."}
+          </p>
+        </div>
       )}
 
       <PortalActions

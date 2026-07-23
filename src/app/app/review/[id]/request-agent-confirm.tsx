@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { MailCheck } from "lucide-react";
 import { useState } from "react";
 
 export function RequestAgentConfirmButton({
@@ -46,25 +47,39 @@ export function RequestAgentConfirmButton({
   }
 
   return (
-    <div className="space-y-2 rounded-lg border p-4">
-      <p className="text-xs font-medium tracking-wide uppercase">
-        Agent confirmation (B8)
-      </p>
-      <p className="text-muted-foreground text-xs leading-relaxed">
-        Emails the producer: Confirm / Deny that this cert is valid &amp;
-        current. Mitigates mid-term cancellations — does not detect them
-        automatically.
-      </p>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        disabled={busy}
-        onClick={() => void onClick()}
-      >
-        {busy ? "Sending…" : "Request agent confirmation"}
-      </Button>
-      {msg ? <p className="text-muted-foreground text-xs">{msg}</p> : null}
+    <div className="bg-card rounded-xl border p-4">
+      <div className="flex items-start gap-3">
+        <span
+          className="bg-muted text-muted-foreground mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg"
+          aria-hidden
+        >
+          <MailCheck className="size-4" />
+        </span>
+        <div className="min-w-0 space-y-2">
+          <div>
+            <p className="text-sm font-semibold">Agent confirmation (B8)</p>
+            <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">
+              Emails the producer: Confirm / Deny that this cert is valid &amp;
+              current. Mitigates mid-term cancellations — does not detect them
+              automatically.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={busy}
+            onClick={() => void onClick()}
+          >
+            {busy ? "Sending…" : "Request agent confirmation"}
+          </Button>
+          {msg ? (
+            <p className="text-muted-foreground text-xs leading-relaxed">
+              {msg}
+            </p>
+          ) : null}
+        </div>
+      </div>
     </div>
   );
 }

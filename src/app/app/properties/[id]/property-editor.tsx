@@ -30,6 +30,17 @@ type Props = {
   vendors: VendorOpt[];
 };
 
+function SectionHeading({ title, hint }: { title: string; hint?: string }) {
+  return (
+    <div>
+      <h2 className="text-sm font-semibold">{title}</h2>
+      {hint ? (
+        <p className="text-muted-foreground mt-0.5 text-xs">{hint}</p>
+      ) : null}
+    </div>
+  );
+}
+
 export function PropertyEditor({
   propertyId,
   initial,
@@ -126,99 +137,122 @@ export function PropertyEditor({
   }
 
   return (
-    <form onSubmit={onSave} className="space-y-6">
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="space-y-1.5 sm:col-span-2">
-          <Label htmlFor="name">Name</Label>
-          <Input
-            id="name"
-            required
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-          />
-        </div>
-        <div className="space-y-1.5 sm:col-span-2">
-          <Label htmlFor="addr">Address</Label>
-          <Input
-            id="addr"
-            value={form.address_line}
-            onChange={(e) => setForm({ ...form, address_line: e.target.value })}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="city">City</Label>
-          <Input
-            id="city"
-            value={form.city}
-            onChange={(e) => setForm({ ...form, city: e.target.value })}
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="state">State</Label>
+    <form onSubmit={onSave} className="space-y-8">
+      <section className="space-y-4">
+        <SectionHeading title="Property details" />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="name">Name</Label>
             <Input
-              id="state"
-              maxLength={2}
-              value={form.state}
-              onChange={(e) => setForm({ ...form, state: e.target.value })}
+              id="name"
+              required
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="addr">Address</Label>
+            <Input
+              id="addr"
+              value={form.address_line}
+              onChange={(e) =>
+                setForm({ ...form, address_line: e.target.value })
+              }
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="zip">ZIP</Label>
+            <Label htmlFor="city">City</Label>
             <Input
-              id="zip"
-              value={form.postal_code}
+              id="city"
+              value={form.city}
+              onChange={(e) => setForm({ ...form, city: e.target.value })}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="state">State</Label>
+              <Input
+                id="state"
+                maxLength={2}
+                value={form.state}
+                onChange={(e) => setForm({ ...form, state: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="zip">ZIP</Label>
+              <Input
+                id="zip"
+                value={form.postal_code}
+                onChange={(e) =>
+                  setForm({ ...form, postal_code: e.target.value })
+                }
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-4 border-t pt-6">
+        <SectionHeading
+          title="Certificate holder & wording"
+          hint="What must appear on every COI for this property."
+        />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="holder">Certificate holder name</Label>
+            <Input
+              id="holder"
+              value={form.certificate_holder_name}
               onChange={(e) =>
-                setForm({ ...form, postal_code: e.target.value })
+                setForm({ ...form, certificate_holder_name: e.target.value })
+              }
+            />
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="ai">Additional insured wording</Label>
+            <Textarea
+              id="ai"
+              rows={3}
+              value={form.additional_insured_wording}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  additional_insured_wording: e.target.value,
+                })
+              }
+              placeholder="…including Oak Street LLC as additional insured…"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="llcs">Owner LLCs (comma-separated)</Label>
+            <Input
+              id="llcs"
+              value={form.owner_llc_names}
+              onChange={(e) =>
+                setForm({ ...form, owner_llc_names: e.target.value })
+              }
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="lenders">Lenders (comma-separated)</Label>
+            <Input
+              id="lenders"
+              value={form.lender_names}
+              onChange={(e) =>
+                setForm({ ...form, lender_names: e.target.value })
               }
             />
           </div>
         </div>
-        <div className="space-y-1.5 sm:col-span-2">
-          <Label htmlFor="holder">Certificate holder name</Label>
-          <Input
-            id="holder"
-            value={form.certificate_holder_name}
-            onChange={(e) =>
-              setForm({ ...form, certificate_holder_name: e.target.value })
-            }
-          />
-        </div>
-        <div className="space-y-1.5 sm:col-span-2">
-          <Label htmlFor="ai">Additional insured wording</Label>
-          <Textarea
-            id="ai"
-            rows={3}
-            value={form.additional_insured_wording}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                additional_insured_wording: e.target.value,
-              })
-            }
-            placeholder="…including Oak Street LLC as additional insured…"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="llcs">Owner LLCs (comma-separated)</Label>
-          <Input
-            id="llcs"
-            value={form.owner_llc_names}
-            onChange={(e) =>
-              setForm({ ...form, owner_llc_names: e.target.value })
-            }
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="lenders">Lenders (comma-separated)</Label>
-          <Input
-            id="lenders"
-            value={form.lender_names}
-            onChange={(e) => setForm({ ...form, lender_names: e.target.value })}
-          />
-        </div>
-        <div className="space-y-1.5 sm:col-span-2">
-          <Label htmlFor="owner-email">Owner report email (D3)</Label>
+      </section>
+
+      <section className="space-y-4 border-t pt-6">
+        <SectionHeading
+          title="Owner report (D3)"
+          hint="A monthly compliance summary for the building owner."
+        />
+        <div className="max-w-md space-y-1.5">
+          <Label htmlFor="owner-email">Owner report email</Label>
           <Input
             id="owner-email"
             type="email"
@@ -231,48 +265,70 @@ export function PropertyEditor({
           <label className="mt-2 flex items-center gap-2 text-sm">
             <input
               type="checkbox"
+              className="accent-primary size-4"
               checked={ownerReportEnabled}
               onChange={(e) => setOwnerReportEnabled(e.target.checked)}
             />
             Email monthly owner report automatically
           </label>
         </div>
-      </div>
+      </section>
 
-      <div className="space-y-2 rounded-lg border p-4">
-        <h2 className="text-sm font-medium">Requirement override</h2>
-        <p className="text-muted-foreground text-xs">
-          Merges over global + trade rules for documents tied to this property.
-        </p>
-        <div className="max-w-xs space-y-1.5">
+      <section className="bg-card rounded-xl border">
+        <div className="border-b px-4 py-3">
+          <h2 className="text-sm font-semibold">Requirement override</h2>
+          <p className="text-muted-foreground mt-0.5 text-xs">
+            Merges over global + trade rules for documents tied to this
+            property.
+          </p>
+        </div>
+        <div className="max-w-xs space-y-1.5 p-4">
           <Label htmlFor="gl">GL each-occurrence minimum ($)</Label>
           <Input
             id="gl"
+            className="tabular-nums"
             value={glMin}
             onChange={(e) => setGlMin(e.target.value)}
           />
         </div>
-      </div>
+      </section>
 
-      <div className="space-y-2 rounded-lg border p-4">
-        <h2 className="text-sm font-medium">Vendors on this property</h2>
-        <ul className="space-y-2">
+      <section className="bg-card rounded-xl border">
+        <div className="flex items-baseline justify-between gap-2 border-b px-4 py-3">
+          <div>
+            <h2 className="text-sm font-semibold">Vendors on this property</h2>
+            <p className="text-muted-foreground mt-0.5 text-xs">
+              Checked vendors are tracked against this property’s requirements.
+            </p>
+          </div>
+          <span className="text-muted-foreground text-xs tabular-nums">
+            {selected.size}/{vendors.length}
+          </span>
+        </div>
+        <div className="divide-y">
           {vendors.map((v) => (
-            <li key={v.id} className="flex items-center gap-2 text-sm">
+            <label
+              key={v.id}
+              htmlFor={`v-${v.id}`}
+              className="hover:bg-muted/40 flex cursor-pointer items-center gap-2.5 px-4 py-2.5 text-sm"
+            >
               <input
                 type="checkbox"
+                className="accent-primary size-4"
                 checked={selected.has(v.id)}
                 onChange={() => toggleVendor(v.id)}
                 id={`v-${v.id}`}
               />
-              <label htmlFor={`v-${v.id}`}>{v.name}</label>
-            </li>
+              {v.name}
+            </label>
           ))}
           {vendors.length === 0 ? (
-            <li className="text-muted-foreground text-xs">No vendors yet.</li>
+            <p className="text-muted-foreground px-4 py-6 text-center text-sm">
+              No vendors yet — add vendors first, then attach them here.
+            </p>
           ) : null}
-        </ul>
-      </div>
+        </div>
+      </section>
 
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={busy}>

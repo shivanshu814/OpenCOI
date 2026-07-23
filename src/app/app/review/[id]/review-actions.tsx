@@ -168,149 +168,166 @@ export function ReviewActions({
     customerDecision === "overridden"
   ) {
     return (
-      <div className="space-y-2 rounded-lg border p-4">
-        <p className="text-xs font-medium tracking-wide uppercase">
-          Customer decision
-        </p>
-        <p className="text-sm font-medium capitalize">
-          {customerDecision ?? status}
-        </p>
-        {customerDecisionReason ? (
-          <p className="text-muted-foreground text-xs">
-            {customerDecisionReason}
+      <div className="bg-card rounded-xl border">
+        <div className="border-b px-4 py-3">
+          <h2 className="text-sm font-semibold">Customer decision</h2>
+        </div>
+        <div className="space-y-2 px-4 py-3">
+          <p className="text-sm font-medium capitalize">
+            {customerDecision ?? status}
           </p>
-        ) : null}
-        <p className="text-muted-foreground text-xs leading-relaxed">
-          Document review assistance — not legal, insurance, or professional
-          advice.
-        </p>
-        {msg ? (
-          <p className="text-muted-foreground text-xs leading-relaxed">{msg}</p>
-        ) : null}
+          {customerDecisionReason ? (
+            <p className="text-muted-foreground text-xs">
+              {customerDecisionReason}
+            </p>
+          ) : null}
+          <p className="text-muted-foreground text-xs leading-relaxed">
+            Document review assistance — not legal, insurance, or professional
+            advice.
+          </p>
+          {msg ? (
+            <p className="text-muted-foreground text-xs leading-relaxed">
+              {msg}
+            </p>
+          ) : null}
+        </div>
       </div>
     );
   }
 
   if (status === "published") {
     return (
-      <div className="space-y-4">
-        <div className="rounded-lg border p-4 space-y-3">
-          <p className="text-xs font-medium tracking-wide uppercase">
-            Your approval (Appendix B)
-          </p>
-          <p className="text-muted-foreground text-xs leading-relaxed">
+      <div className="bg-card rounded-xl border">
+        <div className="border-b px-4 py-3">
+          <h2 className="text-sm font-semibold">Your approval (Appendix B)</h2>
+          <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">
             You are the final approver. Accept the published verdict, or
             override with a logged reason.
           </p>
+        </div>
+
+        <div className="space-y-4 px-4 py-4">
           <Button
             onClick={() => void decide("accept")}
             disabled={busy !== null}
           >
             {busy === "accept" ? "Accepting…" : "Accept verdict"}
           </Button>
-        </div>
 
-        <div className="space-y-3 rounded-lg border p-4">
-          <p className="text-xs font-medium tracking-wide uppercase">
-            Override
-          </p>
-          <div className="space-y-1.5">
-            <Label htmlFor="reason_code">Reason</Label>
-            <select
-              id="reason_code"
-              className="border-input bg-background h-9 w-full rounded-lg border px-2.5 text-sm"
-              value={reasonCode}
-              onChange={(e) =>
-                setReasonCode(e.target.value as OverrideReasonCode)
-              }
-              disabled={busy !== null}
-            >
-              {OVERRIDE_REASON_CODES.map((code) => (
-                <option key={code} value={code}>
-                  {OVERRIDE_REASON_LABELS[code]}
-                </option>
-              ))}
-            </select>
-          </div>
-          {reasonCode === "other" ? (
+          <div className="space-y-3 border-t pt-4">
+            <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+              Or override
+            </p>
             <div className="space-y-1.5">
-              <Label htmlFor="reason_text">Details</Label>
-              <Textarea
-                id="reason_text"
-                value={reasonText}
-                onChange={(e) => setReasonText(e.target.value)}
-                placeholder="Describe the override…"
+              <Label htmlFor="reason_code">Reason</Label>
+              <select
+                id="reason_code"
+                className="border-input bg-background h-9 w-full rounded-lg border px-2.5 text-sm"
+                value={reasonCode}
+                onChange={(e) =>
+                  setReasonCode(e.target.value as OverrideReasonCode)
+                }
                 disabled={busy !== null}
-              />
+              >
+                {OVERRIDE_REASON_CODES.map((code) => (
+                  <option key={code} value={code}>
+                    {OVERRIDE_REASON_LABELS[code]}
+                  </option>
+                ))}
+              </select>
             </div>
-          ) : null}
-          {reasonCode === "extraction_error_dispute" ? (
-            <p className="text-amber-800 text-xs leading-relaxed">
-              Disputes route back to internal review for correction.
+            {reasonCode === "other" ? (
+              <div className="space-y-1.5">
+                <Label htmlFor="reason_text">Details</Label>
+                <Textarea
+                  id="reason_text"
+                  value={reasonText}
+                  onChange={(e) => setReasonText(e.target.value)}
+                  placeholder="Describe the override…"
+                  disabled={busy !== null}
+                />
+              </div>
+            ) : null}
+            {reasonCode === "extraction_error_dispute" ? (
+              <p className="text-xs leading-relaxed text-amber-800">
+                Disputes route back to internal review for correction.
+              </p>
+            ) : null}
+            <Button
+              variant="outline"
+              onClick={() => void decide("override")}
+              disabled={
+                busy !== null ||
+                (reasonCode === "other" && reasonText.trim() === "")
+              }
+            >
+              {busy === "override" ? "Saving…" : "Override with reason"}
+            </Button>
+          </div>
+
+          {msg ? (
+            <p className="text-muted-foreground text-xs leading-relaxed">
+              {msg}
             </p>
           ) : null}
-          <Button
-            variant="outline"
-            onClick={() => void decide("override")}
-            disabled={
-              busy !== null ||
-              (reasonCode === "other" && reasonText.trim() === "")
-            }
-          >
-            {busy === "override" ? "Saving…" : "Override with reason"}
-          </Button>
         </div>
-
-        {msg ? (
-          <p className="text-muted-foreground text-xs leading-relaxed">{msg}</p>
-        ) : null}
       </div>
     );
   }
 
   // Internal review (founder) — default
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
+    <div className="bg-card rounded-xl border">
+      <div className="border-b px-4 py-3">
+        <h2 className="text-sm font-semibold">Founder review</h2>
+        <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">
+          Approve to publish, or correct a field first — every correction
+          becomes a golden-set case.
+        </p>
+      </div>
+
+      <div className="space-y-4 px-4 py-4">
         <Button onClick={publish} disabled={busy !== null}>
           {busy === "publish" ? "Publishing…" : "Approve & publish"}
         </Button>
-      </div>
 
-      <div className="space-y-3 rounded-lg border p-4">
-        <p className="text-xs font-medium tracking-wide uppercase">
-          Save correction (golden set)
-        </p>
-        <div className="space-y-1.5">
-          <Label htmlFor="field_path">Field path</Label>
-          <Input
-            id="field_path"
-            value={fieldPath}
-            onChange={(e) => setFieldPath(e.target.value)}
-            placeholder="policies[0].limits[0].amount"
-          />
+        <div className="space-y-3 border-t pt-4">
+          <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+            Save correction (golden set)
+          </p>
+          <div className="space-y-1.5">
+            <Label htmlFor="field_path">Field path</Label>
+            <Input
+              id="field_path"
+              value={fieldPath}
+              onChange={(e) => setFieldPath(e.target.value)}
+              placeholder="policies[0].limits[0].amount"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="after_value">Corrected value</Label>
+            <Input
+              id="after_value"
+              value={afterValue}
+              onChange={(e) => setAfterValue(e.target.value)}
+              placeholder="2026-12-31"
+            />
+          </div>
+          <Button
+            variant="outline"
+            onClick={saveCorrection}
+            disabled={busy !== null || !fieldPath || afterValue === ""}
+          >
+            {busy === "correct" ? "Saving…" : "Save correction"}
+          </Button>
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="after_value">Corrected value</Label>
-          <Input
-            id="after_value"
-            value={afterValue}
-            onChange={(e) => setAfterValue(e.target.value)}
-            placeholder="2026-12-31"
-          />
-        </div>
-        <Button
-          variant="outline"
-          onClick={saveCorrection}
-          disabled={busy !== null || !fieldPath || afterValue === ""}
-        >
-          {busy === "correct" ? "Saving…" : "Save correction"}
-        </Button>
-      </div>
 
-      {msg ? (
-        <p className="text-muted-foreground text-xs leading-relaxed">{msg}</p>
-      ) : null}
+        {msg ? (
+          <p className="text-muted-foreground text-xs leading-relaxed">
+            {msg}
+          </p>
+        ) : null}
+      </div>
     </div>
   );
 }

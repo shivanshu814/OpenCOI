@@ -74,135 +74,154 @@ export function TeamSettingsClient() {
 
   return (
     <div className="space-y-8">
-      <section className="space-y-3 rounded-lg border p-4">
-        <h2 className="text-sm font-medium">
-          Team (Admin / Manager / Read-only)
-        </h2>
-        <p className="text-muted-foreground text-xs">
-          DB roles map to product: owner/admin → Admin, member → Manager, viewer
-          → Read-only.
-        </p>
-        <ul className="divide-y rounded border text-sm">
+      <section className="bg-card rounded-xl border">
+        <div className="border-b px-4 py-3">
+          <div className="flex items-baseline justify-between gap-2">
+            <h2 className="text-sm font-semibold">Team members</h2>
+            <span className="text-muted-foreground text-xs tabular-nums">
+              {members.length}
+            </span>
+          </div>
+          <p className="text-muted-foreground mt-0.5 text-xs">
+            DB roles map to product: owner/admin → Admin, member → Manager,
+            viewer → Read-only.
+          </p>
+        </div>
+
+        <ul className="divide-y">
           {members.map((m) => (
             <li
               key={m.id}
-              className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"
+              className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5"
             >
               <span className="font-mono text-xs">
                 {m.user_id.slice(0, 8)}…
               </span>
-              <span className="text-xs">
-                {productRoleLabel(toProductRole(m.role))} ({m.role})
+              <span className="text-sm">
+                {productRoleLabel(toProductRole(m.role))}{" "}
+                <span className="text-muted-foreground text-xs">
+                  ({m.role})
+                </span>
               </span>
             </li>
           ))}
           {members.length === 0 ? (
-            <li className="text-muted-foreground px-3 py-4 text-xs">
+            <li className="text-muted-foreground px-4 py-6 text-center text-sm">
               No members loaded (or demo).
             </li>
           ) : null}
         </ul>
-        <div className="grid gap-2 sm:grid-cols-3">
-          <div className="space-y-1 sm:col-span-2">
-            <Label htmlFor="invite-email">Invite email</Label>
-            <Input
-              id="invite-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+
+        <div className="space-y-3 border-t px-4 py-4 sm:px-5">
+          <p className="text-xs font-medium">Invite a teammate</p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label htmlFor="invite-email">Invite email</Label>
+              <Input
+                id="invite-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="teammate@yourpm.com"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="invite-role">Role</Label>
+              <select
+                id="invite-role"
+                className="border-input bg-background h-9 w-full rounded-lg border px-2.5 text-sm"
+                value={role}
+                onChange={(e) =>
+                  setRole(e.target.value as "admin" | "member" | "viewer")
+                }
+              >
+                <option value="admin">Admin</option>
+                <option value="member">Manager</option>
+                <option value="viewer">Read-only</option>
+              </select>
+            </div>
           </div>
-          <div className="space-y-1">
-            <Label htmlFor="invite-role">Role</Label>
-            <select
-              id="invite-role"
-              className="border-input bg-background h-9 w-full rounded-lg border px-2.5 text-sm"
-              value={role}
-              onChange={(e) =>
-                setRole(e.target.value as "admin" | "member" | "viewer")
-              }
-            >
-              <option value="admin">Admin</option>
-              <option value="member">Manager</option>
-              <option value="viewer">Read-only</option>
-            </select>
-          </div>
+          <Button
+            size="sm"
+            disabled={busy || !email.trim()}
+            onClick={() => void post({ action: "invite", email, role })}
+          >
+            Invite
+          </Button>
+          {invites.length ? (
+            <ul className="text-muted-foreground space-y-0.5 text-xs">
+              {invites.map((i) => (
+                <li key={i.id}>
+                  Pending: {i.email} · {i.role}
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
-        <Button
-          size="sm"
-          disabled={busy || !email.trim()}
-          onClick={() => void post({ action: "invite", email, role })}
-        >
-          Invite
-        </Button>
-        {invites.length ? (
-          <ul className="text-muted-foreground text-xs">
-            {invites.map((i) => (
-              <li key={i.id}>
-                Pending: {i.email} · {i.role}
-              </li>
-            ))}
-          </ul>
-        ) : null}
       </section>
 
-      <section className="space-y-3 rounded-lg border p-4">
-        <h2 className="text-sm font-medium">White-label email (F2)</h2>
-        <p className="text-muted-foreground text-xs">
-          Custom from-address requires DKIM on your domain in Resend.
-        </p>
-        <div className="grid gap-2 sm:grid-cols-2">
-          <div className="space-y-1">
-            <Label htmlFor="from">From email</Label>
-            <Input
-              id="from"
-              value={fromEmail}
-              onChange={(e) => setFromEmail(e.target.value)}
-              placeholder="compliance@yourpm.com"
-            />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="reply">Reply-to</Label>
-            <Input
-              id="reply"
-              value={replyTo}
-              onChange={(e) => setReplyTo(e.target.value)}
-            />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="color">Brand color</Label>
-            <Input
-              id="color"
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
-              placeholder="#0F766E"
-            />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="logo">Logo URL</Label>
-            <Input
-              id="logo"
-              value={logo}
-              onChange={(e) => setLogo(e.target.value)}
-            />
-          </div>
+      <section className="bg-card rounded-xl border">
+        <div className="border-b px-4 py-3">
+          <h2 className="text-sm font-semibold">White-label email (F2)</h2>
+          <p className="text-muted-foreground mt-0.5 text-xs">
+            Chase emails go out under your name. Custom from-address requires
+            DKIM on your domain in Resend.
+          </p>
         </div>
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={busy}
-          onClick={() =>
-            void post({
-              action: "update_branding",
-              from_email: fromEmail,
-              reply_to_email: replyTo,
-              brand_primary_color: color,
-              logo_url: logo,
-            })
-          }
-        >
-          Save branding
-        </Button>
+        <div className="space-y-4 px-4 py-4 sm:px-5">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="from">From email</Label>
+              <Input
+                id="from"
+                value={fromEmail}
+                onChange={(e) => setFromEmail(e.target.value)}
+                placeholder="compliance@yourpm.com"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="reply">Reply-to</Label>
+              <Input
+                id="reply"
+                value={replyTo}
+                onChange={(e) => setReplyTo(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="color">Brand color</Label>
+              <Input
+                id="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                placeholder="#0F766E"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="logo">Logo URL</Label>
+              <Input
+                id="logo"
+                value={logo}
+                onChange={(e) => setLogo(e.target.value)}
+              />
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            onClick={() =>
+              void post({
+                action: "update_branding",
+                from_email: fromEmail,
+                reply_to_email: replyTo,
+                brand_primary_color: color,
+                logo_url: logo,
+              })
+            }
+          >
+            Save branding
+          </Button>
+        </div>
       </section>
 
       {msg ? <p className="text-muted-foreground text-xs">{msg}</p> : null}

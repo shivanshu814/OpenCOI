@@ -1,8 +1,8 @@
-import { EmptyState } from "@/components/empty-state";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import type { ProjectStatus } from "@/lib/projects/types";
 import { createClient } from "@/lib/supabase/server";
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { AddProjectForm } from "./add-project-form";
 
@@ -12,6 +12,12 @@ type ProjectRow = {
   start_date: string | null;
   end_date: string | null;
   status: ProjectStatus;
+};
+
+const STATUS_META: Record<ProjectStatus, { label: string; dot: string }> = {
+  active: { label: "Active", dot: "bg-emerald-500" },
+  closeout: { label: "Closeout", dot: "bg-amber-400" },
+  closed: { label: "Closed", dot: "bg-slate-400" },
 };
 
 async function listProjects(): Promise<ProjectRow[]> {
@@ -50,38 +56,56 @@ export default async function ProjectsPage() {
         </p>
       </div>
 
-      <AddProjectForm />
-
-      {projects.length === 0 ? (
-        <EmptyState
-          title="No projects yet"
-          description="Create a project, assign subcontractors, and raise limits for the job."
-        />
-      ) : (
-        <ul className="divide-y rounded-lg border">
-          {projects.map((p) => (
-            <li key={p.id}>
+      <section className="bg-card min-w-0 rounded-xl border">
+        <div className="flex items-baseline justify-between gap-2 border-b px-4 py-3">
+          <h2 className="text-sm font-semibold">All projects</h2>
+          <span className="text-muted-foreground text-xs tabular-nums">
+            {projects.length}
+          </span>
+        </div>
+        <div className="divide-y">
+          {projects.map((p) => {
+            const meta = STATUS_META[p.status] ?? STATUS_META.active;
+            return (
               <Link
+                key={p.id}
                 href={`/app/projects/${p.id}`}
                 className="hover:bg-muted/40 flex items-center justify-between gap-4 px-4 py-3"
               >
-                <div>
-                  <p className="font-medium">{p.name}</p>
-                  <p className="text-muted-foreground text-xs">
-                    {[
-                      p.start_date && p.end_date
-                        ? `${p.start_date} → ${p.end_date}`
-                        : p.start_date || p.end_date || "Dates TBD",
-                      p.status,
-                    ].join(" · ")}
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{p.name}</p>
+                  <p className="text-muted-foreground truncate text-xs tabular-nums">
+                    {p.start_date && p.end_date
+                      ? `${p.start_date} → ${p.end_date}`
+                      : p.start_date || p.end_date || "Dates TBD"}
                   </p>
                 </div>
-                <span className="text-muted-foreground text-xs">Edit →</span>
+                <div className="flex shrink-0 items-center gap-3">
+                  <span className="flex items-center gap-1.5 text-xs">
+                    <span
+                      className={`size-2 rounded-full ${meta.dot}`}
+                      aria-hidden
+                    />
+                    <span className="text-muted-foreground">{meta.label}</span>
+                  </span>
+                  <ChevronRight
+                    className="text-muted-foreground size-4"
+                    aria-hidden
+                  />
+                </div>
               </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+            );
+          })}
+          {projects.length === 0 ? (
+            <p className="text-muted-foreground px-4 py-8 text-center text-sm">
+              No projects yet — create one below, assign subcontractors, and
+              raise limits for the job.
+            </p>
+          ) : null}
+        </div>
+      </section>
+
+      <AddProjectForm />
     </div>
   );
 }

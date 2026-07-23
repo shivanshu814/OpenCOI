@@ -86,152 +86,169 @@ export function VendorOnboardingPanel({ vendorId }: Props) {
   }
 
   return (
-    <div className="space-y-6 rounded-lg border p-4">
-      <div>
-        <h2 className="text-sm font-medium">W-9 / TIN (admins)</h2>
-        <p className="text-muted-foreground mt-1 text-xs">
-          Field-level encrypted. UI shows masked TIN only (
-          {taxMasked ?? "none on file"}).
+    <div className="bg-card min-w-0 rounded-xl border">
+      <div className="border-b px-4 py-3">
+        <h2 className="text-sm font-semibold">Onboarding &amp; paperwork</h2>
+        <p className="text-muted-foreground mt-0.5 text-xs">
+          W-9, trade license, and signed agreements for this vendor.
         </p>
-        <div className="mt-3 grid gap-2 sm:grid-cols-2">
-          <div className="space-y-1">
-            <Label htmlFor="legal">Legal name</Label>
-            <Input
-              id="legal"
-              value={legalName}
-              onChange={(e) => setLegalName(e.target.value)}
-            />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="tin">EIN / SSN</Label>
-            <Input
-              id="tin"
-              value={tin}
-              onChange={(e) => setTin(e.target.value)}
-              placeholder="••-•••••••"
-              autoComplete="off"
-            />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="tintype">Type</Label>
-            <select
-              id="tintype"
-              className="border-input bg-background h-9 w-full rounded-lg border px-2.5 text-sm"
-              value={tinType}
-              onChange={(e) => setTinType(e.target.value as "ein" | "ssn")}
-            >
-              <option value="ein">EIN</option>
-              <option value="ssn">SSN</option>
-            </select>
-          </div>
-        </div>
-        <Button
-          className="mt-3"
-          size="sm"
-          disabled={busy || !tin.trim()}
-          onClick={() =>
-            void post({
-              action: "upsert_tax",
-              legal_name: legalName,
-              tin,
-              tin_type: tinType,
-            })
-          }
-        >
-          Save W-9 / TIN
-        </Button>
       </div>
 
-      <div>
-        <h2 className="text-sm font-medium">Trade license</h2>
-        <div className="mt-2 grid gap-2 sm:grid-cols-3">
-          <Input
-            placeholder="License #"
-            value={licNum}
-            onChange={(e) => setLicNum(e.target.value)}
-          />
-          <Input
-            placeholder="State (CA)"
-            value={licState}
-            onChange={(e) => setLicState(e.target.value)}
-          />
-          <Input
-            type="date"
-            value={licExp}
-            onChange={(e) => setLicExp(e.target.value)}
-          />
-        </div>
-        <Button
-          className="mt-2"
-          size="sm"
-          variant="outline"
-          disabled={busy}
-          onClick={() =>
-            void post({
-              action: "add_license",
-              license_number: licNum,
-              license_state: licState,
-              expires_on: licExp || undefined,
-            })
-          }
-        >
-          Add license
-        </Button>
-        <ul className="text-muted-foreground mt-2 space-y-1 text-xs">
-          {licenses.map((l) => (
-            <li key={l.id}>
-              {l.license_number ?? "—"} · {l.state} · exp {l.expires_on ?? "—"}{" "}
-              {l.board_lookup_url ? (
-                <a
-                  className="underline"
-                  href={l.board_lookup_url}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  board lookup
-                </a>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      </div>
+      <div className="divide-y">
+        <section className="px-4 py-4">
+          <h3 className="text-sm font-medium">W-9 / TIN (admins)</h3>
+          <p className="text-muted-foreground mt-1 text-xs">
+            Field-level encrypted. UI shows masked TIN only (
+            {taxMasked ?? "none on file"}).
+          </p>
+          <div className="mt-3 grid gap-x-3 gap-y-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="legal">Legal name</Label>
+              <Input
+                id="legal"
+                value={legalName}
+                onChange={(e) => setLegalName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="tin">EIN / SSN</Label>
+              <Input
+                id="tin"
+                value={tin}
+                onChange={(e) => setTin(e.target.value)}
+                placeholder="••-•••••••"
+                autoComplete="off"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="tintype">Type</Label>
+              <select
+                id="tintype"
+                className="border-input bg-background h-9 w-full rounded-lg border px-2.5 text-sm"
+                value={tinType}
+                onChange={(e) => setTinType(e.target.value as "ein" | "ssn")}
+              >
+                <option value="ein">EIN</option>
+                <option value="ssn">SSN</option>
+              </select>
+            </div>
+          </div>
+          <Button
+            className="mt-3"
+            size="sm"
+            variant="outline"
+            disabled={busy || !tin.trim()}
+            onClick={() =>
+              void post({
+                action: "upsert_tax",
+                legal_name: legalName,
+                tin,
+                tin_type: tinType,
+              })
+            }
+          >
+            Save W-9 / TIN
+          </Button>
+        </section>
 
-      <div>
-        <h2 className="text-sm font-medium">Agreement e-sign (Documenso)</h2>
-        <p className="text-muted-foreground text-xs">
-          Sends Confirm-style signing link to vendor email (demo without API
-          key).
-        </p>
-        <Button
-          className="mt-2"
-          size="sm"
-          variant="outline"
-          disabled={busy}
-          onClick={() => void post({ action: "create_agreement" })}
-        >
-          Send hold-harmless for signature
-        </Button>
-        <ul className="text-muted-foreground mt-2 space-y-1 text-xs">
-          {agreements.map((a) => (
-            <li key={a.id}>
-              {a.title} · {a.status}{" "}
-              {a.signing_url ? (
-                <a
-                  className="underline"
-                  href={a.signing_url}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  open
-                </a>
-              ) : null}
-            </li>
-          ))}
-        </ul>
+        <section className="px-4 py-4">
+          <h3 className="text-sm font-medium">Trade license</h3>
+          <div className="mt-3 grid gap-x-3 gap-y-3 sm:grid-cols-3">
+            <Input
+              placeholder="License #"
+              value={licNum}
+              onChange={(e) => setLicNum(e.target.value)}
+            />
+            <Input
+              placeholder="State (CA)"
+              value={licState}
+              onChange={(e) => setLicState(e.target.value)}
+            />
+            <Input
+              type="date"
+              value={licExp}
+              onChange={(e) => setLicExp(e.target.value)}
+            />
+          </div>
+          <Button
+            className="mt-3"
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            onClick={() =>
+              void post({
+                action: "add_license",
+                license_number: licNum,
+                license_state: licState,
+                expires_on: licExp || undefined,
+              })
+            }
+          >
+            Add license
+          </Button>
+          {licenses.length > 0 ? (
+            <ul className="text-muted-foreground mt-3 space-y-1 text-xs">
+              {licenses.map((l) => (
+                <li key={l.id} className="tabular-nums">
+                  {l.license_number ?? "—"} · {l.state} · exp{" "}
+                  {l.expires_on ?? "—"}{" "}
+                  {l.board_lookup_url ? (
+                    <a
+                      className="underline underline-offset-4"
+                      href={l.board_lookup_url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      board lookup
+                    </a>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+
+        <section className="px-4 py-4">
+          <h3 className="text-sm font-medium">Agreement e-sign (Documenso)</h3>
+          <p className="text-muted-foreground mt-1 text-xs">
+            Sends Confirm-style signing link to vendor email (demo without API
+            key).
+          </p>
+          <Button
+            className="mt-3"
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            onClick={() => void post({ action: "create_agreement" })}
+          >
+            Send hold-harmless for signature
+          </Button>
+          {agreements.length > 0 ? (
+            <ul className="text-muted-foreground mt-3 space-y-1 text-xs">
+              {agreements.map((a) => (
+                <li key={a.id}>
+                  {a.title} · {a.status}{" "}
+                  {a.signing_url ? (
+                    <a
+                      className="underline underline-offset-4"
+                      href={a.signing_url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      open
+                    </a>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
       </div>
 
       {msg ? (
-        <p className="text-muted-foreground text-xs break-all">{msg}</p>
+        <p className="text-muted-foreground border-t px-4 py-3 text-xs break-all">
+          {msg}
+        </p>
       ) : null}
     </div>
   );

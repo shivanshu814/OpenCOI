@@ -1,3 +1,5 @@
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 
 export function EmptyState({
@@ -12,17 +14,17 @@ export function EmptyState({
   actionLabel?: string;
 }) {
   return (
-    <div className="rounded-lg border border-dashed px-6 py-12 text-center">
-      <p className="text-sm font-medium">{title}</p>
+    <div className="bg-card/50 rounded-xl border border-dashed px-6 py-14 text-center">
+      <p className="text-sm font-semibold">{title}</p>
       {description ? (
-        <p className="text-muted-foreground mx-auto mt-2 max-w-md text-sm leading-relaxed">
+        <p className="text-muted-foreground mx-auto mt-1.5 max-w-md text-sm leading-relaxed">
           {description}
         </p>
       ) : null}
       {actionHref && actionLabel ? (
         <Link
           href={actionHref}
-          className="text-foreground mt-4 inline-block text-sm font-medium underline"
+          className={cn(buttonVariants({ variant: "outline", size: "sm" }), "mt-5")}
         >
           {actionLabel}
         </Link>

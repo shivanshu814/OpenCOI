@@ -56,48 +56,71 @@ export default async function ReportsPage() {
       {properties.length === 0 ? (
         <EmptyState
           title="No properties yet"
-          description="Add a property, assign vendors, then generate an owner report."
+          description="Add a property, assign vendors, then generate an owner report — compliance %, documents on file, and risks flagged, ready for the building owner."
           actionHref="/app/properties"
           actionLabel="Go to Properties"
         />
       ) : (
-        <ul className="divide-y rounded-lg border">
-          {properties.map((p) => (
-            <li
-              key={p.id}
-              className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
-            >
-              <div>
-                <Link
-                  href={`/app/properties/${p.id}`}
-                  className="font-medium hover:underline"
-                >
-                  {p.name}
-                </Link>
-                <p className="text-muted-foreground text-xs">
-                  {[
-                    [p.city, p.state].filter(Boolean).join(", "),
-                    p.owner_report_email
-                      ? `Owner email: ${p.owner_report_email}`
-                      : "No owner email set",
-                    p.owner_report_enabled
-                      ? "Monthly auto-send on"
-                      : "Monthly auto-send off",
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <DownloadOwnerReportButton propertyId={p.id} />
-                <SendOwnerReportButton
-                  propertyId={p.id}
-                  toHint={p.owner_report_email}
-                />
-              </div>
-            </li>
-          ))}
-        </ul>
+        <section className="bg-card rounded-xl border">
+          <div className="border-b px-4 py-3">
+            <div className="flex items-baseline justify-between gap-2">
+              <h2 className="text-sm font-semibold">Properties</h2>
+              <span className="text-muted-foreground text-xs tabular-nums">
+                {properties.length}
+              </span>
+            </div>
+            <p className="text-muted-foreground mt-0.5 text-xs">
+              Download an owner report anytime, or email it directly to the
+              owner on file.
+            </p>
+          </div>
+          <ul className="divide-y">
+            {properties.map((p) => (
+              <li
+                key={p.id}
+                className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
+              >
+                <div className="min-w-0">
+                  <Link
+                    href={`/app/properties/${p.id}`}
+                    className="text-sm font-medium hover:underline"
+                  >
+                    {p.name}
+                  </Link>
+                  <p className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-2 text-xs">
+                    {[p.city, p.state].filter(Boolean).length > 0 ? (
+                      <span>{[p.city, p.state].filter(Boolean).join(", ")}</span>
+                    ) : null}
+                    <span>
+                      {p.owner_report_email
+                        ? `Owner email: ${p.owner_report_email}`
+                        : "No owner email set"}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <span
+                        className={`size-1.5 rounded-full ${
+                          p.owner_report_enabled
+                            ? "bg-emerald-500"
+                            : "bg-slate-400"
+                        }`}
+                      />
+                      {p.owner_report_enabled
+                        ? "Monthly auto-send on"
+                        : "Monthly auto-send off"}
+                    </span>
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <DownloadOwnerReportButton propertyId={p.id} />
+                  <SendOwnerReportButton
+                    propertyId={p.id}
+                    toHint={p.owner_report_email}
+                  />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       <p className="text-muted-foreground text-xs">

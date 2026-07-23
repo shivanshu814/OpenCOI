@@ -55,7 +55,7 @@ export function IssuePortalLinkButton({ vendorId }: { vendorId: string }) {
             : "Copy portal magic link"}
       </Button>
       {url ? (
-        <p className="break-all rounded border bg-muted/30 p-2 font-mono text-xs">
+        <p className="bg-muted/40 text-muted-foreground rounded-lg border px-2.5 py-2 font-mono text-xs leading-relaxed break-all">
           {url}
         </p>
       ) : null}

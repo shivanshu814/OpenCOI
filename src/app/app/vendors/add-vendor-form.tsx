@@ -52,48 +52,51 @@ export function AddVendorForm() {
   }
 
   return (
-    <form
-      onSubmit={onSubmit}
-      className="grid max-w-2xl gap-3 rounded-lg border p-4 sm:grid-cols-4"
-    >
-      <div className="space-y-1.5 sm:col-span-1">
-        <Label htmlFor="name">Name</Label>
-        <Input
-          id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-          placeholder="Vendor LLC"
-        />
+    <form onSubmit={onSubmit} className="bg-card rounded-xl border">
+      <div className="border-b px-4 py-3">
+        <h2 className="text-sm font-semibold">Add a vendor</h2>
+        <p className="text-muted-foreground mt-0.5 text-xs">
+          Name and email are enough to start — chase emails go to this address.
+        </p>
       </div>
-      <div className="space-y-1.5 sm:col-span-1">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          placeholder="ops@vendor.com"
-        />
-      </div>
-      <div className="space-y-1.5 sm:col-span-1">
-        <Label htmlFor="trade">Trade</Label>
-        <Input
-          id="trade"
-          value={trade}
-          onChange={(e) => setTrade(e.target.value)}
-          placeholder="Roofer"
-        />
-      </div>
-      <div className="flex items-end">
-        <Button type="submit" className="w-full" disabled={busy}>
+      <div className="grid items-end gap-x-3 gap-y-4 px-4 py-4 sm:grid-cols-[1fr_1fr_1fr_auto]">
+        <div className="space-y-1.5">
+          <Label htmlFor="name">Name</Label>
+          <Input
+            id="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            placeholder="Vendor LLC"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            placeholder="ops@vendor.com"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="trade">Trade</Label>
+          <Input
+            id="trade"
+            value={trade}
+            onChange={(e) => setTrade(e.target.value)}
+            placeholder="Roofer"
+          />
+        </div>
+        <Button type="submit" disabled={busy}>
           {busy ? "Saving…" : "Add vendor"}
         </Button>
+        {note ? (
+          <p className="text-muted-foreground text-xs sm:col-span-4">{note}</p>
+        ) : null}
       </div>
-      {note ? (
-        <p className="text-muted-foreground sm:col-span-4 text-xs">{note}</p>
-      ) : null}
     </form>
   );
 }

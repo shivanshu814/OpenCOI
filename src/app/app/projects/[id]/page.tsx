@@ -4,9 +4,22 @@ import { isSupabaseConfigured } from "@/lib/config";
 import type { RequirementRule } from "@/lib/requirements/engine";
 import type { ProjectStatus } from "@/lib/projects/types";
 import { createClient } from "@/lib/supabase/server";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProjectEditor } from "./project-editor";
+
+function BackLink() {
+  return (
+    <Link
+      href="/app/projects"
+      className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm"
+    >
+      <ArrowLeft className="size-3.5" aria-hidden />
+      Projects
+    </Link>
+  );
+}
 
 export default async function ProjectDetailPage({
   params,
@@ -17,23 +30,27 @@ export default async function ProjectDetailPage({
 
   if (!isSupabaseConfigured()) {
     return (
-      <div className="space-y-6">
-        <Link href="/app/projects" className="text-muted-foreground text-sm">
-          ← Projects
-        </Link>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Roof Replace — Building A
-          </h1>
-          <Button
-            variant="outline"
-            size="sm"
-            render={
-              <a href={`/api/projects/${id}/closeout-pack`} download />
-            }
-          >
-            Closeout pack
-          </Button>
+      <div className="space-y-8">
+        <div className="space-y-4">
+          <BackLink />
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight">
+                Roof Replace — Building A
+              </h1>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Job-specific requirements merge over global / trade / property
+                rules.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              render={<a href={`/api/projects/${id}/closeout-pack`} download />}
+            >
+              Closeout pack
+            </Button>
+          </div>
         </div>
         <ProjectEditor
           projectId={id}
@@ -89,29 +106,29 @@ export default async function ProjectDetailPage({
     ]);
 
   return (
-    <div className="space-y-6">
-      <Link href="/app/projects" className="text-muted-foreground text-sm">
-        ← Projects
-      </Link>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {project.name}
-          </h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Job-specific requirements merge over global / trade / property
-            rules.
-          </p>
+    <div className="space-y-8">
+      <div className="space-y-4">
+        <BackLink />
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              {project.name}
+            </h1>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Job-specific requirements merge over global / trade / property
+              rules.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            render={
+              <a href={`/api/projects/${project.id}/closeout-pack`} download />
+            }
+          >
+            Closeout pack
+          </Button>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          render={
-            <a href={`/api/projects/${project.id}/closeout-pack`} download />
-          }
-        >
-          Closeout pack
-        </Button>
       </div>
       <ProjectEditor
         projectId={id}

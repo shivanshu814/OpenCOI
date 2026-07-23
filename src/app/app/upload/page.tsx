@@ -14,7 +14,14 @@ export default async function Page() {
 
   return (
     <div className="space-y-6">
-      <IntakeEmailCard email={intakeEmail} demo={!session?.intakeEmail} />
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">Upload COI</h1>
+        <p className="text-muted-foreground mt-1 text-sm">
+          Web upload path (email-in lands Week 2). Endorsement checks run on
+          every extract.
+        </p>
+      </div>
+
       <Suspense
         fallback={
           <p className="text-muted-foreground text-sm">Loading upload…</p>
@@ -22,6 +29,8 @@ export default async function Page() {
       >
         <UploadPage vendors={vendors} />
       </Suspense>
+
+      <IntakeEmailCard email={intakeEmail} demo={!session?.intakeEmail} />
     </div>
   );
 }

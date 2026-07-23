@@ -1,6 +1,7 @@
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { AddPropertyForm } from "./add-property-form";
 
@@ -48,36 +49,47 @@ export default async function PropertiesPage() {
         </p>
       </div>
 
-      <AddPropertyForm />
-
-      <ul className="divide-y rounded-lg border">
-        {properties.map((p) => (
-          <li key={p.id}>
+      <section className="bg-card min-w-0 rounded-xl border">
+        <div className="flex items-baseline justify-between gap-2 border-b px-4 py-3">
+          <h2 className="text-sm font-semibold">All properties</h2>
+          <span className="text-muted-foreground text-xs tabular-nums">
+            {properties.length}
+          </span>
+        </div>
+        <div className="divide-y">
+          {properties.map((p) => (
             <Link
+              key={p.id}
               href={`/app/properties/${p.id}`}
               className="hover:bg-muted/40 flex items-center justify-between gap-4 px-4 py-3"
             >
-              <div>
-                <p className="font-medium">{p.name}</p>
-                <p className="text-muted-foreground text-xs">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{p.name}</p>
+                <p className="text-muted-foreground truncate text-xs">
                   {[
                     p.certificate_holder_name,
                     [p.city, p.state].filter(Boolean).join(", "),
                   ]
                     .filter(Boolean)
-                    .join(" · ") || "No holder set"}
+                    .join(" · ") || "No certificate holder set"}
                 </p>
               </div>
-              <span className="text-muted-foreground text-xs">Edit →</span>
+              <ChevronRight
+                className="text-muted-foreground size-4 shrink-0"
+                aria-hidden
+              />
             </Link>
-          </li>
-        ))}
-        {properties.length === 0 ? (
-          <li className="text-muted-foreground px-4 py-8 text-center text-sm">
-            No properties yet.
-          </li>
-        ) : null}
-      </ul>
+          ))}
+          {properties.length === 0 ? (
+            <p className="text-muted-foreground px-4 py-8 text-center text-sm">
+              No properties yet — add your first one below to set its
+              certificate holder and required limits.
+            </p>
+          ) : null}
+        </div>
+      </section>
+
+      <AddPropertyForm />
     </div>
   );
 }

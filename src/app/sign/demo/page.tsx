@@ -1,3 +1,5 @@
+import { BrandMark } from "@/components/marketing-shell";
+import { PenLine } from "lucide-react";
 import Link from "next/link";
 
 /** Demo Documenso stand-in when DOCUMENSO_API_KEY is unset. */
@@ -9,28 +11,43 @@ export default async function DemoSignPage({
   const sp = await searchParams;
   return (
     <div className="bg-background flex min-h-full flex-col">
-      <header className="border-b px-4 py-3">
-        <p className="text-sm font-semibold tracking-tight">CertShield</p>
+      <header className="bg-card border-b px-4 py-3 sm:px-6">
+        <BrandMark />
       </header>
-      <main className="mx-auto w-full max-w-lg flex-1 space-y-4 px-4 py-10">
-        <h1 className="text-xl font-semibold tracking-tight">
-          Demo e-sign (Documenso not connected)
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          {sp.title ?? "Agreement"} · {sp.email ?? "signer"}
-        </p>
-        <p className="text-muted-foreground text-sm leading-relaxed">
-          Connect <code className="text-foreground">DOCUMENSO_API_KEY</code> and{" "}
-          <code className="text-foreground">DOCUMENSO_API_URL</code> for live
-          signing. This page confirms the Week 5 flow without a password.
-        </p>
-        <p className="text-muted-foreground text-xs">
-          Document review assistance — not legal, insurance, or professional
-          advice.
-        </p>
-        <Link href="/" className="text-sm underline">
-          Back to CertShield
-        </Link>
+      <main className="mx-auto w-full max-w-lg flex-1 px-4 py-12">
+        <div className="bg-card rounded-xl border px-6 py-8">
+          <span className="bg-muted text-muted-foreground flex size-10 items-center justify-center rounded-full">
+            <PenLine className="size-5" />
+          </span>
+          <h1 className="mt-4 text-xl font-semibold tracking-tight">
+            Demo e-sign (Documenso not connected)
+          </h1>
+          <p className="text-muted-foreground mt-2 text-sm">
+            {sp.title ?? "Agreement"} · {sp.email ?? "signer"}
+          </p>
+          <p className="text-muted-foreground mt-4 text-sm leading-relaxed">
+            Connect{" "}
+            <code className="bg-muted text-foreground rounded px-1 py-0.5 text-xs">
+              DOCUMENSO_API_KEY
+            </code>{" "}
+            and{" "}
+            <code className="bg-muted text-foreground rounded px-1 py-0.5 text-xs">
+              DOCUMENSO_API_URL
+            </code>{" "}
+            for live signing. This page confirms the Week 5 flow without a
+            password.
+          </p>
+          <Link
+            href="/"
+            className="text-foreground mt-6 inline-block text-sm font-medium underline underline-offset-4"
+          >
+            Back to CertShield
+          </Link>
+          <p className="text-muted-foreground mt-8 border-t pt-4 text-xs leading-relaxed">
+            Document review assistance — not legal, insurance, or professional
+            advice.
+          </p>
+        </div>
       </main>
     </div>
   );

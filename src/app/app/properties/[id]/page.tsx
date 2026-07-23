@@ -5,9 +5,22 @@ import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import type { RequirementRule } from "@/lib/requirements/engine";
 import { createClient } from "@/lib/supabase/server";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PropertyEditor } from "./property-editor";
+
+function BackLink() {
+  return (
+    <Link
+      href="/app/properties"
+      className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm"
+    >
+      <ArrowLeft className="size-3.5" aria-hidden />
+      Properties
+    </Link>
+  );
+}
 
 export default async function PropertyDetailPage({
   params,
@@ -18,20 +31,26 @@ export default async function PropertyDetailPage({
 
   if (!isSupabaseConfigured()) {
     return (
-      <div className="space-y-6">
-        <Link href="/app/properties" className="text-muted-foreground text-sm">
-          ← Properties
-        </Link>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Oak Street Apartments
-          </h1>
-          <div className="flex flex-wrap items-center gap-2">
-            <DownloadOwnerReportButton propertyId={id} />
-            <SendOwnerReportButton
-              propertyId={id}
-              toHint="owner@oakstreet.example"
-            />
+      <div className="space-y-8">
+        <div className="space-y-4">
+          <BackLink />
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight">
+                Oak Street Apartments
+              </h1>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Certificate holder + AI wording + overrides merge over
+                global/trade rules.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <DownloadOwnerReportButton propertyId={id} />
+              <SendOwnerReportButton
+                propertyId={id}
+                toHint="owner@oakstreet.example"
+              />
+            </div>
           </div>
         </div>
         <PropertyEditor
@@ -99,35 +118,35 @@ export default async function PropertyDetailPage({
     : [];
 
   return (
-    <div className="space-y-6">
-      <Link href="/app/properties" className="text-muted-foreground text-sm">
-        ← Properties
-      </Link>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {property.name}
-          </h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Certificate holder + AI wording + overrides merge over global/trade
-            rules.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <DownloadOwnerReportButton propertyId={property.id} />
-          <SendOwnerReportButton
-            propertyId={property.id}
-            toHint={property.owner_report_email as string | null}
-          />
-          <Button
-            variant="outline"
-            size="sm"
-            render={
-              <a href={`/api/properties/${property.id}/audit-pack`} download />
-            }
-          >
-            Audit pack
-          </Button>
+    <div className="space-y-8">
+      <div className="space-y-4">
+        <BackLink />
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              {property.name}
+            </h1>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Certificate holder + AI wording + overrides merge over
+              global/trade rules.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <DownloadOwnerReportButton propertyId={property.id} />
+            <SendOwnerReportButton
+              propertyId={property.id}
+              toHint={property.owner_report_email as string | null}
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              render={
+                <a href={`/api/properties/${property.id}/audit-pack`} download />
+              }
+            >
+              Audit pack
+            </Button>
+          </div>
         </div>
       </div>
       <PropertyEditor

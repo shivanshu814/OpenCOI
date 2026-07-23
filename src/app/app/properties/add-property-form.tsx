@@ -51,37 +51,42 @@ export function AddPropertyForm() {
   }
 
   return (
-    <form
-      onSubmit={onSubmit}
-      className="grid max-w-xl gap-3 rounded-lg border p-4 sm:grid-cols-2"
-    >
-      <div className="space-y-1.5 sm:col-span-2">
-        <Label htmlFor="prop-name">Property name</Label>
-        <Input
-          id="prop-name"
-          required
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Oak Street Apartments"
-        />
+    <section className="bg-card rounded-xl border">
+      <div className="border-b px-4 py-3">
+        <h2 className="text-sm font-semibold">Add a property</h2>
+        <p className="text-muted-foreground mt-0.5 text-xs">
+          You can add the address, owner LLCs, and overrides on the next screen.
+        </p>
       </div>
-      <div className="space-y-1.5 sm:col-span-2">
-        <Label htmlFor="holder">Certificate holder / owner LLC</Label>
-        <Input
-          id="holder"
-          value={holder}
-          onChange={(e) => setHolder(e.target.value)}
-          placeholder="Oak Street LLC c/o …"
-        />
-      </div>
-      <div className="sm:col-span-2">
-        <Button type="submit" disabled={busy}>
-          {busy ? "Saving…" : "Add property"}
-        </Button>
-        {msg ? (
-          <p className="text-muted-foreground mt-2 text-xs">{msg}</p>
-        ) : null}
-      </div>
-    </form>
+      <form onSubmit={onSubmit} className="grid gap-4 p-4 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label htmlFor="prop-name">Property name</Label>
+          <Input
+            id="prop-name"
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Oak Street Apartments"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="holder">Certificate holder / owner LLC</Label>
+          <Input
+            id="holder"
+            value={holder}
+            onChange={(e) => setHolder(e.target.value)}
+            placeholder="Oak Street LLC c/o …"
+          />
+        </div>
+        <div className="flex items-center gap-3 sm:col-span-2">
+          <Button type="submit" disabled={busy}>
+            {busy ? "Saving…" : "Add property"}
+          </Button>
+          {msg ? (
+            <p className="text-muted-foreground text-xs">{msg}</p>
+          ) : null}
+        </div>
+      </form>
+    </section>
   );
 }

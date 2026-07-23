@@ -1,8 +1,13 @@
 /**
- * Golden-set accuracy harness (Week 6 / Month 3 SCALE gate scaffolding).
- * Compares expected vs actual field paths on fixture extractions.
+ * Golden-set accuracy harness (Week 6 / Month 3 SCALE gate).
+ * Compares expected vs actual field paths on labeled extractions.
  * ≥98% on dates/limits is the M3 gate that reduces internal review — not a launch blocker.
  */
+
+import {
+  ACORD_GOLDEN_CORPUS,
+  isMonth3GateField,
+} from "./corpus";
 
 export type GoldenField = {
   path: string;
@@ -13,7 +18,7 @@ export type GoldenCase = {
   id: string;
   label: string;
   fields: GoldenField[];
-  /** Actual values as if extracted (fixture until real ACORD corpus is loaded). */
+  /** Actual values as if extracted (model output). */
   actual: Record<string, string | number | boolean | null>;
 };
 
@@ -24,13 +29,22 @@ export type AccuracyResult = {
   failures: { caseId: string; path: string; expected: unknown; actual: unknown }[];
 };
 
-export function scoreGoldenSet(cases: GoldenCase[]): AccuracyResult {
+export type ScoreOptions = {
+  /** When true, only score dates + limits (Month 3 SCALE gate). */
+  datesAndLimitsOnly?: boolean;
+};
+
+export function scoreGoldenSet(
+  cases: GoldenCase[],
+  options: ScoreOptions = {},
+): AccuracyResult {
   let total = 0;
   let matched = 0;
   const failures: AccuracyResult["failures"] = [];
 
   for (const c of cases) {
     for (const f of c.fields) {
+      if (options.datesAndLimitsOnly && !isMonth3GateField(f.path)) continue;
       total += 1;
       const actual = c.actual[f.path] ?? null;
       const ok = normalize(actual) === normalize(f.expected);
@@ -59,50 +73,12 @@ function normalize(v: unknown): string {
 
 export const MONTH3_ACCURACY_GATE = 0.98;
 
-/** Seed fixtures — expand with real ACORD corrections from golden_set_cases. */
-export const FIXTURE_GOLDEN_CASES: GoldenCase[] = [
-  {
-    id: "fixture-gl-pass",
-    label: "GL $1M/$2M with dates",
-    fields: [
-      { path: "policies.0.expiration_date", expected: "2027-01-01" },
-      { path: "policies.0.limits.each_occurrence", expected: 1_000_000 },
-      { path: "policies.0.limits.general_aggregate", expected: 2_000_000 },
-      { path: "insured.name", expected: "Acme Roofing LLC" },
-    ],
-    actual: {
-      "policies.0.expiration_date": "2027-01-01",
-      "policies.0.limits.each_occurrence": 1_000_000,
-      "policies.0.limits.general_aggregate": 2_000_000,
-      "insured.name": "Acme Roofing LLC",
-    },
-  },
-  {
-    id: "fixture-wc-pass",
-    label: "WC + GL dates",
-    fields: [
-      { path: "policies.0.expiration_date", expected: "2026-12-31" },
-      { path: "policies.1.expiration_date", expected: "2026-12-31" },
-      { path: "policies.0.limits.each_occurrence", expected: 1_000_000 },
-      { path: "insurers.0.naic", expected: "25674" },
-    ],
-    actual: {
-      "policies.0.expiration_date": "2026-12-31",
-      "policies.1.expiration_date": "2026-12-31",
-      "policies.0.limits.each_occurrence": 1_000_000,
-      "insurers.0.naic": "25674",
-    },
-  },
-  {
-    id: "fixture-currency-normalize",
-    label: "Limit formatting normalize",
-    fields: [
-      { path: "policies.0.limits.each_occurrence", expected: 1000000 },
-      { path: "policies.0.expiration_date", expected: "2027-06-15" },
-    ],
-    actual: {
-      "policies.0.limits.each_occurrence": 1_000_000,
-      "policies.0.expiration_date": "2027-06-15",
-    },
-  },
-];
+/**
+ * Full fixture corpus for CI — ACORD-shaped cases (expand via review corrections).
+ * Re-exported alias kept for older imports.
+ */
+export const FIXTURE_GOLDEN_CASES: GoldenCase[] = ACORD_GOLDEN_CORPUS;
+
+export { ACORD_GOLDEN_CORPUS, casesFromCorrectionRows, isMonth3GateField } from "./corpus";
+export type { GoldenSetCorrectionRow } from "./corpus";
+
