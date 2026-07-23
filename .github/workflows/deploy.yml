@@ -86,16 +86,54 @@ jobs:
 
       # Remote build reads Production env from the Vercel project dashboard.
       # Avoid `vercel pull` + `--prebuilt` — Sensitive/empty pulls bake blank NEXT_PUBLIC_*.
+      # If VERCEL_TOKEN is stale but Vercel Git already shipped this SHA, treat as success
+      # (docs: prefer a long-lived token from vercel.com/account/tokens).
       - name: Deploy to production
         id: deploy
         run: |
-          url=$(vercel deploy --prod --yes --token="$VERCEL_TOKEN")
-          echo "url=$url" >> "$GITHUB_OUTPUT"
-          echo "Deployed: $url"
+          set +e
+          out=$(vercel deploy --prod --yes --token="$VERCEL_TOKEN" 2>&1)
+          status=$?
+          set -e
+          echo "$out"
+          if [ "$status" -eq 0 ]; then
+            url=$(echo "$out" | tail -n 1 | tr -d '\r')
+            echo "url=$url" >> "$GITHUB_OUTPUT"
+            echo "mode=cli" >> "$GITHUB_OUTPUT"
+            echo "Deployed via CLI: $url"
+            exit 0
+          fi
+
+          echo "CLI deploy failed (exit $status). Checking Vercel for this commit…"
+          api=$(curl -sS -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v6/deployments?projectId=$VERCEL_PROJECT_ID&limit=15&target=production")
+          match=$(echo "$api" | node -e '
+            const fs = require("fs");
+            const sha = process.env.GITHUB_SHA;
+            let data;
+            try { data = JSON.parse(fs.readFileSync(0, "utf8")); } catch { process.exit(2); }
+            const hit = (data.deployments || []).find((d) =>
+              (d.meta && d.meta.githubCommitSha) === sha &&
+              (d.readyState === "READY" || d.state === "READY")
+            );
+            if (!hit) process.exit(1);
+            process.stdout.write(hit.url || "");
+          ')
+          if [ -n "$match" ]; then
+            url="https://$match"
+            echo "url=$url" >> "$GITHUB_OUTPUT"
+            echo "mode=git-fallback" >> "$GITHUB_OUTPUT"
+            echo "Commit already live via Vercel Git: $url"
+            exit 0
+          fi
+
+          echo "::error::Vercel CLI deploy failed and commit ${GITHUB_SHA} is not READY in production. Refresh VERCEL_TOKEN (vercel.com/account/tokens → GitHub secret)."
+          exit 1
 
       - name: Summary
         run: |
           echo "### Production deploy" >> "$GITHUB_STEP_SUMMARY"
           echo "- URL: ${{ steps.deploy.outputs.url }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Mode: ${{ steps.deploy.outputs.mode }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- Alias: https://getcertshield.vercel.app" >> "$GITHUB_STEP_SUMMARY"
           echo "- Commit: \`${{ github.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
