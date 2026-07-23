@@ -26,6 +26,20 @@ export type PackDocumentMeta = {
   created_at: string;
 };
 
+function pdfSafe(text: string): string {
+  return text
+    .replaceAll("≥", ">=")
+    .replaceAll("≤", "<=")
+    .replaceAll("—", "-")
+    .replaceAll("–", "-")
+    .replaceAll("’", "'")
+    .replaceAll("‘", "'")
+    .replaceAll("“", '"')
+    .replaceAll("”", '"')
+    .replaceAll("·", "|")
+    .replace(/[^\x00-\x7E]/g, "?");
+}
+
 /** Build a summary PDF for litigation / audit packs. */
 export async function buildPackSummaryPdf(input: {
   title: string;
@@ -49,7 +63,7 @@ export async function buildPackSummaryPdf(input: {
       page = doc.addPage([612, 792]);
       y = 750;
     }
-    page.drawText(text.slice(0, 95), {
+    page.drawText(pdfSafe(text).slice(0, 95), {
       x: left,
       y,
       size,

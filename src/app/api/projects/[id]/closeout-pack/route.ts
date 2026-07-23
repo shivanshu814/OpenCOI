@@ -146,8 +146,8 @@ export async function GET(
     .limit(200);
 
   const pdf = await buildPackSummaryPdf({
-    title: `Closeout pack — ${project.name}`,
-    subtitle: `${session.orgName} · ${project.start_date ?? "?"} → ${project.end_date ?? "?"}`,
+    title: `Closeout pack - ${project.name}`,
+    subtitle: `${session.orgName} | ${project.start_date ?? "?"} -> ${project.end_date ?? "?"}`,
     vendors: vendorLines.map((v) => ({ name: v.name, status: v.status })),
     documents: (documents ?? []) as never,
     messages: [],
