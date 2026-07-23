@@ -1,6 +1,13 @@
 import { DownloadOwnerReportButton } from "@/components/download-owner-report-button";
 import { EmptyState } from "@/components/empty-state";
 import { SendOwnerReportButton } from "@/components/send-owner-report-button";
+import {
+  Card,
+  CardAction,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
@@ -61,19 +68,17 @@ export default async function ReportsPage() {
           actionLabel="Go to Properties"
         />
       ) : (
-        <section className="bg-card rounded-xl border">
-          <div className="border-b px-4 py-3">
-            <div className="flex items-baseline justify-between gap-2">
-              <h2 className="text-sm font-semibold">Properties</h2>
-              <span className="text-muted-foreground text-xs tabular-nums">
-                {properties.length}
-              </span>
-            </div>
-            <p className="text-muted-foreground mt-0.5 text-xs">
+        <Card className="gap-0 py-0">
+          <CardHeader className="border-b pt-4">
+            <CardTitle className="text-sm font-semibold">Properties</CardTitle>
+            <CardDescription className="text-xs">
               Download an owner report anytime, or email it directly to the
               owner on file.
-            </p>
-          </div>
+            </CardDescription>
+            <CardAction className="text-muted-foreground text-xs tabular-nums">
+              {properties.length}
+            </CardAction>
+          </CardHeader>
           <ul className="divide-y">
             {properties.map((p) => (
               <li
@@ -120,7 +125,7 @@ export default async function ReportsPage() {
               </li>
             ))}
           </ul>
-        </section>
+        </Card>
       )}
 
       <p className="text-muted-foreground text-xs">

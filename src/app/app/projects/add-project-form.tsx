@@ -1,8 +1,15 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -54,49 +61,53 @@ export function AddProjectForm() {
   }
 
   return (
-    <section className="bg-card rounded-xl border">
-      <div className="border-b px-4 py-3">
-        <h2 className="text-sm font-semibold">Create a project</h2>
-        <p className="text-muted-foreground mt-0.5 text-xs">
+    <Card className="gap-0 py-0">
+      <CardHeader className="py-3">
+        <CardTitle className="text-sm font-semibold">
+          Create a project
+        </CardTitle>
+        <CardDescription className="text-xs">
           You can attach subs and set job-specific limits on the next screen.
-        </p>
-      </div>
-      <form onSubmit={onSubmit} className="grid gap-4 p-4 sm:grid-cols-4">
-        <div className="space-y-1.5 sm:col-span-2">
-          <Label htmlFor="proj-name">Project name</Label>
-          <Input
-            id="proj-name"
-            required
-            placeholder="Roof Replace — Building A"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="start">Start</Label>
-          <Input
-            id="start"
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="end">End</Label>
-          <Input
-            id="end"
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-        </div>
-        <div className="flex items-center gap-3 sm:col-span-4">
-          <Button type="submit" disabled={busy}>
-            {busy ? "Creating…" : "Create project"}
-          </Button>
-          {msg ? <p className="text-muted-foreground text-xs">{msg}</p> : null}
-        </div>
-      </form>
-    </section>
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="border-t py-4">
+        <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-4">
+          <Field className="sm:col-span-2">
+            <FieldLabel htmlFor="proj-name">Project name</FieldLabel>
+            <Input
+              id="proj-name"
+              required
+              placeholder="Roof Replace — Building A"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="start">Start</FieldLabel>
+            <Input
+              id="start"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="end">End</FieldLabel>
+            <Input
+              id="end"
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </Field>
+          <div className="flex items-center gap-3 sm:col-span-4">
+            <Button type="submit" disabled={busy}>
+              {busy ? "Creating…" : "Create project"}
+            </Button>
+            {msg ? <p className="text-muted-foreground text-xs">{msg}</p> : null}
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

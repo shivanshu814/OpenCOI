@@ -1,6 +1,8 @@
 "use client";
 
+import { SampleCoiPicker } from "@/components/sample-coi-picker";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import type { Vendor } from "@/lib/data/types";
 import { FileText, FileUp, X } from "lucide-react";
@@ -93,10 +95,9 @@ export default function UploadPage({ vendors }: { vendors: Vendor[] }) {
 
   return (
     <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-      <form
-        onSubmit={onSubmit}
-        className="bg-card space-y-5 rounded-xl border p-5"
-      >
+      <form onSubmit={onSubmit}>
+        <Card>
+          <CardContent className="space-y-5 py-1">
         <div className="space-y-1.5">
           <Label htmlFor="vendor">Vendor</Label>
           <select
@@ -164,10 +165,7 @@ export default function UploadPage({ vendors }: { vendors: Vendor[] }) {
                 htmlFor="file"
                 className="flex cursor-pointer flex-col items-center gap-1.5 px-4 py-8 text-center"
               >
-                <FileUp
-                  className="text-muted-foreground size-6"
-                  aria-hidden
-                />
+                <FileUp className="text-muted-foreground size-6" aria-hidden />
                 <span className="text-sm font-medium">
                   Drop the COI here, or browse
                 </span>
@@ -187,6 +185,12 @@ export default function UploadPage({ vendors }: { vendors: Vendor[] }) {
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             />
           </div>
+          <SampleCoiPicker
+            onSelect={(sampleFile) => {
+              setFile(sampleFile);
+              setMsg(`Sample attached: ${sampleFile.name}`);
+            }}
+          />
         </div>
 
         <Button
@@ -199,6 +203,8 @@ export default function UploadPage({ vendors }: { vendors: Vendor[] }) {
         {msg ? (
           <p className="text-muted-foreground text-xs leading-relaxed">{msg}</p>
         ) : null}
+          </CardContent>
+        </Card>
       </form>
 
       <aside className="space-y-4 lg:pt-1">

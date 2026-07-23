@@ -1,6 +1,16 @@
 "use client";
 
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { productRoleLabel, toProductRole } from "@/lib/auth/roles";
@@ -74,19 +84,17 @@ export function TeamSettingsClient() {
 
   return (
     <div className="space-y-8">
-      <section className="bg-card rounded-xl border">
-        <div className="border-b px-4 py-3">
-          <div className="flex items-baseline justify-between gap-2">
-            <h2 className="text-sm font-semibold">Team members</h2>
-            <span className="text-muted-foreground text-xs tabular-nums">
-              {members.length}
-            </span>
-          </div>
-          <p className="text-muted-foreground mt-0.5 text-xs">
+      <Card className="gap-0 py-0">
+        <CardHeader className="border-b pt-4">
+          <CardTitle className="text-sm font-semibold">Team members</CardTitle>
+          <CardDescription className="text-xs">
             DB roles map to product: owner/admin → Admin, member → Manager,
             viewer → Read-only.
-          </p>
-        </div>
+          </CardDescription>
+          <CardAction className="text-muted-foreground text-xs tabular-nums">
+            {members.length}
+          </CardAction>
+        </CardHeader>
 
         <ul className="divide-y">
           {members.map((m) => (
@@ -112,9 +120,9 @@ export function TeamSettingsClient() {
           ) : null}
         </ul>
 
-        <div className="space-y-3 border-t px-4 py-4 sm:px-5">
+        <CardFooter className="flex-col items-start gap-3 sm:px-5">
           <p className="text-xs font-medium">Invite a teammate</p>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid w-full gap-3 sm:grid-cols-3">
             <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="invite-email">Invite email</Label>
               <Input
@@ -157,18 +165,20 @@ export function TeamSettingsClient() {
               ))}
             </ul>
           ) : null}
-        </div>
-      </section>
+        </CardFooter>
+      </Card>
 
-      <section className="bg-card rounded-xl border">
-        <div className="border-b px-4 py-3">
-          <h2 className="text-sm font-semibold">White-label email (F2)</h2>
-          <p className="text-muted-foreground mt-0.5 text-xs">
+      <Card className="gap-0 py-0">
+        <CardHeader className="border-b pt-4">
+          <CardTitle className="text-sm font-semibold">
+            White-label email (F2)
+          </CardTitle>
+          <CardDescription className="text-xs">
             Chase emails go out under your name. Custom from-address requires
             DKIM on your domain in Resend.
-          </p>
-        </div>
-        <div className="space-y-4 px-4 py-4 sm:px-5">
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4 py-4 sm:px-5">
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="from">From email</Label>
@@ -221,10 +231,14 @@ export function TeamSettingsClient() {
           >
             Save branding
           </Button>
-        </div>
-      </section>
+        </CardContent>
+      </Card>
 
-      {msg ? <p className="text-muted-foreground text-xs">{msg}</p> : null}
+      {msg ? (
+        <Alert>
+          <AlertDescription>{msg}</AlertDescription>
+        </Alert>
+      ) : null}
     </div>
   );
 }

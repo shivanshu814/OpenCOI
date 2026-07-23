@@ -1,6 +1,14 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { TriangleAlert } from "lucide-react";
 import { useEffect } from "react";
 
@@ -16,27 +24,33 @@ export default function AppError({
   }, [error]);
 
   return (
-    <div className="mx-auto max-w-md py-20 text-center">
-      <span className="bg-destructive/10 text-destructive mx-auto flex size-10 items-center justify-center rounded-full">
-        <TriangleAlert className="size-5" />
-      </span>
-      <h1 className="mt-4 text-xl font-semibold tracking-tight">
-        Something went wrong
-      </h1>
-      <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-        We hit an unexpected error. Try again. If it keeps happening, email
-        support@getcertshield.com with the time it occurred.
-      </p>
-      {error.digest ? (
-        <p className="text-muted-foreground bg-muted mx-auto mt-3 inline-block rounded px-2 py-1 font-mono text-xs">
-          {error.digest}
-        </p>
-      ) : null}
-      <div className="mt-6">
-        <Button type="button" onClick={() => reset()}>
-          Try again
-        </Button>
-      </div>
+    <div className="mx-auto max-w-md py-20">
+      <Card className="text-center">
+        <CardHeader className="justify-items-center gap-2">
+          <span className="bg-destructive/10 text-destructive flex size-10 items-center justify-center rounded-full">
+            <TriangleAlert className="size-5" />
+          </span>
+          <CardTitle className="text-xl font-semibold tracking-tight">
+            Something went wrong
+          </CardTitle>
+          <CardDescription className="leading-relaxed">
+            We hit an unexpected error. Try again. If it keeps happening, email
+            support@getcertshield.com with the time it occurred.
+          </CardDescription>
+        </CardHeader>
+        {error.digest ? (
+          <CardContent>
+            <p className="text-muted-foreground bg-muted mx-auto inline-block rounded px-2 py-1 font-mono text-xs">
+              {error.digest}
+            </p>
+          </CardContent>
+        ) : null}
+        <CardFooter className="justify-center">
+          <Button type="button" onClick={() => reset()}>
+            Try again
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

@@ -1,6 +1,25 @@
 "use client";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useEffect, useState } from "react";
@@ -73,24 +92,22 @@ export function IntegrationsClient() {
 
   return (
     <div className="space-y-8">
-      <section className="bg-card rounded-xl border">
-        <div className="border-b px-4 py-3">
-          <div className="flex items-baseline justify-between gap-2">
-            <h2 className="text-sm font-semibold">API keys (E4)</h2>
-            <span className="text-muted-foreground text-xs tabular-nums">
-              {keys.length}
-            </span>
-          </div>
-          <p className="text-muted-foreground mt-0.5 text-xs">
+      <Card className="gap-0 py-0">
+        <CardHeader className="border-b pt-4">
+          <CardTitle className="text-sm font-semibold">API keys (E4)</CardTitle>
+          <CardDescription className="text-xs">
             Use{" "}
             <code className="text-foreground">
               Authorization: Bearer cs_live_…
             </code>{" "}
             against <code className="text-foreground">/api/v1/vendors</code>.
-          </p>
-        </div>
+          </CardDescription>
+          <CardAction className="text-muted-foreground text-xs tabular-nums">
+            {keys.length}
+          </CardAction>
+        </CardHeader>
 
-        <div className="space-y-3 px-4 py-4 sm:px-5">
+        <CardContent className="space-y-3 py-4 sm:px-5">
           <div className="flex flex-wrap items-end gap-2">
             <div className="space-y-1.5">
               <Label htmlFor="key-name">Key name</Label>
@@ -111,14 +128,16 @@ export function IntegrationsClient() {
             </Button>
           </div>
           {rawKey ? (
-            <div className="bg-muted/40 rounded-lg border p-3">
-              <p className="text-muted-foreground text-xs font-medium">
+            <Alert>
+              <AlertTitle>
                 Copy this key now — it won&apos;t be shown again.
-              </p>
-              <p className="mt-1 font-mono text-xs break-all">{rawKey}</p>
-            </div>
+              </AlertTitle>
+              <AlertDescription>
+                <span className="font-mono text-xs break-all">{rawKey}</span>
+              </AlertDescription>
+            </Alert>
           ) : null}
-        </div>
+        </CardContent>
 
         <ul className="divide-y border-t">
           {keys.map((k) => (
@@ -138,16 +157,36 @@ export function IntegrationsClient() {
                 ) : null}
               </div>
               {!k.revoked_at ? (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  disabled={busy}
-                  onClick={() =>
-                    void post({ action: "revoke_key", key_id: k.id })
-                  }
-                >
-                  Revoke
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger
+                    disabled={busy}
+                    render={<Button size="sm" variant="ghost" />}
+                  >
+                    Revoke
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Revoke this API key?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {k.name}{" "}
+                        <span className="font-mono">({k.key_prefix}…)</span>{" "}
+                        will stop working immediately — anything connected with
+                        it loses access. This can&apos;t be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogCancel
+                        variant="destructive"
+                        onClick={() =>
+                          void post({ action: "revoke_key", key_id: k.id })
+                        }
+                      >
+                        Revoke key
+                      </AlertDialogCancel>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               ) : null}
             </li>
           ))}
@@ -158,24 +197,24 @@ export function IntegrationsClient() {
             </li>
           ) : null}
         </ul>
-      </section>
+      </Card>
 
-      <section className="bg-card rounded-xl border">
-        <div className="border-b px-4 py-3">
-          <div className="flex items-baseline justify-between gap-2">
-            <h2 className="text-sm font-semibold">Outbound webhooks</h2>
-            <span className="text-muted-foreground text-xs tabular-nums">
-              {webhooks.length}
-            </span>
-          </div>
-          <p className="text-muted-foreground mt-0.5 text-xs">
+      <Card className="gap-0 py-0">
+        <CardHeader className="border-b pt-4">
+          <CardTitle className="text-sm font-semibold">
+            Outbound webhooks
+          </CardTitle>
+          <CardDescription className="text-xs">
             Events: vendor.status_changed, document.published. Verify{" "}
             <code className="text-foreground">X-CertShield-Signature</code>{" "}
             (HMAC SHA-256 of body).
-          </p>
-        </div>
+          </CardDescription>
+          <CardAction className="text-muted-foreground text-xs tabular-nums">
+            {webhooks.length}
+          </CardAction>
+        </CardHeader>
 
-        <div className="space-y-3 px-4 py-4 sm:px-5">
+        <CardContent className="space-y-3 py-4 sm:px-5">
           <div className="space-y-1.5">
             <Label htmlFor="wh-url">Endpoint URL</Label>
             <Input
@@ -194,14 +233,16 @@ export function IntegrationsClient() {
             Add webhook
           </Button>
           {secret ? (
-            <div className="bg-muted/40 rounded-lg border p-3">
-              <p className="text-muted-foreground text-xs font-medium">
+            <Alert>
+              <AlertTitle>
                 Signing secret — store it now, it won&apos;t be shown again.
-              </p>
-              <p className="mt-1 font-mono text-xs break-all">{secret}</p>
-            </div>
+              </AlertTitle>
+              <AlertDescription>
+                <span className="font-mono text-xs break-all">{secret}</span>
+              </AlertDescription>
+            </Alert>
           ) : null}
-        </div>
+        </CardContent>
 
         <ul className="divide-y border-t">
           {webhooks.map((w) => (
@@ -229,9 +270,13 @@ export function IntegrationsClient() {
             </li>
           ) : null}
         </ul>
-      </section>
+      </Card>
 
-      {msg ? <p className="text-muted-foreground text-xs">{msg}</p> : null}
+      {msg ? (
+        <Alert>
+          <AlertDescription>{msg}</AlertDescription>
+        </Alert>
+      ) : null}
     </div>
   );
 }

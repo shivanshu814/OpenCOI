@@ -1,3 +1,10 @@
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
@@ -49,14 +56,16 @@ export default async function PropertiesPage() {
         </p>
       </div>
 
-      <section className="bg-card min-w-0 rounded-xl border">
-        <div className="flex items-baseline justify-between gap-2 border-b px-4 py-3">
-          <h2 className="text-sm font-semibold">All properties</h2>
-          <span className="text-muted-foreground text-xs tabular-nums">
+      <Card className="min-w-0 gap-0 py-0">
+        <CardHeader className="py-3">
+          <CardTitle className="text-sm font-semibold">
+            All properties
+          </CardTitle>
+          <CardAction className="text-muted-foreground self-center text-xs tabular-nums">
             {properties.length}
-          </span>
-        </div>
-        <div className="divide-y">
+          </CardAction>
+        </CardHeader>
+        <CardContent className="divide-y border-t px-0">
           {properties.map((p) => (
             <Link
               key={p.id}
@@ -86,8 +95,8 @@ export default async function PropertiesPage() {
               certificate holder and required limits.
             </p>
           ) : null}
-        </div>
-      </section>
+        </CardContent>
+      </Card>
 
       <AddPropertyForm />
     </div>

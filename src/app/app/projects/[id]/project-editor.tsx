@@ -1,8 +1,24 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type { RequirementRule } from "@/lib/requirements/engine";
 import type { ProjectStatus } from "@/lib/projects/types";
@@ -26,6 +42,12 @@ type Props = {
   vendorIds: string[];
   vendors: VendorOpt[];
 };
+
+const STATUS_ITEMS: ReadonlyArray<{ label: string; value: ProjectStatus }> = [
+  { label: "Active", value: "active" },
+  { label: "Closeout", value: "closeout" },
+  { label: "Closed", value: "closed" },
+];
 
 function SectionHeading({ title, hint }: { title: string; hint?: string }) {
   return (
@@ -125,60 +147,63 @@ export function ProjectEditor({
       <section className="space-y-4">
         <SectionHeading title="Project details" />
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="name">Name</Label>
+          <Field className="sm:col-span-2">
+            <FieldLabel htmlFor="name">Name</FieldLabel>
             <Input
               id="name"
               required
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="start">Start date</Label>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="start">Start date</FieldLabel>
             <Input
               id="start"
               type="date"
               value={form.start_date}
               onChange={(e) => setForm({ ...form, start_date: e.target.value })}
             />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="end">End date</Label>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="end">End date</FieldLabel>
             <Input
               id="end"
               type="date"
               value={form.end_date}
               onChange={(e) => setForm({ ...form, end_date: e.target.value })}
             />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="status">Status</Label>
-            <select
-              id="status"
-              className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm"
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="status">Status</FieldLabel>
+            <Select
+              items={STATUS_ITEMS}
               value={form.status}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  status: e.target.value as ProjectStatus,
-                })
-              }
+              onValueChange={(value) => {
+                if (value) setForm({ ...form, status: value });
+              }}
             >
-              <option value="active">Active</option>
-              <option value="closeout">Closeout</option>
-              <option value="closed">Closed</option>
-            </select>
-          </div>
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="notes">Notes</Label>
+              <SelectTrigger id="status" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_ITEMS.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    {s.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field className="sm:col-span-2">
+            <FieldLabel htmlFor="notes">Notes</FieldLabel>
             <Textarea
               id="notes"
               rows={2}
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
             />
-          </div>
+          </Field>
         </div>
       </section>
 
@@ -188,8 +213,8 @@ export function ProjectEditor({
           hint="What must appear on every sub's COI for this job."
         />
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="holder">Certificate holder (job)</Label>
+          <Field className="sm:col-span-2">
+            <FieldLabel htmlFor="holder">Certificate holder (job)</FieldLabel>
             <Input
               id="holder"
               value={form.certificate_holder_name}
@@ -197,9 +222,9 @@ export function ProjectEditor({
                 setForm({ ...form, certificate_holder_name: e.target.value })
               }
             />
-          </div>
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="ai">Additional insured wording</Label>
+          </Field>
+          <Field className="sm:col-span-2">
+            <FieldLabel htmlFor="ai">Additional insured wording</FieldLabel>
             <Textarea
               id="ai"
               rows={3}
@@ -211,56 +236,56 @@ export function ProjectEditor({
                 })
               }
             />
-          </div>
+          </Field>
         </div>
       </section>
 
-      <section className="bg-card rounded-xl border">
-        <div className="border-b px-4 py-3">
-          <h2 className="text-sm font-semibold">
+      <Card className="gap-0 py-0">
+        <CardHeader className="py-3">
+          <CardTitle className="text-sm font-semibold">
             Project requirement override
-          </h2>
-          <p className="text-muted-foreground mt-0.5 text-xs">
+          </CardTitle>
+          <CardDescription className="text-xs">
             Wins over global, trade, and property rules for documents tied to
             this project (D2 higher job limits).
-          </p>
-        </div>
-        <div className="max-w-xs space-y-1.5 p-4">
-          <Label htmlFor="gl">GL each-occurrence minimum ($)</Label>
-          <Input
-            id="gl"
-            className="tabular-nums"
-            value={glMin}
-            onChange={(e) => setGlMin(e.target.value)}
-          />
-        </div>
-      </section>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="border-t py-4">
+          <Field className="max-w-xs">
+            <FieldLabel htmlFor="gl">GL each-occurrence minimum ($)</FieldLabel>
+            <Input
+              id="gl"
+              className="tabular-nums"
+              value={glMin}
+              onChange={(e) => setGlMin(e.target.value)}
+            />
+          </Field>
+        </CardContent>
+      </Card>
 
-      <section className="bg-card rounded-xl border">
-        <div className="flex items-baseline justify-between gap-2 border-b px-4 py-3">
-          <div>
-            <h2 className="text-sm font-semibold">Subs on this project</h2>
-            <p className="text-muted-foreground mt-0.5 text-xs">
-              Checked subs are tracked against this job’s requirements.
-            </p>
-          </div>
-          <span className="text-muted-foreground text-xs tabular-nums">
+      <Card className="gap-0 py-0">
+        <CardHeader className="py-3">
+          <CardTitle className="text-sm font-semibold">
+            Subs on this project
+          </CardTitle>
+          <CardDescription className="text-xs">
+            Checked subs are tracked against this job’s requirements.
+          </CardDescription>
+          <CardAction className="text-muted-foreground self-center text-xs tabular-nums">
             {selected.size}/{vendors.length}
-          </span>
-        </div>
-        <div className="divide-y">
+          </CardAction>
+        </CardHeader>
+        <CardContent className="divide-y border-t px-0">
           {vendors.map((v) => (
             <label
               key={v.id}
               htmlFor={`pv-${v.id}`}
               className="hover:bg-muted/40 flex cursor-pointer items-center gap-2.5 px-4 py-2.5 text-sm"
             >
-              <input
-                type="checkbox"
-                className="accent-primary size-4"
-                checked={selected.has(v.id)}
-                onChange={() => toggleVendor(v.id)}
+              <Checkbox
                 id={`pv-${v.id}`}
+                checked={selected.has(v.id)}
+                onCheckedChange={() => toggleVendor(v.id)}
               />
               {v.name}
             </label>
@@ -270,8 +295,8 @@ export function ProjectEditor({
               No vendors yet — add vendors first, then attach them as subs.
             </p>
           ) : null}
-        </div>
-      </section>
+        </CardContent>
+      </Card>
 
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={busy}>

@@ -1,3 +1,10 @@
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import type { ProjectStatus } from "@/lib/projects/types";
@@ -56,14 +63,14 @@ export default async function ProjectsPage() {
         </p>
       </div>
 
-      <section className="bg-card min-w-0 rounded-xl border">
-        <div className="flex items-baseline justify-between gap-2 border-b px-4 py-3">
-          <h2 className="text-sm font-semibold">All projects</h2>
-          <span className="text-muted-foreground text-xs tabular-nums">
+      <Card className="min-w-0 gap-0 py-0">
+        <CardHeader className="py-3">
+          <CardTitle className="text-sm font-semibold">All projects</CardTitle>
+          <CardAction className="text-muted-foreground self-center text-xs tabular-nums">
             {projects.length}
-          </span>
-        </div>
-        <div className="divide-y">
+          </CardAction>
+        </CardHeader>
+        <CardContent className="divide-y border-t px-0">
           {projects.map((p) => {
             const meta = STATUS_META[p.status] ?? STATUS_META.active;
             return (
@@ -102,8 +109,8 @@ export default async function ProjectsPage() {
               raise limits for the job.
             </p>
           ) : null}
-        </div>
-      </section>
+        </CardContent>
+      </Card>
 
       <AddProjectForm />
     </div>

@@ -1,7 +1,42 @@
 "use client";
 
 import { DisclaimerFooter } from "@/components/disclaimer-footer";
-import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarRail,
+  SidebarSeparator,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 import {
   Building2,
   ClipboardCheck,
@@ -11,17 +46,15 @@ import {
   KeyRound,
   LayoutGrid,
   LifeBuoy,
-  Menu,
   ScrollText,
   ShieldCheck,
   Upload,
+  UserRound,
   Users,
   Wrench,
-  X,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 
 type NavItem = {
   href: string;
@@ -70,92 +103,210 @@ const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
+const ALL_ITEMS = NAV_GROUPS.flatMap((g) => g.items);
+
 function isActive(pathname: string, item: NavItem) {
   return item.exact
     ? pathname === item.href
     : pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
 
-function SidebarContent({ live }: { live: boolean }) {
+/** Best-effort breadcrumb from the nav map; deeper segments render as the page. */
+function useBreadcrumb(pathname: string) {
+  const current =
+    ALL_ITEMS.filter((i) => isActive(pathname, i)).sort(
+      (a, b) => b.href.length - a.href.length,
+    )[0] ?? null;
+  const isDetail = current != null && pathname !== current.href;
+  return { current, isDetail };
+}
+
+function AppSidebar({ live }: { live: boolean }) {
   const pathname = usePathname();
+
   return (
-    <div className="flex h-full flex-col">
-      <Link
-        href="/app"
-        className="flex items-center gap-2.5 px-5 pt-5 pb-6"
-        aria-label="CertShield dashboard"
-      >
-        <span className="bg-sidebar-primary text-sidebar-primary-foreground flex size-7 items-center justify-center rounded-md">
-          <ShieldCheck className="size-4.5" />
-        </span>
-        <span className="text-sidebar-accent-foreground text-[0.95rem] font-semibold tracking-tight">
-          CertShield
-        </span>
-      </Link>
+    <Sidebar collapsible="icon">
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              size="lg"
+              render={<Link href="/app" />}
+              tooltip="CertShield"
+            >
+              <span className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                <ShieldCheck className="size-4.5" />
+              </span>
+              <span className="grid flex-1 text-left leading-tight">
+                <span className="truncate font-semibold tracking-tight">
+                  CertShield
+                </span>
+                <span className="text-sidebar-foreground/60 truncate text-xs">
+                  COI compliance
+                </span>
+              </span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
 
-      <nav className="flex-1 space-y-5 overflow-y-auto px-3 pb-4">
+      <SidebarContent>
         {NAV_GROUPS.map((group) => (
-          <div key={group.label ?? "root"}>
+          <SidebarGroup key={group.label ?? "root"}>
             {group.label ? (
-              <p className="text-sidebar-foreground/55 px-2 pb-1.5 text-[0.68rem] font-medium tracking-[0.08em] uppercase">
-                {group.label}
-              </p>
+              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
             ) : null}
-            <ul className="space-y-0.5">
-              {group.items.map((item) => {
-                const active = isActive(pathname, item);
-                return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      aria-current={active ? "page" : undefined}
-                      className={cn(
-                        "group flex items-center gap-2.5 rounded-md px-2 py-1.5 text-[0.83rem] transition-colors",
-                        active
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                          : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
-                      )}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map((item) => (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                      isActive={isActive(pathname, item)}
+                      tooltip={item.label}
+                      render={<Link href={item.href} />}
                     >
-                      <item.icon
-                        className={cn(
-                          "size-4 shrink-0 transition-colors",
-                          active
-                            ? "text-sidebar-primary"
-                            : "text-sidebar-foreground/60 group-hover:text-sidebar-foreground",
-                        )}
-                      />
-                      {item.label}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
+                      <item.icon />
+                      <span>{item.label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
         ))}
-      </nav>
+      </SidebarContent>
 
-      <div className="border-sidebar-border border-t px-3 py-3">
-        <Link
-          href="/help"
-          className="text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground flex items-center gap-2.5 rounded-md px-2 py-1.5 text-[0.83rem] transition-colors"
+      <SidebarFooter>
+        <SidebarSeparator />
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              tooltip="Help & docs"
+              render={<Link href="/help" />}
+            >
+              <LifeBuoy />
+              <span>Help &amp; docs</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              tooltip={live ? "Workspace connected" : "Demo mode"}
+              render={<Link href="/login" />}
+            >
+              <span className="flex size-4 items-center justify-center">
+                <span
+                  className={
+                    live
+                      ? "bg-sidebar-primary size-2 rounded-full"
+                      : "size-2 rounded-full bg-amber-400"
+                  }
+                />
+              </span>
+              <span className="truncate text-xs">
+                {live ? "Workspace connected" : "Demo mode — connect Supabase"}
+              </span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+      <SidebarRail />
+    </Sidebar>
+  );
+}
+
+function AppHeader({ live }: { live: boolean }) {
+  const pathname = usePathname();
+  const { current, isDetail } = useBreadcrumb(pathname);
+
+  return (
+    <header className="bg-background/90 sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b px-4 backdrop-blur">
+      <SidebarTrigger className="-ml-1" />
+      <Breadcrumb className="min-w-0">
+        <BreadcrumbList className="flex-nowrap">
+          <BreadcrumbItem className="hidden sm:block">
+            <BreadcrumbLink render={<Link href="/app" />}>
+              CertShield
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          {current ? (
+            <>
+              <BreadcrumbSeparator className="hidden sm:block" />
+              <BreadcrumbItem>
+                {isDetail ? (
+                  <BreadcrumbLink render={<Link href={current.href} />}>
+                    {current.label}
+                  </BreadcrumbLink>
+                ) : (
+                  <BreadcrumbPage>{current.label}</BreadcrumbPage>
+                )}
+              </BreadcrumbItem>
+              {isDetail ? (
+                <>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>Detail</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </>
+              ) : null}
+            </>
+          ) : null}
+        </BreadcrumbList>
+      </Breadcrumb>
+
+      <div className="ml-auto flex items-center gap-2">
+        <Button
+          size="sm"
+          className="hidden sm:inline-flex"
+          render={<Link href="/app/upload" />}
         >
-          <LifeBuoy className="text-sidebar-foreground/60 size-4" />
-          Help & docs
-        </Link>
-        <Link
-          href="/login"
-          className="text-sidebar-foreground/70 hover:text-sidebar-accent-foreground mt-1 flex items-center gap-2.5 rounded-md px-2 py-1.5 text-xs transition-colors"
-        >
-          <span
-            className={cn(
-              "size-1.5 shrink-0 rounded-full",
-              live ? "bg-sidebar-primary" : "bg-amber-400",
-            )}
-          />
-          {live ? "Workspace connected" : "Demo mode — connect Supabase"}
-        </Link>
+          <Upload data-icon="inline-start" />
+          Upload COI
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <button
+                type="button"
+                aria-label="Account menu"
+                className="focus-visible:ring-ring/50 rounded-full outline-none focus-visible:ring-3"
+              />
+            }
+          >
+            <Avatar className="size-8">
+              <AvatarFallback>
+                <UserRound className="size-4" />
+              </AvatarFallback>
+            </Avatar>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>
+              {live ? "Workspace connected" : "Demo mode"}
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem render={<Link href="/app/settings/team" />}>
+                <Users /> Team
+              </DropdownMenuItem>
+              <DropdownMenuItem render={<Link href="/app/settings/billing" />}>
+                <CreditCard /> Billing
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                render={<Link href="/app/settings/integrations" />}
+              >
+                <KeyRound /> API &amp; integrations
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem render={<Link href="/help" />}>
+              <LifeBuoy /> Help &amp; docs
+            </DropdownMenuItem>
+            <DropdownMenuItem render={<Link href="/login" />}>
+              <UserRound /> Account
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
-    </div>
+    </header>
   );
 }
 
@@ -166,71 +317,16 @@ export function AppShell({
   live: boolean;
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  // Close the drawer on navigation.
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
-
   return (
-    <div className="bg-background flex min-h-full">
-      {/* Desktop sidebar */}
-      <aside className="bg-sidebar border-sidebar-border fixed inset-y-0 left-0 z-30 hidden w-60 border-r lg:block">
-        <SidebarContent live={live} />
-      </aside>
-
-      {/* Mobile drawer */}
-      {mobileOpen ? (
-        <div className="fixed inset-0 z-40 lg:hidden">
-          <button
-            type="button"
-            aria-label="Close menu"
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setMobileOpen(false)}
-          />
-          <aside className="bg-sidebar animate-in slide-in-from-left absolute inset-y-0 left-0 w-64 shadow-xl duration-200">
-            <button
-              type="button"
-              aria-label="Close menu"
-              className="text-sidebar-foreground hover:text-sidebar-accent-foreground absolute top-4 right-3 p-1"
-              onClick={() => setMobileOpen(false)}
-            >
-              <X className="size-4.5" />
-            </button>
-            <SidebarContent live={live} />
-          </aside>
-        </div>
-      ) : null}
-
-      {/* Content column */}
-      <div className="flex min-h-full min-w-0 flex-1 flex-col lg:pl-60">
-        {/* Mobile topbar */}
-        <header className="bg-background/90 sticky top-0 z-20 flex items-center gap-3 border-b px-4 py-2.5 backdrop-blur lg:hidden">
-          <button
-            type="button"
-            aria-label="Open menu"
-            className="text-muted-foreground hover:text-foreground -ml-1 p-1"
-            onClick={() => setMobileOpen(true)}
-          >
-            <Menu className="size-5" />
-          </button>
-          <Link href="/app" className="flex items-center gap-2">
-            <span className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
-              <ShieldCheck className="size-3.5" />
-            </span>
-            <span className="text-sm font-semibold tracking-tight">
-              CertShield
-            </span>
-          </Link>
-        </header>
-
+    <SidebarProvider>
+      <AppSidebar live={live} />
+      <SidebarInset>
+        <AppHeader live={live} />
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           {children}
         </main>
         <DisclaimerFooter />
-      </div>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

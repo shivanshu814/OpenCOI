@@ -1,5 +1,26 @@
 import { DownloadReportButton } from "@/components/download-report-button";
 import { VerdictBadge } from "@/components/status-badges";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { isSupabaseConfigured } from "@/lib/config";
 import { getDocument, listVendors } from "@/lib/data/documents";
 import type { Verdict } from "@/lib/requirements/engine";
@@ -95,7 +116,7 @@ export default async function ReviewDocumentPage({
       </div>
 
       <div className="grid items-start gap-4 lg:grid-cols-2">
-        <section className="bg-muted/40 flex min-h-[420px] items-center justify-center overflow-hidden rounded-xl border lg:sticky lg:top-6">
+        <Card className="bg-muted/40 min-h-[420px] items-center justify-center py-0 lg:sticky lg:top-6">
           {pdfUrl ? (
             <iframe
               title="COI PDF"
@@ -112,110 +133,147 @@ export default async function ReviewDocumentPage({
               </p>
             </div>
           )}
-        </section>
+        </Card>
 
         <section className="min-w-0 space-y-4">
-          <div className="bg-card rounded-xl border">
-            <div className="border-b px-4 py-3">
-              <h2 className="text-sm font-semibold">Extracted fields</h2>
-              <p className="text-muted-foreground mt-0.5 text-xs">
+          <Card>
+            <CardHeader className="border-b">
+              <CardTitle>Extracted fields</CardTitle>
+              <CardDescription className="text-xs">
                 Anything below 90% confidence is flagged — verify against the
                 PDF.
-              </p>
-            </div>
-            <dl className="divide-y px-4">
-              <Row
-                label="Insured"
-                value={ex.insured.name}
-                conf={ex.insured.confidence}
-              />
-              <Row
-                label="Producer"
-                value={ex.producer.name}
-                conf={ex.producer.confidence}
-              />
-              <Row
-                label="GL each-occurrence"
-                value={glEachOccurrence?.amount?.toLocaleString() ?? "—"}
-                conf={glEachOccurrence?.confidence}
-              />
-              <Row
-                label="Expiration"
-                value={ex.policies[0]?.expiration_date ?? "—"}
-                conf={ex.policies[0]?.confidence}
-              />
-              <Row
-                label="Endorsements"
-                value={
-                  ex.endorsement_forms_detected.map((e) => e.form).join(", ") ||
-                  "None detected"
-                }
-                conf={ex.endorsement_forms_detected[0]?.confidence}
-              />
-            </dl>
-          </div>
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="text-muted-foreground text-xs font-medium">
+                      Field
+                    </TableHead>
+                    <TableHead className="text-muted-foreground text-right text-xs font-medium">
+                      Value
+                    </TableHead>
+                    <TableHead className="text-muted-foreground text-right text-xs font-medium">
+                      Confidence
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <FieldRow
+                    label="Insured"
+                    value={ex.insured.name}
+                    conf={ex.insured.confidence}
+                  />
+                  <FieldRow
+                    label="Producer"
+                    value={ex.producer.name}
+                    conf={ex.producer.confidence}
+                  />
+                  <FieldRow
+                    label="GL each-occurrence"
+                    value={glEachOccurrence?.amount?.toLocaleString() ?? "—"}
+                    conf={glEachOccurrence?.confidence}
+                  />
+                  <FieldRow
+                    label="Expiration"
+                    value={ex.policies[0]?.expiration_date ?? "—"}
+                    conf={ex.policies[0]?.confidence}
+                  />
+                  <FieldRow
+                    label="Endorsements"
+                    value={
+                      ex.endorsement_forms_detected
+                        .map((e) => e.form)
+                        .join(", ") || "None detected"
+                    }
+                    conf={ex.endorsement_forms_detected[0]?.confidence}
+                  />
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
 
-          <div className="bg-card rounded-xl border">
-            <div className="flex items-baseline justify-between gap-2 border-b px-4 py-3">
-              <h2 className="text-sm font-semibold">Requirements check</h2>
-              <p className="text-muted-foreground text-xs tabular-nums">
-                {passCount} pass
-                {failCount > 0 ? (
-                  <span className="ml-2 font-medium text-red-700">
-                    {failCount} fail
-                  </span>
-                ) : null}
-              </p>
-            </div>
-            <ul className="divide-y">
-              {doc.check_lines.map((line) => {
-                const { Icon, className } = VERDICT_ICON[line.verdict];
-                return (
-                  <li
-                    key={line.rule_id}
-                    className="flex items-start justify-between gap-3 px-4 py-3 text-sm"
-                  >
-                    <div className="flex min-w-0 items-start gap-3">
-                      <span
-                        className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full ${className}`}
-                        aria-hidden
-                      >
-                        <Icon className="size-3" strokeWidth={3} />
-                      </span>
-                      <div className="min-w-0">
-                        <p className="font-medium">{line.label}</p>
-                        <p className="text-muted-foreground text-xs leading-relaxed">
-                          {line.reason}
-                        </p>
-                      </div>
-                    </div>
-                    <VerdictBadge verdict={line.verdict} />
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
+          <Card>
+            <CardHeader className="border-b">
+              <CardTitle>Requirements check</CardTitle>
+              <CardAction>
+                <p className="text-muted-foreground text-xs tabular-nums">
+                  {passCount} pass
+                  {failCount > 0 ? (
+                    <span className="ml-2 font-medium text-red-700">
+                      {failCount} fail
+                    </span>
+                  ) : null}
+                </p>
+              </CardAction>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="text-muted-foreground text-xs font-medium">
+                      Requirement
+                    </TableHead>
+                    <TableHead className="text-muted-foreground text-right text-xs font-medium">
+                      Status
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {doc.check_lines.map((line) => {
+                    const { Icon, className } = VERDICT_ICON[line.verdict];
+                    return (
+                      <TableRow key={line.rule_id}>
+                        <TableCell className="whitespace-normal py-3">
+                          <div className="flex min-w-0 items-start gap-3">
+                            <span
+                              className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full ${className}`}
+                              aria-hidden
+                            >
+                              <Icon className="size-3" strokeWidth={3} />
+                            </span>
+                            <div className="min-w-0">
+                              <p className="font-medium">{line.label}</p>
+                              <p className="text-muted-foreground text-xs leading-relaxed">
+                                {line.reason}
+                              </p>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-3 text-right align-top">
+                          <VerdictBadge verdict={line.verdict} />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
 
           {(doc.fraud_signals?.length ?? 0) > 0 ? (
-            <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4">
-              <h2 className="flex items-center gap-1.5 text-sm font-semibold text-amber-950">
-                <TriangleAlert className="size-4 text-amber-600" aria-hidden />
-                Risk signals (not a guarantee)
-              </h2>
-              <p className="text-muted-foreground mt-1 text-xs">
-                Heuristics only — never proof of fraud.
-              </p>
-              <ul className="mt-3 space-y-2 text-sm">
-                {doc.fraud_signals!.map((s) => (
-                  <li key={`${s.code}-${s.message.slice(0, 24)}`}>
-                    <span className="text-xs font-medium tracking-wide text-amber-900 uppercase">
-                      {s.severity}
-                    </span>
-                    <p className="text-xs leading-relaxed">{s.message}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <Alert className="border-amber-200 bg-amber-50/50 text-amber-950">
+              <TriangleAlert className="size-4 text-amber-600" aria-hidden />
+              <AlertTitle>Risk signals (not a guarantee)</AlertTitle>
+              <AlertDescription>
+                <p className="text-muted-foreground text-xs">
+                  Heuristics only — never proof of fraud.
+                </p>
+                <ul className="mt-3 space-y-2 text-sm">
+                  {doc.fraud_signals!.map((s) => (
+                    <li key={`${s.code}-${s.message.slice(0, 24)}`}>
+                      <span className="text-xs font-medium tracking-wide text-amber-900 uppercase">
+                        {s.severity}
+                      </span>
+                      <p className="text-foreground text-xs leading-relaxed">
+                        {s.message}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </AlertDescription>
+            </Alert>
           ) : null}
 
           <RequestAgentConfirmButton documentId={doc.id} />
@@ -247,7 +305,7 @@ async function signedPdfUrl(storagePath: string | null | undefined) {
   }
 }
 
-function Row({
+function FieldRow({
   label,
   value,
   conf,
@@ -258,23 +316,27 @@ function Row({
 }) {
   const low = conf != null && conf < 0.9;
   return (
-    <div className="flex items-baseline justify-between gap-3 py-2.5">
-      <dt className="text-muted-foreground shrink-0 text-xs">{label}</dt>
-      <dd className="min-w-0 text-right text-sm">
-        <span className="font-medium tabular-nums">{value ?? "—"}</span>
+    <TableRow>
+      <TableCell className="text-muted-foreground text-xs">{label}</TableCell>
+      <TableCell className="whitespace-normal text-right text-sm font-medium tabular-nums">
+        {value ?? "—"}
+      </TableCell>
+      <TableCell className="text-right">
         {conf != null ? (
           low ? (
-            <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800 tabular-nums">
+            <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800 tabular-nums">
               <TriangleAlert className="size-3" aria-hidden />
               {Math.round(conf * 100)}% — verify
             </span>
           ) : (
-            <span className="text-muted-foreground ml-2 text-xs tabular-nums">
+            <span className="text-muted-foreground text-xs tabular-nums">
               {Math.round(conf * 100)}%
             </span>
           )
-        ) : null}
-      </dd>
-    </div>
+        ) : (
+          <span className="text-muted-foreground text-xs">—</span>
+        )}
+      </TableCell>
+    </TableRow>
   );
 }

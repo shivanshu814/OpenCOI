@@ -1,6 +1,12 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
@@ -52,14 +58,17 @@ export function AddVendorForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="bg-card rounded-xl border">
-      <div className="border-b px-4 py-3">
-        <h2 className="text-sm font-semibold">Add a vendor</h2>
-        <p className="text-muted-foreground mt-0.5 text-xs">
+    <Card className="gap-0 py-0">
+      <CardHeader className="border-b py-4">
+        <CardTitle>Add a vendor</CardTitle>
+        <CardDescription className="text-xs">
           Name and email are enough to start — chase emails go to this address.
-        </p>
-      </div>
-      <div className="grid items-end gap-x-3 gap-y-4 px-4 py-4 sm:grid-cols-[1fr_1fr_1fr_auto]">
+        </CardDescription>
+      </CardHeader>
+      <form
+        onSubmit={onSubmit}
+        className="grid items-end gap-x-3 gap-y-4 px-4 py-4 sm:grid-cols-[1fr_1fr_1fr_auto]"
+      >
         <div className="space-y-1.5">
           <Label htmlFor="name">Name</Label>
           <Input
@@ -96,7 +105,7 @@ export function AddVendorForm() {
         {note ? (
           <p className="text-muted-foreground text-xs sm:col-span-4">{note}</p>
         ) : null}
-      </div>
-    </form>
+      </form>
+    </Card>
   );
 }

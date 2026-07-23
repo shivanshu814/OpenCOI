@@ -3,6 +3,14 @@ import { IntakeEmailCard } from "@/components/intake-email-card";
 import { SendChaseButton } from "@/components/send-chase-button";
 import { VendorStatusBadge } from "@/components/status-badges";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { getSessionOrg } from "@/lib/auth/session";
 import {
   listAwaitingCustomerDecision,
@@ -39,17 +47,15 @@ function QueueList({
   action: string;
 }) {
   return (
-    <section className="bg-card min-w-0 rounded-xl border">
-      <div className="border-b px-4 py-3">
-        <div className="flex items-baseline justify-between gap-2">
-          <h2 className="text-sm font-semibold">{title}</h2>
-          <span className="text-muted-foreground text-xs tabular-nums">
-            {rows.length}
-          </span>
-        </div>
-        <p className="text-muted-foreground mt-0.5 text-xs">{hint}</p>
-      </div>
-      <div className="divide-y">
+    <Card className="min-w-0 gap-0 py-0">
+      <CardHeader className="gap-0.5 border-b px-4 py-3">
+        <CardTitle className="text-sm font-semibold">{title}</CardTitle>
+        <CardDescription className="text-xs">{hint}</CardDescription>
+        <CardAction className="text-muted-foreground text-xs tabular-nums">
+          {rows.length}
+        </CardAction>
+      </CardHeader>
+      <CardContent className="divide-y px-0">
         {rows.map((row) => (
           <div
             key={row.id}
@@ -75,8 +81,8 @@ function QueueList({
             {empty}
           </p>
         ) : null}
-      </div>
-    </section>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -110,7 +116,8 @@ export default async function DashboardPage() {
       </div>
 
       {/* Portfolio health band */}
-      <section className="bg-card rounded-xl border px-5 py-4">
+      <Card>
+        <CardContent>
         <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
           <div>
             <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
@@ -157,7 +164,8 @@ export default async function DashboardPage() {
             portfolio health here.
           </p>
         )}
-      </section>
+        </CardContent>
+      </Card>
 
       <IntakeEmailCard email={intakeEmail} demo={intakeDemo} />
 
@@ -196,7 +204,8 @@ export default async function DashboardPage() {
             All vendors
           </Link>
         </div>
-        <div className="bg-card divide-y rounded-xl border">
+        <Card className="gap-0 py-0">
+          <CardContent className="divide-y px-0">
           {attention.map((v) => (
             <div
               key={v.id}
@@ -229,7 +238,8 @@ export default async function DashboardPage() {
               All vendors compliant.
             </p>
           ) : null}
-        </div>
+          </CardContent>
+        </Card>
       </section>
     </div>
   );

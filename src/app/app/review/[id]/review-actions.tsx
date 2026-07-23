@@ -1,6 +1,14 @@
 "use client";
 
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +21,7 @@ import {
   OVERRIDE_REASON_LABELS,
   type OverrideReasonCode,
 } from "@/lib/verdicts/customer-decision";
+import { TriangleAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -168,11 +177,11 @@ export function ReviewActions({
     customerDecision === "overridden"
   ) {
     return (
-      <div className="bg-card rounded-xl border">
-        <div className="border-b px-4 py-3">
-          <h2 className="text-sm font-semibold">Customer decision</h2>
-        </div>
-        <div className="space-y-2 px-4 py-3">
+      <Card>
+        <CardHeader className="border-b">
+          <CardTitle>Customer decision</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
           <p className="text-sm font-medium capitalize">
             {customerDecision ?? status}
           </p>
@@ -190,23 +199,23 @@ export function ReviewActions({
               {msg}
             </p>
           ) : null}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     );
   }
 
   if (status === "published") {
     return (
-      <div className="bg-card rounded-xl border">
-        <div className="border-b px-4 py-3">
-          <h2 className="text-sm font-semibold">Your approval (Appendix B)</h2>
-          <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">
+      <Card>
+        <CardHeader className="border-b">
+          <CardTitle>Your approval (Appendix B)</CardTitle>
+          <CardDescription className="text-xs leading-relaxed">
             You are the final approver. Accept the published verdict, or
             override with a logged reason.
-          </p>
-        </div>
+          </CardDescription>
+        </CardHeader>
 
-        <div className="space-y-4 px-4 py-4">
+        <CardContent className="space-y-4">
           <Button
             onClick={() => void decide("accept")}
             disabled={busy !== null}
@@ -249,9 +258,12 @@ export function ReviewActions({
               </div>
             ) : null}
             {reasonCode === "extraction_error_dispute" ? (
-              <p className="text-xs leading-relaxed text-amber-800">
-                Disputes route back to internal review for correction.
-              </p>
+              <Alert className="border-amber-200 bg-amber-50/50 text-amber-950">
+                <TriangleAlert className="size-4 text-amber-600" aria-hidden />
+                <AlertDescription className="text-xs leading-relaxed text-amber-800">
+                  Disputes route back to internal review for correction.
+                </AlertDescription>
+              </Alert>
             ) : null}
             <Button
               variant="outline"
@@ -270,23 +282,23 @@ export function ReviewActions({
               {msg}
             </p>
           ) : null}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     );
   }
 
   // Internal review (founder) — default
   return (
-    <div className="bg-card rounded-xl border">
-      <div className="border-b px-4 py-3">
-        <h2 className="text-sm font-semibold">Founder review</h2>
-        <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">
+    <Card>
+      <CardHeader className="border-b">
+        <CardTitle>Founder review</CardTitle>
+        <CardDescription className="text-xs leading-relaxed">
           Approve to publish, or correct a field first — every correction
           becomes a golden-set case.
-        </p>
-      </div>
+        </CardDescription>
+      </CardHeader>
 
-      <div className="space-y-4 px-4 py-4">
+      <CardContent className="space-y-4">
         <Button onClick={publish} disabled={busy !== null}>
           {busy === "publish" ? "Publishing…" : "Approve & publish"}
         </Button>
@@ -327,7 +339,7 @@ export function ReviewActions({
             {msg}
           </p>
         ) : null}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

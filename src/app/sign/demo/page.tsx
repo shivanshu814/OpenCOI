@@ -1,4 +1,5 @@
 import { BrandMark } from "@/components/marketing-shell";
+import { Card, CardContent } from "@/components/ui/card";
 import { PenLine } from "lucide-react";
 import Link from "next/link";
 
@@ -15,7 +16,8 @@ export default async function DemoSignPage({
         <BrandMark />
       </header>
       <main className="mx-auto w-full max-w-lg flex-1 px-4 py-12">
-        <div className="bg-card rounded-xl border px-6 py-8">
+        <Card className="[--card-spacing:--spacing(6)]">
+          <CardContent className="py-2">
           <span className="bg-muted text-muted-foreground flex size-10 items-center justify-center rounded-full">
             <PenLine className="size-5" />
           </span>
@@ -47,7 +49,8 @@ export default async function DemoSignPage({
             Document review assistance — not legal, insurance, or professional
             advice.
           </p>
-        </div>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );

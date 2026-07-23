@@ -1,4 +1,12 @@
 import { AuditTimeline } from "@/components/audit-timeline";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { listAuditEvents } from "@/lib/audit/list";
 
 export default async function AuditPage() {
@@ -13,23 +21,21 @@ export default async function AuditPage() {
         </p>
       </div>
 
-      <section className="bg-card rounded-xl border">
-        <div className="border-b px-4 py-3">
-          <div className="flex items-baseline justify-between gap-2">
-            <h2 className="text-sm font-semibold">Recent events</h2>
-            <span className="text-muted-foreground text-xs tabular-nums">
-              {events.length}
-            </span>
-          </div>
-          <p className="text-muted-foreground mt-0.5 text-xs">
+      <Card className="gap-0 py-0">
+        <CardHeader className="border-b pt-4">
+          <CardTitle className="text-sm font-semibold">Recent events</CardTitle>
+          <CardDescription className="text-xs">
             Most recent first · showing up to 150 events. Nothing here can be
             edited or deleted.
-          </p>
-        </div>
-        <div className="px-4 py-4 sm:px-5">
+          </CardDescription>
+          <CardAction className="text-muted-foreground text-xs tabular-nums">
+            {events.length}
+          </CardAction>
+        </CardHeader>
+        <CardContent className="py-4 sm:px-5">
           <AuditTimeline events={events} />
-        </div>
-      </section>
+        </CardContent>
+      </Card>
     </div>
   );
 }

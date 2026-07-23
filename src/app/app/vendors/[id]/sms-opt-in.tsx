@@ -1,6 +1,15 @@
 "use client";
 
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
@@ -52,52 +61,59 @@ export function VendorSmsOptIn({
   }
 
   return (
-    <form onSubmit={onSave} className="bg-card rounded-xl border">
-      <div className="border-b px-4 py-3">
-        <h2 className="text-sm font-semibold">SMS chasing (TCPA)</h2>
-        <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">
+    <Card className="gap-0 py-0">
+      <CardHeader className="border-b py-4">
+        <CardTitle>SMS chasing (TCPA)</CardTitle>
+        <CardDescription className="text-xs leading-relaxed">
           Texts are sent only with explicit opt-in. Reply STOP opts out
           instantly. Without opt-in, email-only chasing applies.
-        </p>
-      </div>
-      <div className="space-y-3 px-4 py-4">
-        <div className="space-y-1.5">
-          <Label htmlFor="phone">Mobile phone</Label>
-          <Input
-            id="phone"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="+1 555 555 0100"
-          />
-        </div>
-        <label className="text-muted-foreground flex items-start gap-2 text-xs leading-relaxed">
-          <input
-            type="checkbox"
-            className="mt-0.5"
-            checked={optIn}
-            onChange={(e) => setOptIn(e.target.checked)}
-          />
-          <span>
-            Vendor consented to receive compliance/renewal SMS from CertShield
-            on behalf of this property manager. Consent logged with timestamp.
-          </span>
-        </label>
-        {smsOptOutAt ? (
-          <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-            Opted out via STOP at {new Date(smsOptOutAt).toLocaleString()}.
-            Re-check the box only after fresh consent.
-          </p>
-        ) : null}
-        <Button
-          type="submit"
-          size="sm"
-          variant="outline"
-          disabled={busy || (optIn && !phone.trim())}
-        >
-          {busy ? "Saving…" : "Save SMS settings"}
-        </Button>
-        {msg ? <p className="text-muted-foreground text-xs">{msg}</p> : null}
-      </div>
-    </form>
+        </CardDescription>
+      </CardHeader>
+      <form onSubmit={onSave}>
+        <CardContent className="space-y-3 py-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="phone">Mobile phone</Label>
+            <Input
+              id="phone"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+1 555 555 0100"
+            />
+          </div>
+          <div className="flex items-start gap-2">
+            <Checkbox
+              id="sms-consent"
+              className="mt-0.5"
+              checked={optIn}
+              onCheckedChange={(checked) => setOptIn(checked === true)}
+            />
+            <Label
+              htmlFor="sms-consent"
+              className="text-muted-foreground text-xs leading-relaxed font-normal"
+            >
+              Vendor consented to receive compliance/renewal SMS from CertShield
+              on behalf of this property manager. Consent logged with timestamp.
+            </Label>
+          </div>
+          {smsOptOutAt ? (
+            <Alert className="border-amber-200 bg-amber-50 text-amber-900">
+              <AlertDescription className="text-xs text-amber-900">
+                Opted out via STOP at {new Date(smsOptOutAt).toLocaleString()}.
+                Re-check the box only after fresh consent.
+              </AlertDescription>
+            </Alert>
+          ) : null}
+          <Button
+            type="submit"
+            size="sm"
+            variant="outline"
+            disabled={busy || (optIn && !phone.trim())}
+          >
+            {busy ? "Saving…" : "Save SMS settings"}
+          </Button>
+          {msg ? <p className="text-muted-foreground text-xs">{msg}</p> : null}
+        </CardContent>
+      </form>
+    </Card>
   );
 }

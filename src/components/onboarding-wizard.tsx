@@ -1,7 +1,9 @@
 "use client";
 
 import { IntakeEmailCard } from "@/components/intake-email-card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -110,32 +112,27 @@ function OnboardingWizardInner({
   return (
     <div className="mx-auto max-w-xl space-y-6">
       {/* Step indicator */}
-      <ol className="flex items-center gap-2" aria-label="Setup progress">
-        {STEPS.map((s, i) => {
-          const state =
-            i < stepIdx ? "done" : i === stepIdx ? "current" : "upcoming";
-          return (
-            <li key={s} className="flex flex-1 flex-col gap-1.5">
-              <span
-                className={
-                  state === "upcoming"
-                    ? "bg-border h-1 rounded-full"
-                    : "bg-primary h-1 rounded-full"
-                }
-              />
-              <span
-                className={
-                  state === "current"
-                    ? "text-foreground text-[11px] font-medium"
-                    : "text-muted-foreground text-[11px]"
-                }
-              >
-                {STEP_LABELS[s]}
-              </span>
+      <div className="space-y-1.5">
+        <Progress
+          value={((stepIdx + 1) / STEPS.length) * 100}
+          aria-label="Setup progress"
+        />
+        <ol className="grid grid-cols-4 gap-2">
+          {STEPS.map((s, i) => (
+            <li
+              key={s}
+              aria-current={i === stepIdx ? "step" : undefined}
+              className={
+                i === stepIdx
+                  ? "text-foreground text-[11px] font-medium"
+                  : "text-muted-foreground text-[11px]"
+              }
+            >
+              {STEP_LABELS[s]}
             </li>
-          );
-        })}
-      </ol>
+          ))}
+        </ol>
+      </div>
 
       <div>
         <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
@@ -275,7 +272,9 @@ function OnboardingWizardInner({
         </Button>
       </div>
       {note ? (
-        <p className="text-muted-foreground text-xs leading-relaxed">{note}</p>
+        <Alert>
+          <AlertDescription>{note}</AlertDescription>
+        </Alert>
       ) : null}
     </div>
   );

@@ -9,7 +9,7 @@ export const metadata = {
 const SECTIONS = [
   {
     title: "Upload a COI",
-    body: "App → Upload, pick a vendor, drop the PDF. Extraction runs in the background; every verdict goes to internal review before publish until the Month 3 accuracy gate.",
+    body: "App → Upload, pick a vendor, drop the PDF (or tap Use on a sample COI). Same samples appear on the vendor portal. Extraction runs in the background; every verdict goes to internal review before publish until the Month 3 accuracy gate.",
   },
   {
     title: "Review & publish",

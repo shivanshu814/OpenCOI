@@ -1,6 +1,13 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { MailCheck } from "lucide-react";
 import { useState } from "react";
 
@@ -47,39 +54,34 @@ export function RequestAgentConfirmButton({
   }
 
   return (
-    <div className="bg-card rounded-xl border p-4">
-      <div className="flex items-start gap-3">
-        <span
-          className="bg-muted text-muted-foreground mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg"
-          aria-hidden
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <MailCheck className="text-muted-foreground size-4" aria-hidden />
+          Agent confirmation (B8)
+        </CardTitle>
+        <CardDescription className="text-xs leading-relaxed">
+          Emails the producer: Confirm / Deny that this cert is valid &amp;
+          current. Mitigates mid-term cancellations — does not detect them
+          automatically.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={busy}
+          onClick={() => void onClick()}
         >
-          <MailCheck className="size-4" />
-        </span>
-        <div className="min-w-0 space-y-2">
-          <div>
-            <p className="text-sm font-semibold">Agent confirmation (B8)</p>
-            <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">
-              Emails the producer: Confirm / Deny that this cert is valid &amp;
-              current. Mitigates mid-term cancellations — does not detect them
-              automatically.
-            </p>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={busy}
-            onClick={() => void onClick()}
-          >
-            {busy ? "Sending…" : "Request agent confirmation"}
-          </Button>
-          {msg ? (
-            <p className="text-muted-foreground text-xs leading-relaxed">
-              {msg}
-            </p>
-          ) : null}
-        </div>
-      </div>
-    </div>
+          {busy ? "Sending…" : "Request agent confirmation"}
+        </Button>
+        {msg ? (
+          <p className="text-muted-foreground text-xs leading-relaxed">
+            {msg}
+          </p>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }

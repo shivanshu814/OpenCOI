@@ -1,4 +1,5 @@
 import { IntakeEmailCard } from "@/components/intake-email-card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getSessionOrg } from "@/lib/auth/session";
 import { listVendors } from "@/lib/data/documents";
 import { DEMO_INTAKE_EMAIL } from "@/lib/email/intake-address";
@@ -24,7 +25,15 @@ export default async function Page() {
 
       <Suspense
         fallback={
-          <p className="text-muted-foreground text-sm">Loading upload…</p>
+          <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+            <Skeleton className="h-72 rounded-xl" />
+            <div className="space-y-3">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-16" />
+              <Skeleton className="h-16" />
+              <Skeleton className="h-16" />
+            </div>
+          </div>
         }
       >
         <UploadPage vendors={vendors} />

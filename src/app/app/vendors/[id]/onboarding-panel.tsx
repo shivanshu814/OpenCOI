@@ -1,6 +1,13 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useEffect, useState } from "react";
@@ -86,13 +93,13 @@ export function VendorOnboardingPanel({ vendorId }: Props) {
   }
 
   return (
-    <div className="bg-card min-w-0 rounded-xl border">
-      <div className="border-b px-4 py-3">
-        <h2 className="text-sm font-semibold">Onboarding &amp; paperwork</h2>
-        <p className="text-muted-foreground mt-0.5 text-xs">
+    <Card className="min-w-0 gap-0 py-0">
+      <CardHeader className="border-b py-4">
+        <CardTitle>Onboarding &amp; paperwork</CardTitle>
+        <CardDescription className="text-xs">
           W-9, trade license, and signed agreements for this vendor.
-        </p>
-      </div>
+        </CardDescription>
+      </CardHeader>
 
       <div className="divide-y">
         <section className="px-4 py-4">
@@ -246,10 +253,10 @@ export function VendorOnboardingPanel({ vendorId }: Props) {
       </div>
 
       {msg ? (
-        <p className="text-muted-foreground border-t px-4 py-3 text-xs break-all">
-          {msg}
-        </p>
+        <CardFooter className="py-3">
+          <p className="text-muted-foreground text-xs break-all">{msg}</p>
+        </CardFooter>
       ) : null}
-    </div>
+    </Card>
   );
 }

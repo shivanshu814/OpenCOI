@@ -1,8 +1,15 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -51,42 +58,46 @@ export function AddPropertyForm() {
   }
 
   return (
-    <section className="bg-card rounded-xl border">
-      <div className="border-b px-4 py-3">
-        <h2 className="text-sm font-semibold">Add a property</h2>
-        <p className="text-muted-foreground mt-0.5 text-xs">
+    <Card className="gap-0 py-0">
+      <CardHeader className="py-3">
+        <CardTitle className="text-sm font-semibold">Add a property</CardTitle>
+        <CardDescription className="text-xs">
           You can add the address, owner LLCs, and overrides on the next screen.
-        </p>
-      </div>
-      <form onSubmit={onSubmit} className="grid gap-4 p-4 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label htmlFor="prop-name">Property name</Label>
-          <Input
-            id="prop-name"
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Oak Street Apartments"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="holder">Certificate holder / owner LLC</Label>
-          <Input
-            id="holder"
-            value={holder}
-            onChange={(e) => setHolder(e.target.value)}
-            placeholder="Oak Street LLC c/o …"
-          />
-        </div>
-        <div className="flex items-center gap-3 sm:col-span-2">
-          <Button type="submit" disabled={busy}>
-            {busy ? "Saving…" : "Add property"}
-          </Button>
-          {msg ? (
-            <p className="text-muted-foreground text-xs">{msg}</p>
-          ) : null}
-        </div>
-      </form>
-    </section>
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="border-t py-4">
+        <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2">
+          <Field>
+            <FieldLabel htmlFor="prop-name">Property name</FieldLabel>
+            <Input
+              id="prop-name"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Oak Street Apartments"
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="holder">
+              Certificate holder / owner LLC
+            </FieldLabel>
+            <Input
+              id="holder"
+              value={holder}
+              onChange={(e) => setHolder(e.target.value)}
+              placeholder="Oak Street LLC c/o …"
+            />
+          </Field>
+          <div className="flex items-center gap-3 sm:col-span-2">
+            <Button type="submit" disabled={busy}>
+              {busy ? "Saving…" : "Add property"}
+            </Button>
+            {msg ? (
+              <p className="text-muted-foreground text-xs">{msg}</p>
+            ) : null}
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

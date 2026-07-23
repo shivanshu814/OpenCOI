@@ -2,6 +2,13 @@ import { DownloadReportButton } from "@/components/download-report-button";
 import { VendorStatusBadge } from "@/components/status-badges";
 import { Button } from "@/components/ui/button";
 import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
   Table,
   TableBody,
   TableCell,
@@ -50,16 +57,18 @@ export default async function VendorsPage() {
 
       <AddVendorForm />
 
-      <section className="bg-card min-w-0 rounded-xl border">
-        <div className="flex items-baseline justify-between gap-2 border-b px-4 py-3">
-          <h2 className="text-sm font-semibold">All vendors</h2>
-          <span className="text-muted-foreground text-xs tabular-nums">
-            {vendors.length}
-          </span>
-        </div>
+      <Card className="min-w-0 gap-0 py-0">
+        <CardHeader className="border-b py-4">
+          <CardTitle>All vendors</CardTitle>
+          <CardAction className="self-center">
+            <span className="text-muted-foreground text-xs tabular-nums">
+              {vendors.length}
+            </span>
+          </CardAction>
+        </CardHeader>
 
         {vendors.length === 0 ? (
-          <div className="px-6 py-14 text-center">
+          <CardContent className="px-6 py-14 text-center">
             <p className="text-sm font-medium">No vendors yet</p>
             <p className="text-muted-foreground mx-auto mt-2 max-w-md text-sm leading-relaxed">
               Add your first vendor above, then upload their COI — we&rsquo;ll
@@ -73,7 +82,7 @@ export default async function VendorsPage() {
             >
               Go to upload
             </Button>
-          </div>
+          </CardContent>
         ) : (
           <Table>
             <TableHeader>
@@ -135,7 +144,7 @@ export default async function VendorsPage() {
             </TableBody>
           </Table>
         )}
-      </section>
+      </Card>
     </div>
   );
 }

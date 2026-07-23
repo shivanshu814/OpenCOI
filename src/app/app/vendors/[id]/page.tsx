@@ -3,6 +3,13 @@ import { DownloadReportButton } from "@/components/download-report-button";
 import { SendChaseButton } from "@/components/send-chase-button";
 import { VendorStatusBadge } from "@/components/status-badges";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { listVendorAuditTrail } from "@/lib/audit/list";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
@@ -41,17 +48,17 @@ export default async function VendorDetailPage({
           </div>
         </div>
 
-        <section className="bg-card rounded-xl border">
-          <div className="border-b px-4 py-3">
-            <h2 className="text-sm font-semibold">Vendor portal (no login)</h2>
-            <p className="text-muted-foreground mt-0.5 text-xs">
+        <Card className="gap-0 py-0">
+          <CardHeader className="border-b py-4">
+            <CardTitle>Vendor portal (no login)</CardTitle>
+            <CardDescription className="text-xs">
               Magic link for upload + status. Also embedded in chase emails.
-            </p>
-          </div>
-          <div className="px-4 py-4">
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="py-4">
             <IssuePortalLinkButton vendorId={id} />
-          </div>
-        </section>
+          </CardContent>
+        </Card>
 
         <section className="space-y-3">
           <h2 className="text-sm font-semibold">Audit trail</h2>
@@ -135,19 +142,17 @@ export default async function VendorDetailPage({
         </div>
 
         <div className="min-w-0 space-y-6">
-          <section className="bg-card rounded-xl border">
-            <div className="border-b px-4 py-3">
-              <h2 className="text-sm font-semibold">
-                Vendor portal (no login)
-              </h2>
-              <p className="text-muted-foreground mt-0.5 text-xs">
+          <Card className="gap-0 py-0">
+            <CardHeader className="border-b py-4">
+              <CardTitle>Vendor portal (no login)</CardTitle>
+              <CardDescription className="text-xs">
                 Magic link for upload + status. Also embedded in chase emails.
-              </p>
-            </div>
-            <div className="px-4 py-4">
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="py-4">
               <IssuePortalLinkButton vendorId={vendor.id} />
-            </div>
-          </section>
+            </CardContent>
+          </Card>
 
           <VendorSmsOptIn
             vendorId={vendor.id}

@@ -1,4 +1,12 @@
 import { VendorStatusBadge } from "@/components/status-badges";
+import { Alert, AlertTitle } from "@/components/ui/alert";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { isSupabaseConfigured } from "@/lib/config";
 import { resolvePortalToken } from "@/lib/portal/tokens";
 import type { Verdict } from "@/lib/requirements/engine";
@@ -27,20 +35,22 @@ export default async function PortalPage({
   const ctx = await resolvePortalToken(token);
   if (!ctx) {
     return (
-      <div className="bg-card space-y-3 rounded-xl border px-5 py-8 text-center">
-        <CircleAlert
-          className="text-muted-foreground mx-auto size-8"
-          aria-hidden
-        />
-        <h1 className="text-xl font-semibold tracking-tight">Link expired</h1>
-        <p className="text-muted-foreground mx-auto max-w-sm text-sm leading-relaxed">
-          This portal link is invalid or expired. Ask{" "}
-          <span className="text-foreground font-medium">
-            your property manager
-          </span>{" "}
-          to resend a chase email.
-        </p>
-      </div>
+      <Card className="py-8">
+        <CardContent className="space-y-3 px-5 text-center">
+          <CircleAlert
+            className="text-muted-foreground mx-auto size-8"
+            aria-hidden
+          />
+          <h1 className="text-xl font-semibold tracking-tight">Link expired</h1>
+          <p className="text-muted-foreground mx-auto max-w-sm text-sm leading-relaxed">
+            This portal link is invalid or expired. Ask{" "}
+            <span className="text-foreground font-medium">
+              your property manager
+            </span>{" "}
+            to resend a chase email.
+          </p>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -71,17 +81,15 @@ export default async function PortalPage({
       </div>
 
       {gaps.length > 0 ? (
-        <section className="bg-card rounded-xl border">
-          <div className="border-b px-4 py-3">
-            <div className="flex items-baseline justify-between gap-2">
-              <h2 className="text-sm font-semibold">
-                {locale === "es" ? "Lo que falta" : "What’s missing"}
-              </h2>
-              <span className="text-muted-foreground text-xs tabular-nums">
-                {gaps.length}
-              </span>
-            </div>
-          </div>
+        <Card className="gap-0 py-0">
+          <CardHeader className="border-b py-3 [.border-b]:pb-3">
+            <CardTitle className="text-sm font-semibold">
+              {locale === "es" ? "Lo que falta" : "What’s missing"}
+            </CardTitle>
+            <CardAction className="text-muted-foreground self-center text-xs tabular-nums">
+              {gaps.length}
+            </CardAction>
+          </CardHeader>
           <ul className="divide-y">
             {gaps.map((g) => {
               const sep = g.indexOf(": ");
@@ -105,19 +113,16 @@ export default async function PortalPage({
               );
             })}
           </ul>
-        </section>
+        </Card>
       ) : (
-        <div className="bg-card flex items-start gap-3 rounded-xl border px-4 py-4">
-          <CheckCircle2
-            className="mt-0.5 size-5 shrink-0 text-emerald-600"
-            aria-hidden
-          />
-          <p className="text-sm leading-relaxed">
+        <Alert className="px-4 py-4">
+          <CheckCircle2 className="size-5 text-emerald-600" aria-hidden />
+          <AlertTitle className="font-normal leading-relaxed">
             {locale === "es"
               ? "No hay hallazgos publicados todavía, o está al día."
               : "No published gaps yet — or you’re up to date."}
-          </p>
-        </div>
+          </AlertTitle>
+        </Alert>
       )}
 
       <PortalActions

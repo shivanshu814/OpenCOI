@@ -1,3 +1,10 @@
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { canAdminSensitive } from "@/lib/auth/roles";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
@@ -96,44 +103,52 @@ export default async function AdminMetricsPage() {
         </p>
       </div>
 
-      <section className="bg-card rounded-xl border">
-        <div className="border-b px-4 py-3">
-          <h2 className="text-sm font-semibold">Document pipeline</h2>
-          <p className="text-muted-foreground mt-0.5 text-xs">
+      <Card className="gap-0 py-0">
+        <CardHeader className="border-b pt-4">
+          <CardTitle className="text-sm font-semibold">
+            Document pipeline
+          </CardTitle>
+          <CardDescription className="text-xs">
             Org-scoped counts across the verification flow.
-          </p>
-        </div>
-        <dl className="grid grid-cols-2 gap-x-8 gap-y-5 px-4 py-4 sm:grid-cols-4 sm:px-5">
-          <Metric label="Vendors" value={String(vendors ?? 0)} />
-          <Metric label="In internal review" value={String(inReview ?? 0)} />
-          <Metric label="Published docs" value={String(published ?? 0)} />
-          <Metric label="Golden-set cases" value={String(golden ?? 0)} />
-        </dl>
-      </section>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="py-4 sm:px-5">
+          <dl className="grid grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-4">
+            <Metric label="Vendors" value={String(vendors ?? 0)} />
+            <Metric label="In internal review" value={String(inReview ?? 0)} />
+            <Metric label="Published docs" value={String(published ?? 0)} />
+            <Metric label="Golden-set cases" value={String(golden ?? 0)} />
+          </dl>
+        </CardContent>
+      </Card>
 
-      <section className="bg-card rounded-xl border">
-        <div className="border-b px-4 py-3">
-          <h2 className="text-sm font-semibold">AI extraction ops</h2>
-          <p className="text-muted-foreground mt-0.5 text-xs">
+      <Card className="gap-0 py-0">
+        <CardHeader className="border-b pt-4">
+          <CardTitle className="text-sm font-semibold">
+            AI extraction ops
+          </CardTitle>
+          <CardDescription className="text-xs">
             Last {rows.length || 100} extractions — cost, latency, confidence,
             and model versions are logged on every call.
-          </p>
-        </div>
-        <dl className="grid grid-cols-2 gap-x-8 gap-y-5 px-4 py-4 sm:grid-cols-4 sm:px-5">
-          <Metric label="AI cost (last 100)" value={`$${cost.toFixed(4)}`} />
-          <Metric label="Avg latency (ms)" value={String(avgLatency)} />
-          <Metric
-            label="Avg confidence"
-            value={`${Math.round(avgConf * 100)}%`}
-          />
-          <Metric
-            label="Models seen"
-            value={String(
-              new Set(rows.map((r) => r.model_version).filter(Boolean)).size,
-            )}
-          />
-        </dl>
-      </section>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="py-4 sm:px-5">
+          <dl className="grid grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-4">
+            <Metric label="AI cost (last 100)" value={`$${cost.toFixed(4)}`} />
+            <Metric label="Avg latency (ms)" value={String(avgLatency)} />
+            <Metric
+              label="Avg confidence"
+              value={`${Math.round(avgConf * 100)}%`}
+            />
+            <Metric
+              label="Models seen"
+              value={String(
+                new Set(rows.map((r) => r.model_version).filter(Boolean)).size,
+              )}
+            />
+          </dl>
+        </CardContent>
+      </Card>
 
       <FixtureAccuracyCard />
 
@@ -162,16 +177,18 @@ function FixtureAccuracyCard() {
   const pct = Math.round(result.accuracy * 100);
   const gate = Math.round(MONTH3_ACCURACY_GATE * 100);
   return (
-    <section className="bg-card rounded-xl border">
-      <div className="border-b px-4 py-3">
-        <h2 className="text-sm font-semibold">Golden-set fixture accuracy</h2>
-        <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">
+    <Card className="gap-0 py-0">
+      <CardHeader className="border-b pt-4">
+        <CardTitle className="text-sm font-semibold">
+          Golden-set fixture accuracy
+        </CardTitle>
+        <CardDescription className="text-xs leading-relaxed">
           CI harness on seeded date/limit fixtures. Month 3 SCALE gate is ≥
           {gate}% on a 100-cert real ACORD corpus (charging already allowed
           under 100% internal review).
-        </p>
-      </div>
-      <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3 px-4 py-4 sm:px-5">
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3 py-4 sm:px-5">
         <p className="text-3xl font-semibold tabular-nums">
           {pct}%
           <span className="text-muted-foreground text-sm font-normal">
@@ -182,7 +199,7 @@ function FixtureAccuracyCard() {
         <p className="text-muted-foreground text-xs">
           Gate: ≥{gate}% automated accuracy
         </p>
-      </div>
-    </section>
+      </CardContent>
+    </Card>
   );
 }

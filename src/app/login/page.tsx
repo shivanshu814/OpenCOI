@@ -2,8 +2,14 @@
 
 import { BrandMark } from "@/components/marketing-shell";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -60,28 +66,33 @@ function LoginForm() {
   }
 
   return (
-    <form
-      onSubmit={onSubmit}
-      className="bg-card space-y-4 rounded-xl border p-6 shadow-sm"
-    >
-      <div className="space-y-1.5">
-        <Label htmlFor="email">Work email</Label>
-        <Input
-          id="email"
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@propertymgmt.com"
-        />
-      </div>
-      <Button type="submit" size="lg" className="w-full" disabled={busy}>
-        {busy ? "Sending…" : "Send magic link"}
-      </Button>
-      {msg ? (
-        <p className="text-muted-foreground text-xs leading-relaxed">{msg}</p>
-      ) : null}
-    </form>
+    <Card className="[--card-spacing:--spacing(6)] shadow-sm">
+      <CardContent>
+        <form onSubmit={onSubmit}>
+          <FieldGroup className="gap-4">
+            <Field>
+              <FieldLabel htmlFor="email">Work email</FieldLabel>
+              <Input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@propertymgmt.com"
+              />
+            </Field>
+            <Button type="submit" size="lg" className="w-full" disabled={busy}>
+              {busy ? "Sending…" : "Send magic link"}
+            </Button>
+            {msg ? (
+              <FieldDescription className="text-xs leading-relaxed">
+                {msg}
+              </FieldDescription>
+            ) : null}
+          </FieldGroup>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
 

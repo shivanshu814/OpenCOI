@@ -1,4 +1,12 @@
 import { CheckoutButton } from "@/components/checkout-button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { getSessionOrg } from "@/lib/auth/session";
 import { PLANS } from "@/lib/billing/plans";
 import { isPaddleCheckoutConfigured, isSupabaseConfigured } from "@/lib/config";
@@ -19,45 +27,51 @@ export default async function BillingSettingsPage() {
         </p>
       </div>
 
-      <section className="bg-card rounded-xl border">
-        <div className="border-b px-4 py-3">
-          <h2 className="text-sm font-semibold">Current subscription</h2>
-        </div>
-        <dl className="grid gap-x-8 gap-y-4 px-4 py-4 sm:grid-cols-2 sm:px-5">
-          <div>
-            <dt className="text-muted-foreground text-xs font-medium">
-              Current plan
-            </dt>
-            <dd className="mt-1 text-sm font-medium">
-              {session?.plan ?? "None (founding / manual invoice OK)"}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-muted-foreground text-xs font-medium">
-              Status
-            </dt>
-            <dd className="mt-1 text-sm font-medium">
-              {session?.subscriptionStatus ?? "—"}
-            </dd>
-          </div>
-        </dl>
+      <Card className="gap-0 py-0">
+        <CardHeader className="border-b pt-4">
+          <CardTitle className="text-sm font-semibold">
+            Current subscription
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="py-4 sm:px-5">
+          <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
+            <div>
+              <dt className="text-muted-foreground text-xs font-medium">
+                Current plan
+              </dt>
+              <dd className="mt-1 text-sm font-medium">
+                {session?.plan ?? "None (founding / manual invoice OK)"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground text-xs font-medium">
+                Status
+              </dt>
+              <dd className="mt-1 text-sm font-medium">
+                {session?.subscriptionStatus ?? "—"}
+              </dd>
+            </div>
+          </dl>
+        </CardContent>
         {!paddleReady ? (
-          <p className="text-muted-foreground border-t px-4 py-3 text-xs leading-relaxed sm:px-5">
-            Paddle client token / price IDs not set. Add{" "}
-            <code>NEXT_PUBLIC_PADDLE_*</code> + webhook secret after Paddle KYC.
-            Until then, onboard customers and invoice manually (launch plan
-            fallback).
-          </p>
+          <CardFooter className="sm:px-5">
+            <p className="text-muted-foreground text-xs leading-relaxed">
+              Paddle client token / price IDs not set. Add{" "}
+              <code>NEXT_PUBLIC_PADDLE_*</code> + webhook secret after Paddle
+              KYC. Until then, onboard customers and invoice manually (launch
+              plan fallback).
+            </p>
+          </CardFooter>
         ) : null}
-      </section>
+      </Card>
 
-      <section className="bg-card rounded-xl border">
-        <div className="border-b px-4 py-3">
-          <h2 className="text-sm font-semibold">Plans</h2>
-          <p className="text-muted-foreground mt-0.5 text-xs">
+      <Card className="gap-0 py-0">
+        <CardHeader className="border-b pt-4">
+          <CardTitle className="text-sm font-semibold">Plans</CardTitle>
+          <CardDescription className="text-xs">
             Change plans anytime — billing is prorated by Paddle.
-          </p>
-        </div>
+          </CardDescription>
+        </CardHeader>
         <div className="divide-y">
           {PLANS.map((plan) => (
             <div
@@ -88,7 +102,7 @@ export default async function BillingSettingsPage() {
             </div>
           ))}
         </div>
-      </section>
+      </Card>
 
       <p className="text-muted-foreground text-xs">
         Full plan comparison on the{" "}

@@ -1,8 +1,17 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { RequirementRule } from "@/lib/requirements/engine";
 import { useRouter } from "next/navigation";
@@ -141,17 +150,17 @@ export function PropertyEditor({
       <section className="space-y-4">
         <SectionHeading title="Property details" />
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="name">Name</Label>
+          <Field className="sm:col-span-2">
+            <FieldLabel htmlFor="name">Name</FieldLabel>
             <Input
               id="name"
               required
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
-          </div>
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="addr">Address</Label>
+          </Field>
+          <Field className="sm:col-span-2">
+            <FieldLabel htmlFor="addr">Address</FieldLabel>
             <Input
               id="addr"
               value={form.address_line}
@@ -159,27 +168,27 @@ export function PropertyEditor({
                 setForm({ ...form, address_line: e.target.value })
               }
             />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="city">City</Label>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="city">City</FieldLabel>
             <Input
               id="city"
               value={form.city}
               onChange={(e) => setForm({ ...form, city: e.target.value })}
             />
-          </div>
+          </Field>
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="state">State</Label>
+            <Field>
+              <FieldLabel htmlFor="state">State</FieldLabel>
               <Input
                 id="state"
                 maxLength={2}
                 value={form.state}
                 onChange={(e) => setForm({ ...form, state: e.target.value })}
               />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="zip">ZIP</Label>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="zip">ZIP</FieldLabel>
               <Input
                 id="zip"
                 value={form.postal_code}
@@ -187,7 +196,7 @@ export function PropertyEditor({
                   setForm({ ...form, postal_code: e.target.value })
                 }
               />
-            </div>
+            </Field>
           </div>
         </div>
       </section>
@@ -198,8 +207,8 @@ export function PropertyEditor({
           hint="What must appear on every COI for this property."
         />
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="holder">Certificate holder name</Label>
+          <Field className="sm:col-span-2">
+            <FieldLabel htmlFor="holder">Certificate holder name</FieldLabel>
             <Input
               id="holder"
               value={form.certificate_holder_name}
@@ -207,9 +216,9 @@ export function PropertyEditor({
                 setForm({ ...form, certificate_holder_name: e.target.value })
               }
             />
-          </div>
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="ai">Additional insured wording</Label>
+          </Field>
+          <Field className="sm:col-span-2">
+            <FieldLabel htmlFor="ai">Additional insured wording</FieldLabel>
             <Textarea
               id="ai"
               rows={3}
@@ -222,9 +231,11 @@ export function PropertyEditor({
               }
               placeholder="…including Oak Street LLC as additional insured…"
             />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="llcs">Owner LLCs (comma-separated)</Label>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="llcs">
+              Owner LLCs (comma-separated)
+            </FieldLabel>
             <Input
               id="llcs"
               value={form.owner_llc_names}
@@ -232,9 +243,9 @@ export function PropertyEditor({
                 setForm({ ...form, owner_llc_names: e.target.value })
               }
             />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="lenders">Lenders (comma-separated)</Label>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="lenders">Lenders (comma-separated)</FieldLabel>
             <Input
               id="lenders"
               value={form.lender_names}
@@ -242,7 +253,7 @@ export function PropertyEditor({
                 setForm({ ...form, lender_names: e.target.value })
               }
             />
-          </div>
+          </Field>
         </div>
       </section>
 
@@ -252,72 +263,78 @@ export function PropertyEditor({
           hint="A monthly compliance summary for the building owner."
         />
         <div className="max-w-md space-y-1.5">
-          <Label htmlFor="owner-email">Owner report email</Label>
-          <Input
-            id="owner-email"
-            type="email"
-            placeholder="owner@building.example"
-            value={form.owner_report_email}
-            onChange={(e) =>
-              setForm({ ...form, owner_report_email: e.target.value })
-            }
-          />
-          <label className="mt-2 flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              className="accent-primary size-4"
+          <Field>
+            <FieldLabel htmlFor="owner-email">Owner report email</FieldLabel>
+            <Input
+              id="owner-email"
+              type="email"
+              placeholder="owner@building.example"
+              value={form.owner_report_email}
+              onChange={(e) =>
+                setForm({ ...form, owner_report_email: e.target.value })
+              }
+            />
+          </Field>
+          <label
+            htmlFor="owner-report-enabled"
+            className="mt-2 flex cursor-pointer items-center gap-2 text-sm"
+          >
+            <Checkbox
+              id="owner-report-enabled"
               checked={ownerReportEnabled}
-              onChange={(e) => setOwnerReportEnabled(e.target.checked)}
+              onCheckedChange={(checked) => setOwnerReportEnabled(checked)}
             />
             Email monthly owner report automatically
           </label>
         </div>
       </section>
 
-      <section className="bg-card rounded-xl border">
-        <div className="border-b px-4 py-3">
-          <h2 className="text-sm font-semibold">Requirement override</h2>
-          <p className="text-muted-foreground mt-0.5 text-xs">
+      <Card className="gap-0 py-0">
+        <CardHeader className="py-3">
+          <CardTitle className="text-sm font-semibold">
+            Requirement override
+          </CardTitle>
+          <CardDescription className="text-xs">
             Merges over global + trade rules for documents tied to this
             property.
-          </p>
-        </div>
-        <div className="max-w-xs space-y-1.5 p-4">
-          <Label htmlFor="gl">GL each-occurrence minimum ($)</Label>
-          <Input
-            id="gl"
-            className="tabular-nums"
-            value={glMin}
-            onChange={(e) => setGlMin(e.target.value)}
-          />
-        </div>
-      </section>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="border-t py-4">
+          <Field className="max-w-xs">
+            <FieldLabel htmlFor="gl">GL each-occurrence minimum ($)</FieldLabel>
+            <Input
+              id="gl"
+              className="tabular-nums"
+              value={glMin}
+              onChange={(e) => setGlMin(e.target.value)}
+            />
+          </Field>
+        </CardContent>
+      </Card>
 
-      <section className="bg-card rounded-xl border">
-        <div className="flex items-baseline justify-between gap-2 border-b px-4 py-3">
-          <div>
-            <h2 className="text-sm font-semibold">Vendors on this property</h2>
-            <p className="text-muted-foreground mt-0.5 text-xs">
-              Checked vendors are tracked against this property’s requirements.
-            </p>
-          </div>
-          <span className="text-muted-foreground text-xs tabular-nums">
+      <Card className="gap-0 py-0">
+        <CardHeader className="py-3">
+          <CardTitle className="text-sm font-semibold">
+            Vendors on this property
+          </CardTitle>
+          <CardDescription className="text-xs">
+            Checked vendors are tracked against this property’s requirements.
+          </CardDescription>
+          <CardAction className="text-muted-foreground self-center text-xs tabular-nums">
             {selected.size}/{vendors.length}
-          </span>
-        </div>
-        <div className="divide-y">
+          </CardAction>
+        </CardHeader>
+        <CardContent className="divide-y border-t px-0">
           {vendors.map((v) => (
             <label
               key={v.id}
               htmlFor={`v-${v.id}`}
               className="hover:bg-muted/40 flex cursor-pointer items-center gap-2.5 px-4 py-2.5 text-sm"
             >
-              <input
-                type="checkbox"
-                className="accent-primary size-4"
-                checked={selected.has(v.id)}
-                onChange={() => toggleVendor(v.id)}
+              <Checkbox
                 id={`v-${v.id}`}
+                checked={selected.has(v.id)}
+                onCheckedChange={() => toggleVendor(v.id)}
               />
               {v.name}
             </label>
@@ -327,8 +344,8 @@ export function PropertyEditor({
               No vendors yet — add vendors first, then attach them here.
             </p>
           ) : null}
-        </div>
-      </section>
+        </CardContent>
+      </Card>
 
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={busy}>

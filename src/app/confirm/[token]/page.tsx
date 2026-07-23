@@ -1,5 +1,6 @@
 import { BrandMark } from "@/components/marketing-shell";
-import { buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { resolveAgentConfirmation } from "@/lib/agent-confirm/issue";
 import { isSupabaseConfigured } from "@/lib/config";
@@ -40,20 +41,17 @@ export default async function ConfirmPage({
           Open the Confirm or Deny link from the email.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <Link
-            className={cn(buttonVariants({ variant: "default" }))}
-            href={`/confirm/${token}?a=confirm`}
-          >
+          <Button render={<Link href={`/confirm/${token}?a=confirm`} />}>
             <CircleCheck className="size-4" />
             Confirm — valid &amp; current
-          </Link>
-          <Link
-            className={cn(buttonVariants({ variant: "outline" }))}
-            href={`/confirm/${token}?a=deny`}
+          </Button>
+          <Button
+            variant="outline"
+            render={<Link href={`/confirm/${token}?a=deny`} />}
           >
             <CircleX className="size-4" />
             Deny
-          </Link>
+          </Button>
         </div>
       </Shell>
     );
@@ -123,7 +121,9 @@ function Shell({ children }: { children: React.ReactNode }) {
         <BrandMark />
       </header>
       <main className="mx-auto w-full max-w-lg flex-1 px-4 py-12">
-        <div className="bg-card rounded-xl border px-6 py-8">{children}</div>
+        <Card className="[--card-spacing:--spacing(6)]">
+          <CardContent className="py-2">{children}</CardContent>
+        </Card>
       </main>
     </div>
   );
