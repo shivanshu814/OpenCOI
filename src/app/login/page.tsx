@@ -20,22 +20,35 @@ function LoginForm() {
     setMsg(null);
     try {
       const supabase = createClient();
-      // Prefer configured app URL so prod emails never redirect to localhost
-      // when Site URL / env are correct. Falls back to current origin for local.
+      // Canonical prod URL — never rely on window.origin (localhost emails)
+      // or empty NEXT_PUBLIC_APP_URL. Query-string redirects often fail
+      // Supabase allowlist matching and silently fall back to Site URL.
       const appUrl = (
         process.env.NEXT_PUBLIC_APP_URL?.trim() ||
-        window.location.origin
+        (typeof window !== "undefined" &&
+        window.location.hostname !== "localhost" &&
+        window.location.hostname !== "127.0.0.1"
+          ? window.location.origin
+          : "https://getcertshield.vercel.app")
       ).replace(/\/$/, "");
+
+      const redirectTo = `${appUrl}/auth/callback`;
+
+      // Persist post-login path in a cookie (callback reads it)
+      document.cookie = `cs_auth_next=${encodeURIComponent(next)}; path=/; max-age=600; samesite=lax`;
+
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${appUrl}/auth/callback?next=${encodeURIComponent(next)}`,
+          emailRedirectTo: redirectTo,
         },
       });
       if (error) {
         setMsg(error.message);
       } else {
-        setMsg("Check your email for the magic link.");
+        setMsg(
+          `Check your email for the magic link. (redirect → ${redirectTo})`,
+        );
       }
     } catch (err) {
       setMsg(err instanceof Error ? err.message : "Login failed");
