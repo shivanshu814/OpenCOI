@@ -34,3 +34,40 @@ export type ComplianceReport = {
   /** Soft CTA — free-audit / sales weapon (docs/03). */
   cta: string;
 };
+
+/** D3 / P10 — monthly branded owner report (PDF + email). */
+export type OwnerReportVendorLine = {
+  id: string;
+  name: string;
+  trade: string | null;
+  status: VendorStatus;
+  documents_on_file: number;
+};
+
+export type OwnerReport = {
+  brand: "CertShield";
+  generated_at: string;
+  period_label: string;
+  org_name: string;
+  property: {
+    id: string;
+    name: string;
+    address: string | null;
+    owner_llc_names: string[];
+    certificate_holder_name: string | null;
+  };
+  compliance_percent: number;
+  vendor_count: number;
+  documents_on_file: number;
+  /**
+   * Spec D3 "incidents avoided" — operational proxy only:
+   * vendors flagged non-compliant / missing docs / in review (not claim outcomes).
+   */
+  risks_flagged: number;
+  expiring_count: number;
+  by_status: Record<VendorStatus, number>;
+  vendors: OwnerReportVendorLine[];
+  summary: string;
+  disclaimer: string;
+  honesty_note: string;
+};

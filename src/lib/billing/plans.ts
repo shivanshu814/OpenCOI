@@ -45,8 +45,8 @@ export const PLANS: Plan[] = [
       "Agent confirmations + fraud risk signals",
       "Carrier AM Best checks + compliance scores",
       "Weekly digest email",
+      "Owner reports (PDF + monthly email)",
     ],
-    comingSoon: ["Owner reports"],
   },
   {
     id: "business",

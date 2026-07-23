@@ -15,6 +15,10 @@ const patchSchema = z.object({
   additional_insured_wording: z.string().max(1000).optional().nullable(),
   owner_llc_names: z.array(z.string()).optional(),
   lender_names: z.array(z.string()).optional(),
+  owner_report_email: z
+    .union([z.string().email(), z.literal(""), z.null()])
+    .optional(),
+  owner_report_enabled: z.boolean().optional(),
   rules: z.array(z.record(z.string(), z.unknown())).optional(),
   vendorIds: z.array(z.string().uuid()).optional(),
 });
@@ -127,6 +131,10 @@ export async function PATCH(
   if (p.owner_llc_names !== undefined)
     updates.owner_llc_names = p.owner_llc_names;
   if (p.lender_names !== undefined) updates.lender_names = p.lender_names;
+  if (p.owner_report_email !== undefined)
+    updates.owner_report_email = p.owner_report_email?.trim() || null;
+  if (p.owner_report_enabled !== undefined)
+    updates.owner_report_enabled = p.owner_report_enabled;
 
   const { error } = await supabase
     .from("properties")

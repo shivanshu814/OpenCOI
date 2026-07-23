@@ -1,3 +1,5 @@
+import { DownloadOwnerReportButton } from "@/components/download-owner-report-button";
+import { SendOwnerReportButton } from "@/components/send-owner-report-button";
 import { Button } from "@/components/ui/button";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
@@ -20,9 +22,18 @@ export default async function PropertyDetailPage({
         <Link href="/app/properties" className="text-muted-foreground text-sm">
           ← Properties
         </Link>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Oak Street Apartments
-        </h1>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Oak Street Apartments
+          </h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <DownloadOwnerReportButton propertyId={id} />
+            <SendOwnerReportButton
+              propertyId={id}
+              toHint="owner@oakstreet.example"
+            />
+          </div>
+        </div>
         <PropertyEditor
           propertyId={id}
           initial={{
@@ -35,6 +46,8 @@ export default async function PropertyDetailPage({
             additional_insured_wording: "",
             owner_llc_names: "Oak Street LLC",
             lender_names: "",
+            owner_report_email: "owner@oakstreet.example",
+            owner_report_enabled: true,
           }}
           rules={[]}
           vendorIds={[]}
@@ -100,15 +113,22 @@ export default async function PropertyDetailPage({
             rules.
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          render={
-            <a href={`/api/properties/${property.id}/audit-pack`} download />
-          }
-        >
-          Audit pack
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <DownloadOwnerReportButton propertyId={property.id} />
+          <SendOwnerReportButton
+            propertyId={property.id}
+            toHint={property.owner_report_email as string | null}
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            render={
+              <a href={`/api/properties/${property.id}/audit-pack`} download />
+            }
+          >
+            Audit pack
+          </Button>
+        </div>
       </div>
       <PropertyEditor
         propertyId={id}
@@ -122,6 +142,8 @@ export default async function PropertyDetailPage({
           additional_insured_wording: property.additional_insured_wording ?? "",
           owner_llc_names: ownerLlcs.join(", "),
           lender_names: lenders.join(", "),
+          owner_report_email: (property.owner_report_email as string) ?? "",
+          owner_report_enabled: Boolean(property.owner_report_enabled),
         }}
         rules={(reqSet?.rules as RequirementRule[]) ?? []}
         vendorIds={(links ?? []).map((l) => l.vendor_id)}

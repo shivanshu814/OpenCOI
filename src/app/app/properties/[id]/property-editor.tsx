@@ -22,6 +22,8 @@ type Props = {
     additional_insured_wording: string;
     owner_llc_names: string;
     lender_names: string;
+    owner_report_email: string;
+    owner_report_enabled: boolean;
   };
   rules: RequirementRule[];
   vendorIds: string[];
@@ -37,6 +39,9 @@ export function PropertyEditor({
 }: Props) {
   const router = useRouter();
   const [form, setForm] = useState(initial);
+  const [ownerReportEnabled, setOwnerReportEnabled] = useState(
+    initial.owner_report_enabled,
+  );
   const [selected, setSelected] = useState<Set<string>>(new Set(vendorIds));
   const [glMin, setGlMin] = useState(() => {
     const r = rules.find((x) => x.id === "gl_each_occ");
@@ -100,6 +105,8 @@ export function PropertyEditor({
             .split(",")
             .map((s) => s.trim())
             .filter(Boolean),
+          owner_report_email: form.owner_report_email.trim() || null,
+          owner_report_enabled: ownerReportEnabled,
           rules: nextRules,
           vendorIds: Array.from(selected),
         }),
@@ -209,6 +216,26 @@ export function PropertyEditor({
             value={form.lender_names}
             onChange={(e) => setForm({ ...form, lender_names: e.target.value })}
           />
+        </div>
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label htmlFor="owner-email">Owner report email (D3)</Label>
+          <Input
+            id="owner-email"
+            type="email"
+            placeholder="owner@building.example"
+            value={form.owner_report_email}
+            onChange={(e) =>
+              setForm({ ...form, owner_report_email: e.target.value })
+            }
+          />
+          <label className="mt-2 flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={ownerReportEnabled}
+              onChange={(e) => setOwnerReportEnabled(e.target.checked)}
+            />
+            Email monthly owner report automatically
+          </label>
         </div>
       </div>
 
