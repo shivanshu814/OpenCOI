@@ -363,7 +363,7 @@ export function AppShell({
       <AppSidebar live={live} />
       <SidebarInset className="bg-background">
         <AppHeader live={live} />
-        <main className="mx-auto w-full max-w-6xl flex-1 space-y-6 px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
+        <main className="w-full flex-1 space-y-6 px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
           {children}
         </main>
         <DisclaimerFooter />

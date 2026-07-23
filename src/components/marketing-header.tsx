@@ -1,7 +1,7 @@
 "use client";
 
 import { BrandMark } from "@/components/certshield-logo";
-import { LiveBadgeOnDark, LiveOpsTicker } from "@/components/live-activity";
+import { LiveOpsTicker } from "@/components/live-activity";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -39,7 +39,7 @@ function NavLink({
       href={href}
       onClick={onNavigate}
       className={cn(
-        "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+        "rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
         active
           ? "bg-white/10 text-white shadow-xs"
           : "text-white/60 hover:bg-white/[0.06] hover:text-white",
@@ -54,45 +54,45 @@ export function MarketingHeader() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-[oklch(0.22_0.03_260)]/90 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 overflow-visible border-b border-white/10 bg-[oklch(0.22_0.03_260)]/90 backdrop-blur-xl">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-brand/50 to-transparent"
       />
 
-      <div className="relative mx-auto flex h-[4.25rem] max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <Link
-          href="/"
-          aria-label="CertShield home"
-          className="group shrink-0 transition-opacity hover:opacity-90"
-        >
-          <BrandMark
-            markSize={30}
-            wordmarkClassName="text-white text-[1.0625rem] tracking-tight"
-          />
-        </Link>
+      <div className="relative mx-auto grid h-[4.25rem] w-full max-w-6xl grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 px-4 sm:px-6">
+        <div className="flex min-w-0 items-center justify-start">
+          <Link
+            href="/"
+            aria-label="CertShield home"
+            className="group shrink-0 transition-opacity hover:opacity-90"
+          >
+            <BrandMark
+              markSize={30}
+              wordmarkClassName="text-white text-[1.0625rem] tracking-tight"
+            />
+          </Link>
+        </div>
 
-        <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-0.5 rounded-full border border-white/10 bg-white/[0.04] p-1 sm:flex">
+        <nav className="hidden shrink-0 items-center gap-0.5 rounded-full border border-white/10 bg-white/[0.04] p-1 md:flex">
           {nav.map((item) => (
             <NavLink key={item.href} {...item} />
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
-          <LiveOpsTicker className="mr-1 hidden max-w-[14rem] lg:inline-flex xl:max-w-[18rem]" />
-          <LiveBadgeOnDark
-            label="Live"
-            className="hidden md:inline-flex lg:hidden"
-          />
+        <div className="flex min-w-0 items-center justify-end gap-3">
+          <LiveOpsTicker className="mr-0 hidden min-w-0 max-w-[11rem] shrink xl:inline-flex 2xl:max-w-[16rem]" />
+
           <Link
             href="/login"
-            className="hidden rounded-lg px-3 py-1.5 text-sm font-medium text-white/65 transition-colors hover:bg-white/[0.06] hover:text-white sm:inline-flex"
+            className="hidden h-9 shrink-0 items-center rounded-lg px-3 text-sm font-medium text-white/70 transition-colors hover:bg-white/[0.06] hover:text-white sm:inline-flex"
           >
             Sign in
           </Link>
+
           <Button
             size="sm"
-            className="bg-brand text-brand-foreground hover:bg-brand/90 h-9 rounded-lg px-3.5 text-sm font-semibold shadow-[0_0_0_1px_rgba(0,184,132,0.35),0_8px_24px_-8px_rgba(0,184,132,0.65)]"
+            className="bg-brand text-brand-foreground hover:bg-brand/90 h-9 shrink-0 rounded-lg px-3.5 text-sm font-semibold shadow-[0_0_0_1px_rgba(0,184,132,0.35),0_8px_24px_-8px_rgba(0,184,132,0.65)]"
             render={<Link href="/pricing" />}
           >
             Start from $99
@@ -104,7 +104,7 @@ export function MarketingHeader() {
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="text-white hover:bg-white/10 hover:text-white sm:hidden"
+                  className="text-white hover:bg-white/10 hover:text-white md:hidden"
                   aria-label="Open menu"
                 />
               }
@@ -139,7 +139,7 @@ export function MarketingHeader() {
                   Sign in
                 </Link>
                 <div className="mt-4 px-1">
-                  <LiveOpsTicker className="w-full justify-start" />
+                  <LiveOpsTicker className="w-full max-w-none justify-start" />
                 </div>
               </div>
             </SheetContent>
