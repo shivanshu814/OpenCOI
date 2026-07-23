@@ -26,6 +26,8 @@ export type SendEmailInput = {
   text: string;
   html: string;
   replyTo?: string;
+  /** F2 white-label from (must be verified in Resend). */
+  from?: string;
   tags?: { name: string; value: string }[];
 };
 
@@ -44,12 +46,13 @@ export async function sendOutboundEmail(
       to: input.to,
       cc: input.cc,
       subject: input.subject,
+      from: input.from,
     });
     return { ok: true, demo: true, id: `demo_${Date.now()}` };
   }
 
   const { data, error } = await resend.emails.send({
-    from: getResendFromAddress(),
+    from: input.from?.trim() || getResendFromAddress(),
     to: input.to,
     cc: input.cc,
     subject: input.subject,

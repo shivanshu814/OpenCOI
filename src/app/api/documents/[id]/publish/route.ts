@@ -112,6 +112,31 @@ export async function POST(_request: Request, ctx: Ctx) {
     reason: "Internal review approved",
   });
 
+  try {
+    const { dispatchOrgWebhooks } = await import("@/lib/api/keys");
+    await dispatchOrgWebhooks({
+      orgId: session.orgId,
+      event: "document.published",
+      payload: {
+        document_id: id,
+        vendor_id: doc.vendor_id,
+        overall_verdict: check?.overall_verdict ?? null,
+      },
+    });
+    if (check) {
+      await dispatchOrgWebhooks({
+        orgId: session.orgId,
+        event: "vendor.status_changed",
+        payload: {
+          vendor_id: doc.vendor_id,
+          status: vendorStatusFromVerdict(check.overall_verdict as Verdict),
+        },
+      });
+    }
+  } catch (e) {
+    console.error("webhook dispatch", e);
+  }
+
   return NextResponse.json({
     ok: true,
     status: "published",

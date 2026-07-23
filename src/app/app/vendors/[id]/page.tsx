@@ -10,6 +10,7 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { IssuePortalLinkButton } from "./issue-portal-link";
+import { VendorOnboardingPanel } from "./onboarding-panel";
 import { VendorSmsOptIn } from "./sms-opt-in";
 
 export default async function VendorDetailPage({
@@ -77,6 +78,15 @@ export default async function VendorDetailPage({
         </div>
         <div className="flex flex-wrap gap-2">
           <DownloadReportButton vendorId={vendor.id} label="Report" />
+          <Button
+            variant="outline"
+            size="sm"
+            render={
+              <a href={`/api/vendors/${vendor.id}/litigation-pack`} download />
+            }
+          >
+            Litigation pack
+          </Button>
           <SendChaseButton vendorId={vendor.id} vendorName={vendor.name} />
           <Button
             variant="outline"
@@ -97,6 +107,8 @@ export default async function VendorDetailPage({
           <IssuePortalLinkButton vendorId={vendor.id} />
         </div>
       </div>
+
+      <VendorOnboardingPanel vendorId={vendor.id} />
 
       <VendorSmsOptIn
         vendorId={vendor.id}

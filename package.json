@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --test src/lib/requirements/engine.test.ts src/lib/requirements/merge.test.ts src/lib/chase/cadence.test.ts src/lib/reports/build.test.ts src/lib/verdicts/customer-decision.test.ts src/lib/billing/checkout.test.ts src/lib/carriers/ratings.test.ts src/lib/fraud/signals.test.ts src/lib/scores/compute.test.ts src/lib/sms/templates.test.ts"
+    "test": "tsx --test src/lib/requirements/engine.test.ts src/lib/requirements/merge.test.ts src/lib/chase/cadence.test.ts src/lib/reports/build.test.ts src/lib/verdicts/customer-decision.test.ts src/lib/billing/checkout.test.ts src/lib/carriers/ratings.test.ts src/lib/fraud/signals.test.ts src/lib/scores/compute.test.ts src/lib/sms/templates.test.ts src/lib/auth/roles.test.ts src/lib/tax/tin.test.ts src/lib/api/keys.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.113.0",
@@ -20,6 +20,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "inngest": "^4.13.0",
+    "jszip": "^3.10.1",
     "lucide-react": "^1.26.0",
     "next": "16.2.11",
     "next-themes": "^0.4.6",
@@ -35,6 +36,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/jszip": "^3.4.0",
     "@types/node": "^20.19.43",
     "@types/react": "^19",
     "@types/react-dom": "^19",

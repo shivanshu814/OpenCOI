@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import type { RequirementRule } from "@/lib/requirements/engine";
@@ -89,14 +90,25 @@ export default async function PropertyDetailPage({
       <Link href="/app/properties" className="text-muted-foreground text-sm">
         ← Properties
       </Link>
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {property.name}
-        </h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Certificate holder + AI wording + overrides merge over global/trade
-          rules.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {property.name}
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Certificate holder + AI wording + overrides merge over global/trade
+            rules.
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          render={
+            <a href={`/api/properties/${property.id}/audit-pack`} download />
+          }
+        >
+          Audit pack
+        </Button>
       </div>
       <PropertyEditor
         propertyId={id}

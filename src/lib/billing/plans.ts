@@ -58,8 +58,12 @@ export const PLANS: Plan[] = [
       "Unlimited vendors",
       "Everything in Pro",
       "Dedicated onboarding support",
+      "Team roles (Admin / Manager / Read-only)",
+      "White-label chase from-address",
+      "Public API + webhooks (Zapier-ready)",
+      "W-9 / license tracking + Documenso e-sign",
+      "Litigation & property audit export packs",
     ],
-    comingSoon: ["White-label, integrations, API, roles"],
   },
 ];
 

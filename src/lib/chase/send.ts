@@ -61,6 +61,8 @@ type OrgRow = {
   name: string;
   intake_token: string | null;
   chase_notify_email: string | null;
+  from_email: string | null;
+  reply_to_email: string | null;
 };
 
 export async function sendChaseForVendor(
@@ -88,7 +90,9 @@ export async function sendChaseForVendor(
 
   const { data: org } = await supabase
     .from("orgs")
-    .select("id, name, intake_token, chase_notify_email")
+    .select(
+      "id, name, intake_token, chase_notify_email, from_email, reply_to_email",
+    )
     .eq("id", req.orgId)
     .single();
 
@@ -176,7 +180,8 @@ export async function sendChaseForVendor(
     subject: rendered.subject,
     text: rendered.text,
     html: rendered.html,
-    replyTo: o.chase_notify_email ?? undefined,
+    from: o.from_email ?? undefined,
+    replyTo: o.reply_to_email ?? o.chase_notify_email ?? undefined,
     tags: [
       { name: "template", value: templateKey },
       { name: "org", value: req.orgId.slice(0, 36) },
