@@ -9,6 +9,7 @@ type RequirementSetRow = {
   scope: string;
   trade: string | null;
   property_id: string | null;
+  project_id?: string | null;
   rules: unknown;
 };
 
@@ -18,19 +19,21 @@ function asRules(raw: unknown): RequirementRule[] {
 }
 
 /**
- * Merge requirement rules: global → trade (vendor) → property.
+ * Merge requirement rules: global → trade (vendor) → property → project.
  * Later scopes override earlier rules with the same `id`.
+ * Project wins (D2 — job-specific higher limits).
  */
 export function mergeRequirementRules(sets: {
   global: RequirementRule[];
   trade: RequirementRule[];
   property: RequirementRule[];
+  project?: RequirementRule[];
 }): RequirementRule[] {
   const ordered = new Map<string, RequirementRule>();
   const layers =
     sets.global.length > 0
-      ? [sets.global, sets.trade, sets.property]
-      : [DEFAULT_GLOBAL_RULES, sets.trade, sets.property];
+      ? [sets.global, sets.trade, sets.property, sets.project ?? []]
+      : [DEFAULT_GLOBAL_RULES, sets.trade, sets.property, sets.project ?? []];
   for (const layer of layers) {
     for (const rule of layer) {
       ordered.set(rule.id, rule);
@@ -43,6 +46,7 @@ export async function loadMergedRulesForDocument(input: {
   orgId: string;
   vendorId: string;
   propertyId?: string | null;
+  projectId?: string | null;
   supabase?: SupabaseClient;
 }): Promise<RequirementRule[]> {
   const db = input.supabase ?? createAdminClient();
@@ -56,7 +60,7 @@ export async function loadMergedRulesForDocument(input: {
 
   const { data: sets } = await db
     .from("requirement_sets")
-    .select("scope, trade, property_id, rules")
+    .select("scope, trade, property_id, project_id, rules")
     .eq("org_id", input.orgId);
 
   const rows = (sets ?? []) as RequirementSetRow[];
@@ -80,6 +84,13 @@ export async function loadMergedRulesForDocument(input: {
       )
       .flatMap((r) => asRules(r.rules))
     : [];
+  const project = input.projectId
+    ? rows
+      .filter(
+        (r) => r.scope === "project" && r.project_id === input.projectId,
+      )
+      .flatMap((r) => asRules(r.rules))
+    : [];
 
-  return mergeRequirementRules({ global, trade, property });
+  return mergeRequirementRules({ global, trade, property, project });
 }

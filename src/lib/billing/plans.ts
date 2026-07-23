@@ -63,7 +63,9 @@ export const PLANS: Plan[] = [
       "Public API + webhooks (Zapier-ready)",
       "W-9 / license tracking + Documenso e-sign",
       "Litigation & property audit export packs",
+      "GC project mode + closeout packs",
     ],
+    comingSoon: ["AppFolio / Buildium native sync"],
   },
 ];
 

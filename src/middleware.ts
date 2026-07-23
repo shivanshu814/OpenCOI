@@ -1,6 +1,23 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+/** Public / system routes — no session gate (webhooks, magic links, marketing). */
+function isPublicApi(path: string): boolean {
+  return (
+    path.startsWith("/api/webhooks") ||
+    path.startsWith("/api/inngest") ||
+    path.startsWith("/api/portal") ||
+    path.startsWith("/api/v1/") // API keys, not cookie session
+  );
+}
+
+/** Cookie-session APIs that require a signed-in user. */
+function isAuthedApi(path: string): boolean {
+  if (!path.startsWith("/api/")) return false;
+  if (isPublicApi(path)) return false;
+  return true;
+}
+
 export async function middleware(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -38,20 +55,19 @@ export async function middleware(request: NextRequest) {
     },
   });
 
+  // Always refresh session when middleware runs (keeps JWT alive for Route Handlers).
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
   const isApp = path.startsWith("/app");
-  const isAuthApi =
-    path.startsWith("/api/vendors") ||
-    path.startsWith("/api/documents") ||
-    path.startsWith("/api/onboarding") ||
-    path.startsWith("/api/billing") ||
-    path.startsWith("/api/properties");
+  const needsAuth = isApp || isAuthedApi(path);
 
-  if ((isApp || isAuthApi) && !user) {
+  if (needsAuth && !user) {
+    if (path.startsWith("/api/")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const login = new URL("/login", request.url);
     login.searchParams.set("next", path);
     return NextResponse.redirect(login);
@@ -68,12 +84,7 @@ export const config = {
   matcher: [
     "/app/:path*",
     "/login",
-    "/api/vendors",
-    "/api/vendors/:path*",
-    "/api/documents/:path*",
-    "/api/onboarding",
-    "/api/billing/:path*",
-    "/api/properties",
-    "/api/properties/:path*",
+    // Refresh session + gate cookie-auth APIs (exclude static assets)
+    "/api/:path*",
   ],
 };

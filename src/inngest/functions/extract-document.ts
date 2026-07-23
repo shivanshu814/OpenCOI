@@ -42,7 +42,7 @@ export const extractDocument = inngest.createFunction(
       const supabase = createAdminClient();
       const { data: doc } = await supabase
         .from("documents")
-        .select("vendor_id, property_id")
+        .select("vendor_id, property_id, project_id")
         .eq("id", documentId)
         .single();
       if (!doc) throw new Error("document not found");
@@ -50,6 +50,7 @@ export const extractDocument = inngest.createFunction(
         orgId,
         vendorId: doc.vendor_id,
         propertyId: doc.property_id,
+        projectId: doc.project_id,
         supabase,
       });
       return runRequirementsEngine(extraction, rules);

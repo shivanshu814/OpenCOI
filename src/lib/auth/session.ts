@@ -15,7 +15,37 @@ export type SessionOrg = {
   subscriptionStatus: string | null;
 };
 
-/** Returns null in demo mode or when the user is not signed in. */
+type OrgRow = {
+  id: string;
+  name: string;
+  intake_token: string | null;
+  onboarding_completed_at: string | null;
+  plan: string | null;
+  subscription_status: string | null;
+};
+
+function toSession(
+  userId: string,
+  email: string | null,
+  role: string,
+  org: OrgRow,
+): SessionOrg {
+  const token = org.intake_token;
+  return {
+    orgId: org.id,
+    orgName: org.name,
+    intakeToken: token,
+    intakeEmail: token ? intakeEmailForToken(token) : null,
+    userId,
+    email,
+    role,
+    onboardingCompletedAt: org.onboarding_completed_at,
+    plan: org.plan,
+    subscriptionStatus: org.subscription_status,
+  };
+}
+
+/** Returns null in demo mode or when the user is not signed in / has no org. */
 export async function getSessionOrg(): Promise<SessionOrg | null> {
   if (!isSupabaseConfigured()) return null;
 
@@ -25,37 +55,36 @@ export async function getSessionOrg(): Promise<SessionOrg | null> {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: membership } = await supabase
+  // Split queries — nested `orgs(...)` embed can come back null under RLS
+  // even when membership exists, which previously fell through to create_org
+  // and failed on slug unique → permanent Unauthorized.
+  const { data: membership, error: memErr } = await supabase
     .from("org_members")
-    .select(
-      "org_id, role, orgs(id, name, intake_token, onboarding_completed_at, plan, subscription_status)",
-    )
+    .select("org_id, role")
     .eq("user_id", user.id)
     .limit(1)
     .maybeSingle();
 
-  if (membership?.org_id && membership.orgs) {
-    const org = membership.orgs as unknown as {
-      id: string;
-      name: string;
-      intake_token: string | null;
-      onboarding_completed_at: string | null;
-      plan: string | null;
-      subscription_status: string | null;
-    };
-    const token = org.intake_token;
-    return {
-      orgId: membership.org_id,
-      orgName: org.name,
-      intakeToken: token,
-      intakeEmail: token ? intakeEmailForToken(token) : null,
-      userId: user.id,
-      email: user.email ?? null,
-      role: membership.role,
-      onboardingCompletedAt: org.onboarding_completed_at,
-      plan: org.plan,
-      subscriptionStatus: org.subscription_status,
-    };
+  if (memErr) {
+    console.error("org_members lookup failed", memErr);
+  }
+
+  if (membership?.org_id) {
+    const { data: org, error: orgErr } = await supabase
+      .from("orgs")
+      .select(
+        "id, name, intake_token, onboarding_completed_at, plan, subscription_status",
+      )
+      .eq("id", membership.org_id)
+      .maybeSingle();
+
+    if (orgErr) {
+      console.error("orgs lookup failed", orgErr);
+    }
+
+    if (org) {
+      return toSession(user.id, user.email ?? null, membership.role, org as OrgRow);
+    }
   }
 
   // First login: bootstrap org via security-definer RPC (migration 002/003).
@@ -73,29 +102,58 @@ export async function getSessionOrg(): Promise<SessionOrg | null> {
     p_name: name,
     p_slug: slug,
   });
+
   if (error || !orgId) {
     console.error("create_org failed", error);
+    // Slug collision / race: membership may already exist — re-read once.
+    const { data: retryMem } = await supabase
+      .from("org_members")
+      .select("org_id, role")
+      .eq("user_id", user.id)
+      .limit(1)
+      .maybeSingle();
+    if (retryMem?.org_id) {
+      const { data: org } = await supabase
+        .from("orgs")
+        .select(
+          "id, name, intake_token, onboarding_completed_at, plan, subscription_status",
+        )
+        .eq("id", retryMem.org_id)
+        .maybeSingle();
+      if (org) {
+        return toSession(
+          user.id,
+          user.email ?? null,
+          retryMem.role,
+          org as OrgRow,
+        );
+      }
+    }
     return null;
   }
 
   const { data: orgRow } = await supabase
     .from("orgs")
-    .select("intake_token")
+    .select(
+      "id, name, intake_token, onboarding_completed_at, plan, subscription_status",
+    )
     .eq("id", orgId)
     .maybeSingle();
 
-  const token = orgRow?.intake_token ?? null;
+  if (!orgRow) {
+    return {
+      orgId: orgId as string,
+      orgName: name,
+      intakeToken: null,
+      intakeEmail: null,
+      userId: user.id,
+      email: user.email ?? null,
+      role: "owner",
+      onboardingCompletedAt: null,
+      plan: null,
+      subscriptionStatus: null,
+    };
+  }
 
-  return {
-    orgId: orgId as string,
-    orgName: name,
-    intakeToken: token,
-    intakeEmail: token ? intakeEmailForToken(token) : null,
-    userId: user.id,
-    email: user.email ?? null,
-    role: "owner",
-    onboardingCompletedAt: null,
-    plan: null,
-    subscriptionStatus: null,
-  };
+  return toSession(user.id, user.email ?? null, "owner", orgRow as OrgRow);
 }

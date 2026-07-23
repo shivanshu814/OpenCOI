@@ -14,6 +14,7 @@ export type IngestPdfArgs = {
   orgId: string;
   vendorId: string;
   propertyId?: string | null;
+  projectId?: string | null;
   fileName: string;
   mimeType?: string;
   pdfBytes: Buffer;
@@ -44,6 +45,7 @@ export async function ingestPdfDocument(
       org_id: args.orgId,
       vendor_id: args.vendorId,
       property_id: args.propertyId ?? null,
+      project_id: args.projectId ?? null,
       storage_path: "pending",
       file_name: args.fileName,
       mime_type: mime,
@@ -126,7 +128,7 @@ export async function runExtractInline(args: {
 
   const { data: doc } = await admin
     .from("documents")
-    .select("vendor_id, property_id")
+    .select("vendor_id, property_id, project_id")
     .eq("id", args.documentId)
     .single();
 
@@ -136,6 +138,7 @@ export async function runExtractInline(args: {
     orgId: args.orgId,
     vendorId: doc.vendor_id,
     propertyId: doc.property_id,
+    projectId: doc.project_id,
     supabase: admin,
   });
   const checks = runRequirementsEngine(extraction, rules);
