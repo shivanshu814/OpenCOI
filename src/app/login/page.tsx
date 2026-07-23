@@ -20,11 +20,16 @@ function LoginForm() {
     setMsg(null);
     try {
       const supabase = createClient();
-      const origin = window.location.origin;
+      // Prefer configured app URL so prod emails never redirect to localhost
+      // when Site URL / env are correct. Falls back to current origin for local.
+      const appUrl = (
+        process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+        window.location.origin
+      ).replace(/\/$/, "");
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
+          emailRedirectTo: `${appUrl}/auth/callback?next=${encodeURIComponent(next)}`,
         },
       });
       if (error) {
