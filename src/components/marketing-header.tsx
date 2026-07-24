@@ -60,8 +60,8 @@ export function MarketingHeader() {
         className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-brand/50 to-transparent"
       />
 
-      <div className="relative mx-auto grid h-[4.25rem] w-full max-w-6xl grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 px-4 sm:px-6">
-        <div className="flex min-w-0 items-center justify-start">
+      <div className="relative mx-auto flex h-[4.25rem] w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:justify-normal">
+        <div className="flex min-w-0 items-center justify-start md:min-w-0">
           <Link
             href="/"
             aria-label="CertShield home"
@@ -80,22 +80,23 @@ export function MarketingHeader() {
           ))}
         </nav>
 
-        <div className="flex min-w-0 items-center justify-end gap-3">
+        <div className="flex shrink-0 items-center justify-end gap-1.5 md:gap-3">
           <LiveOpsTicker className="mr-0 hidden min-w-0 max-w-[11rem] shrink xl:inline-flex 2xl:max-w-[16rem]" />
 
           <Link
             href="/login"
-            className="hidden h-9 shrink-0 items-center rounded-lg px-3 text-sm font-medium text-white/70 transition-colors hover:bg-white/[0.06] hover:text-white sm:inline-flex"
+            className="hidden h-9 shrink-0 items-center rounded-lg px-3 text-sm font-medium text-white/70 transition-colors hover:bg-white/[0.06] hover:text-white md:inline-flex"
           >
             Sign in
           </Link>
 
           <Button
             size="sm"
-            className="bg-brand text-brand-foreground hover:bg-brand/90 h-9 shrink-0 rounded-lg px-3.5 text-sm font-semibold shadow-[0_0_0_1px_rgba(0,184,132,0.35),0_8px_24px_-8px_rgba(0,184,132,0.65)]"
+            className="bg-brand text-brand-foreground hover:bg-brand/90 h-9 shrink-0 rounded-lg px-3 text-sm font-semibold shadow-[0_0_0_1px_rgba(0,184,132,0.35),0_8px_24px_-8px_rgba(0,184,132,0.65)] md:px-3.5"
             render={<Link href="/pricing" />}
           >
-            Start from $99
+            <span className="md:hidden">Start</span>
+            <span className="hidden md:inline">Start from $99</span>
           </Button>
 
           <Sheet open={open} onOpenChange={setOpen}>
@@ -138,6 +139,17 @@ export function MarketingHeader() {
                 >
                   Sign in
                 </Link>
+                <div className="mt-4 px-1">
+                  <Button
+                    size="sm"
+                    className="bg-brand text-brand-foreground hover:bg-brand/90 h-9 w-full font-semibold"
+                    render={
+                      <Link href="/pricing" onClick={() => setOpen(false)} />
+                    }
+                  >
+                    Start from $99
+                  </Button>
+                </div>
                 <div className="mt-4 px-1">
                   <LiveOpsTicker className="w-full max-w-none justify-start" />
                 </div>
