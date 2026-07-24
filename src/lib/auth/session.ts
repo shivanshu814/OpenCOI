@@ -87,7 +87,40 @@ export async function getSessionOrg(): Promise<SessionOrg | null> {
     }
   }
 
-  // First login: bootstrap org via security-definer RPC (migration 002/003).
+  // First login: if this email was invited to an org, join it instead of
+  // bootstrapping a separate one (migration 015). SECURITY DEFINER, matches
+  // only the caller's own verified email.
+  const { data: invitedOrgId, error: inviteErr } = await supabase.rpc(
+    "claim_pending_invites",
+  );
+  if (inviteErr) {
+    console.error("claim_pending_invites failed", inviteErr);
+  }
+  if (invitedOrgId) {
+    const { data: joinedMem } = await supabase
+      .from("org_members")
+      .select("org_id, role")
+      .eq("user_id", user.id)
+      .eq("org_id", invitedOrgId as string)
+      .maybeSingle();
+    const { data: joinedOrg } = await supabase
+      .from("orgs")
+      .select(
+        "id, name, intake_token, onboarding_completed_at, plan, subscription_status",
+      )
+      .eq("id", invitedOrgId as string)
+      .maybeSingle();
+    if (joinedMem?.org_id && joinedOrg) {
+      return toSession(
+        user.id,
+        user.email ?? null,
+        joinedMem.role,
+        joinedOrg as OrgRow,
+      );
+    }
+  }
+
+  // Otherwise bootstrap a fresh org via security-definer RPC (migration 002/003).
   const slugBase =
     (user.email?.split("@")[0] ?? "org")
       .toLowerCase()

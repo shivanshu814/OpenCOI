@@ -62,11 +62,16 @@ export default function UploadPage({ vendors }: { vendors: Vendor[] }) {
         demo?: boolean;
         message?: string;
         error?: string;
+        sla?: string;
         reviewPath?: string;
         queued?: boolean;
       };
       if (!res.ok) {
-        setMsg(data.error ?? "Upload failed");
+        setMsg(
+          data.sla
+            ? `${data.error ?? "Upload failed"} ${data.sla}`
+            : (data.error ?? "Upload failed"),
+        );
         return;
       }
       if (data.demo) {

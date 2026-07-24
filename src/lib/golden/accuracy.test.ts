@@ -6,24 +6,55 @@ import {
   MONTH3_ACCURACY_GATE,
   casesFromCorrectionRows,
   isMonth3GateField,
+  scoreCorrectionCorpus,
   scoreGoldenSet,
 } from "./accuracy";
 
 describe("golden-set accuracy harness", () => {
-  it("scores ACORD corpus dates/limits at ≥98% (Month 3 SCALE gate)", () => {
+  // NOTE: this scores hand-authored fixtures whose `actual` values are seeded to
+  // (mostly) match — it verifies the SCORER MECHANICS and guards against code
+  // drift. It is NOT a measurement of real model accuracy, and does NOT satisfy
+  // the Month 3 ≥98% production gate. That gate is measured only against real
+  // human-labeled corrections (see scoreCorrectionCorpus + admin page).
+  it("scorer runs over the fixture corpus on date/limit fields (harness self-check)", () => {
     const result = scoreGoldenSet(ACORD_GOLDEN_CORPUS, {
       datesAndLimitsOnly: true,
     });
     assert.ok(result.total >= 50, `expected ≥50 date/limit fields, got ${result.total}`);
+    // Fixtures are seeded high so unrelated code changes that break scoring surface loudly.
     assert.ok(
-      result.accuracy >= MONTH3_ACCURACY_GATE,
-      `accuracy ${result.accuracy} (${result.matched}/${result.total}) below gate ${MONTH3_ACCURACY_GATE}; failures=${JSON.stringify(result.failures)}`,
+      result.accuracy >= 0.9,
+      `fixture harness scored ${result.accuracy} (${result.matched}/${result.total}); scorer likely broke; failures=${JSON.stringify(result.failures)}`,
     );
-    // Honest corpus: at least one intentional OCR near-miss
+    // Honest corpus: at least one intentional OCR near-miss must count as a failure.
     assert.ok(
       result.failures.some((f) => f.caseId === "acord-ocr-expiry-near-miss"),
       "expected OCR near-miss to count as a failure",
     );
+  });
+
+  it("scores real corrections separately and reports 0 total when none exist (Month 3 gate stays honest)", () => {
+    // No real labeled corrections yet → not measurable, never a fake pass.
+    const empty = scoreCorrectionCorpus([]);
+    assert.equal(empty.total, 0);
+    assert.equal(empty.accuracy, 0);
+
+    // With real corrections, the gate is measured only on gate fields.
+    const scored = scoreCorrectionCorpus([
+      {
+        field_path: "policies.0.expiration_date",
+        before_value: "2027-01-01",
+        after_value: "2027-01-01",
+      },
+      {
+        field_path: "insured.name",
+        before_value: "Acme",
+        after_value: "Acme LLC",
+      },
+    ]);
+    // insured.name is not a gate field, so only the date counts.
+    assert.equal(scored.total, 1);
+    assert.ok(MONTH3_ACCURACY_GATE === 0.98);
   });
 
   it("exports FIXTURE_GOLDEN_CASES as the ACORD corpus", () => {

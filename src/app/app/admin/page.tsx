@@ -12,7 +12,9 @@ import { isSupabaseConfigured } from "@/lib/config";
 import {
   FIXTURE_GOLDEN_CASES,
   MONTH3_ACCURACY_GATE,
+  scoreCorrectionCorpus,
   scoreGoldenSet,
+  type GoldenSetCorrectionRow,
 } from "@/lib/golden/accuracy";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
@@ -45,7 +47,7 @@ export default async function AdminMetricsPage() {
     { count: inReview },
     { count: published },
     { data: extractions },
-    { count: golden },
+    { data: goldenRows },
   ] = await Promise.all([
     supabase
       .from("vendors")
@@ -69,10 +71,14 @@ export default async function AdminMetricsPage() {
       .limit(100),
     supabase
       .from("golden_set_cases")
-      .select("*", { count: "exact", head: true })
-      .eq("org_id", session.orgId),
+      .select("field_path, before_value, after_value")
+      .eq("org_id", session.orgId)
+      .order("created_at", { ascending: false })
+      .limit(1000),
   ]);
 
+  const corrections = (goldenRows ?? []) as GoldenSetCorrectionRow[];
+  const golden = corrections.length;
   const rows = extractions ?? [];
   const cost = rows.reduce((s, r) => s + Number(r.cost_usd ?? 0), 0);
   const avgLatency =
@@ -146,6 +152,8 @@ export default async function AdminMetricsPage() {
         </CardContent>
       </Card>
 
+      <CorrectionAccuracyCard corrections={corrections} />
+
       <FixtureAccuracyCard />
 
       <p className="text-muted-foreground text-xs">
@@ -168,20 +176,62 @@ function Metric({ label, value }: { label: string; value: string }) {
   );
 }
 
-function FixtureAccuracyCard() {
-  const result = scoreGoldenSet(FIXTURE_GOLDEN_CASES);
-  const pct = Math.round(result.accuracy * 100);
+function CorrectionAccuracyCard({
+  corrections,
+}: {
+  corrections: GoldenSetCorrectionRow[];
+}) {
+  const result = scoreCorrectionCorpus(corrections);
   const gate = Math.round(MONTH3_ACCURACY_GATE * 100);
+  const measurable = result.total > 0;
+  const pct = Math.round(result.accuracy * 100);
   return (
     <Card className="gap-0 py-0">
       <CardHeader className="border-b pt-4">
         <CardTitle className="text-sm font-semibold">
-          Golden-set fixture accuracy
+          Month 3 gate — real correction accuracy
         </CardTitle>
         <CardDescription className="text-xs leading-relaxed">
-          CI harness on seeded date/limit fixtures. Month 3 SCALE gate is ≥
-          {gate}% on a 100-cert real ACORD corpus (charging already allowed
-          under 100% internal review).
+          Measured only on real human review corrections (golden_set_cases) over
+          date/limit fields. The ≥{gate}% gate is what reduces internal review —
+          it is <strong>not</strong> a launch blocker (charging is allowed today
+          because 100% of verdicts pass internal review before publish).
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3 py-4 sm:px-5">
+        {measurable ? (
+          <p className="text-3xl font-semibold tabular-nums">
+            {pct}%
+            <span className="text-muted-foreground text-sm font-normal">
+              {" "}
+              ({result.matched}/{result.total} gate fields)
+            </span>
+          </p>
+        ) : (
+          <p className="text-muted-foreground text-sm">
+            Not yet measurable — no labeled corrections. Add real ACORD
+            corrections via the review queue to start scoring the gate.
+          </p>
+        )}
+        <p className="text-muted-foreground text-xs">Gate: ≥{gate}%</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function FixtureAccuracyCard() {
+  const result = scoreGoldenSet(FIXTURE_GOLDEN_CASES);
+  const pct = Math.round(result.accuracy * 100);
+  return (
+    <Card className="gap-0 py-0">
+      <CardHeader className="border-b pt-4">
+        <CardTitle className="text-sm font-semibold">
+          Fixture harness (scorer self-check)
+        </CardTitle>
+        <CardDescription className="text-xs leading-relaxed">
+          CI runs the scorer over seeded date/limit fixtures to catch code drift.
+          These are hand-authored — <strong>not</strong> a measurement of real
+          model accuracy. Real accuracy is the card above.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3 py-4 sm:px-5">
@@ -189,12 +239,10 @@ function FixtureAccuracyCard() {
           {pct}%
           <span className="text-muted-foreground text-sm font-normal">
             {" "}
-            ({result.matched}/{result.total} fields)
+            ({result.matched}/{result.total} fixture fields)
           </span>
         </p>
-        <p className="text-muted-foreground text-xs">
-          Gate: ≥{gate}% automated accuracy
-        </p>
+        <p className="text-muted-foreground text-xs">Seeded fixtures</p>
       </CardContent>
     </Card>
   );

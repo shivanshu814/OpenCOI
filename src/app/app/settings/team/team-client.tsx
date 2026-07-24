@@ -19,7 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { productRoleLabel, toProductRole } from "@/lib/auth/roles";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export function TeamSettingsClient() {
   const [members, setMembers] = useState<
@@ -37,7 +37,7 @@ export function TeamSettingsClient() {
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  async function load() {
+  const load = useCallback(async () => {
     const res = await fetch("/api/settings/team");
     const data = (await res.json()) as {
       members?: typeof members;
@@ -60,11 +60,11 @@ export function TeamSettingsClient() {
     setReplyTo(data.branding?.reply_to_email ?? "");
     setColor(data.branding?.brand_primary_color ?? "");
     setLogo(data.branding?.logo_url ?? "");
-  }
+  }, []);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   async function post(body: Record<string, unknown>) {
     setBusy(true);

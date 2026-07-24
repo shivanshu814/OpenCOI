@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export function IntegrationsClient() {
   const [keys, setKeys] = useState<
@@ -48,7 +48,7 @@ export function IntegrationsClient() {
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  async function load() {
+  const load = useCallback(async () => {
     const res = await fetch("/api/settings/integrations");
     const data = (await res.json()) as {
       keys?: typeof keys;
@@ -61,11 +61,11 @@ export function IntegrationsClient() {
     }
     setKeys(data.keys ?? []);
     setWebhooks(data.webhooks ?? []);
-  }
+  }, []);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   async function post(body: Record<string, unknown>) {
     setBusy(true);

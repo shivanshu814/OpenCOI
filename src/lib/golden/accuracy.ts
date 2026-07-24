@@ -6,8 +6,10 @@
 
 import {
   ACORD_GOLDEN_CORPUS,
+  casesFromCorrectionRows,
   isMonth3GateField,
 } from "./corpus";
+import type { GoldenSetCorrectionRow } from "./corpus";
 
 export type GoldenField = {
   path: string;
@@ -74,10 +76,26 @@ function normalize(v: unknown): string {
 export const MONTH3_ACCURACY_GATE = 0.98;
 
 /**
- * Full fixture corpus for CI — ACORD-shaped cases (expand via review corrections).
- * Re-exported alias kept for older imports.
+ * Seeded ACORD-shaped fixtures. These exercise the scorer and catch code drift
+ * in CI — they are NOT a measurement of real model accuracy (the `actual`
+ * values are hand-authored). The Month 3 ≥98% production gate is measured only
+ * against real human-labeled corrections via `scoreCorrectionCorpus`.
  */
 export const FIXTURE_GOLDEN_CASES: GoldenCase[] = ACORD_GOLDEN_CORPUS;
+
+/**
+ * Real-accuracy path: score human review corrections (golden_set_cases rows)
+ * on the Month 3 gate fields (dates + limits). `before_value` is what the model
+ * produced; `after_value` is the human ground truth. Empty rows → total 0, so
+ * callers can honestly report "not yet measurable" instead of a fake number.
+ */
+export function scoreCorrectionCorpus(
+  rows: GoldenSetCorrectionRow[],
+): AccuracyResult {
+  return scoreGoldenSet(casesFromCorrectionRows(rows), {
+    datesAndLimitsOnly: true,
+  });
+}
 
 export { ACORD_GOLDEN_CORPUS, casesFromCorrectionRows, isMonth3GateField } from "./corpus";
 export type { GoldenSetCorrectionRow } from "./corpus";

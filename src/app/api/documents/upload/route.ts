@@ -1,5 +1,12 @@
 import { getSessionOrg } from "@/lib/auth/session";
 import {
+  FREE_AUDIT_SLA_NOTE,
+  FREE_DAILY_AUDIT_CAP,
+  checkDailyCap,
+  isPaidPlan,
+  startOfUtcDay,
+} from "@/lib/billing/limits";
+import {
   isSupabaseConfigured,
 } from "@/lib/config";
 import { ingestPdfDocument } from "@/lib/documents/ingest";
@@ -51,6 +58,29 @@ export async function POST(request: Request) {
 
   if (!vendor) {
     return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
+  }
+
+  // Free-tier daily intake cap. Paid orgs are uncapped and reviewed first.
+  if (!isPaidPlan(session.plan, session.subscriptionStatus)) {
+    const { count: usedToday } = await supabase
+      .from("documents")
+      .select("*", { count: "exact", head: true })
+      .eq("org_id", session.orgId)
+      .gte("created_at", startOfUtcDay(new Date()));
+    const cap = checkDailyCap(usedToday ?? 0);
+    if (!cap.allowed) {
+      return NextResponse.json(
+        {
+          error: `Free daily audit limit reached (${FREE_DAILY_AUDIT_CAP}/day). Upgrade for uncapped, priority review.`,
+          code: "daily_cap_reached",
+          used: cap.used,
+          cap: cap.cap,
+          sla: FREE_AUDIT_SLA_NOTE,
+          upgradePath: "/app/settings/billing",
+        },
+        { status: 429 },
+      );
+    }
   }
 
   try {

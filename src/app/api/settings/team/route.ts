@@ -103,7 +103,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ok: true,
       invite: data,
-      note: "Invite stored. Ask the teammate to sign in with that email; founder can map membership manually until accept flow ships.",
+      note: "Invite sent. When the teammate signs in with this email, they auto-join this org with the assigned role.",
     });
   }
 
