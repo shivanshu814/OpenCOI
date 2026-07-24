@@ -1,4 +1,8 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  twilioVerificationEnabled,
+  validateTwilioSignature,
+} from "@/lib/sms/twilio-signature";
 import { NextResponse } from "next/server";
 
 /**
@@ -7,6 +11,30 @@ import { NextResponse } from "next/server";
  */
 export async function POST(request: Request) {
   const form = await request.formData();
+
+  // C3 hardening: when TWILIO_AUTH_TOKEN is set (prod), require a valid
+  // X-Twilio-Signature so a spoofed request can't force vendor opt-outs.
+  // Demo/local (no token) skips verification so testing stays frictionless.
+  if (twilioVerificationEnabled()) {
+    const params: Record<string, string> = {};
+    for (const [k, v] of form.entries()) params[k] = String(v);
+    const appUrl =
+      process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "") ?? "";
+    const url = `${appUrl}/api/webhooks/twilio/sms`;
+    const ok = validateTwilioSignature({
+      authToken: process.env.TWILIO_AUTH_TOKEN!.trim(),
+      signature: request.headers.get("x-twilio-signature"),
+      url,
+      params,
+    });
+    if (!ok) {
+      return new NextResponse("<Response></Response>", {
+        status: 403,
+        headers: { "Content-Type": "text/xml" },
+      });
+    }
+  }
+
   const from = String(form.get("From") ?? "");
   const body = String(form.get("Body") ?? "").trim().toUpperCase();
 

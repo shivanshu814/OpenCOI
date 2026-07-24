@@ -7,6 +7,10 @@ import {
   type Extraction,
 } from "@/lib/extraction/schema";
 import { runRequirementsEngine } from "@/lib/requirements/engine";
+import {
+  loadMergedRulesForDocument,
+  loadPropertyValidation,
+} from "@/lib/requirements/merge";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
@@ -43,7 +47,7 @@ export async function POST(request: Request, ctx: Ctx) {
 
   const { data: doc } = await supabase
     .from("documents")
-    .select("id, vendor_id, status")
+    .select("id, vendor_id, property_id, project_id, status")
     .eq("id", id)
     .eq("org_id", session.orgId)
     .maybeSingle();
@@ -94,7 +98,22 @@ export async function POST(request: Request, ctx: Ctx) {
     );
   }
 
-  const checks = runRequirementsEngine(after);
+  // Re-check with the SAME merged rules + per-property (D1) validation the
+  // primary verdict path uses — a correction must not silently fall back to
+  // default global rules only.
+  const rules = await loadMergedRulesForDocument({
+    orgId: session.orgId,
+    vendorId: doc.vendor_id,
+    propertyId: doc.property_id,
+    projectId: doc.project_id,
+    supabase,
+  });
+  const propertyValidation = await loadPropertyValidation({
+    orgId: session.orgId,
+    propertyId: doc.property_id,
+    supabase,
+  });
+  const checks = runRequirementsEngine(after, rules, propertyValidation);
 
   // New extraction row (preserve original for audit/golden-set history).
   const { error: insertExtErr } = await supabase.from("extractions").insert({

@@ -78,9 +78,25 @@ export default async function PortalPage({
 
   return (
     <div className="space-y-8">
+      {ctx.logoUrl ? (
+        <div className="flex items-center gap-3 border-b pb-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={ctx.logoUrl}
+            alt={`${ctx.orgName} logo`}
+            className="h-8 w-auto max-w-[180px] object-contain"
+          />
+          <span className="text-muted-foreground text-xs">
+            {locale === "es" ? "Portal de" : "Portal by"} {ctx.orgName}
+          </span>
+        </div>
+      ) : null}
       <div>
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-xl font-semibold tracking-tight text-balance">
+          <h1
+            className="text-xl font-semibold tracking-tight text-balance"
+            style={ctx.brandColor ? { color: ctx.brandColor } : undefined}
+          >
             {title}
           </h1>
           <LiveBadge label="Live" tone="ok" />

@@ -24,6 +24,9 @@ export function DisclaimerFooter({ className }: { className?: string }) {
         <Link href="/privacy" className="hover:text-foreground underline">
           Privacy
         </Link>
+        <Link href="/subprocessors" className="hover:text-foreground underline">
+          Subprocessors
+        </Link>
       </p>
     </div>
   );

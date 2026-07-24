@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import type { Extraction } from "../extraction/schema";
 import {
   DEFAULT_GLOBAL_RULES,
+  evaluatePropertyValidation,
   runRequirementsEngine,
   type RequirementRule,
 } from "./engine";
@@ -235,5 +236,125 @@ describe("B4 endorsement checks", () => {
     const result = runRequirementsEngine(baseExtraction());
     assert.equal(result.overall, "FAIL");
     assert.equal(result.needs_internal_review, true);
+  });
+});
+
+describe("D1 per-property certificate-holder + AI wording validation", () => {
+  it("PASS when extracted holder fuzzy-matches the property holder", () => {
+    const ex = baseExtraction({
+      certificate_holder: {
+        name: "City of Springfield",
+        address: null,
+        confidence: 0.95,
+      },
+    });
+    const lines = evaluatePropertyValidation(ex, {
+      certificate_holder_name: "City of Springfield, Its Officers",
+    });
+    const l = lines.find((x) => x.rule_id === "property_certificate_holder");
+    assert.ok(l);
+    assert.equal(l.verdict, "PASS");
+  });
+
+  it("FAIL when the cert names a different holder than the property", () => {
+    const ex = baseExtraction({
+      certificate_holder: {
+        name: "Acme Property Management",
+        address: null,
+        confidence: 0.95,
+      },
+    });
+    const lines = evaluatePropertyValidation(ex, {
+      certificate_holder_name: "City of Springfield",
+    });
+    const l = lines.find((x) => x.rule_id === "property_certificate_holder");
+    assert.ok(l);
+    assert.equal(l.verdict, "FAIL");
+  });
+
+  it("MISSING when the cert has no holder but the property requires one", () => {
+    const ex = baseExtraction({
+      certificate_holder: { name: null, address: null, confidence: 0.5 },
+    });
+    const lines = evaluatePropertyValidation(ex, {
+      certificate_holder_name: "City of Springfield",
+    });
+    const l = lines.find((x) => x.rule_id === "property_certificate_holder");
+    assert.ok(l);
+    assert.equal(l.verdict, "MISSING");
+  });
+
+  it("AI wording: PASS when required wording is present in description", () => {
+    const ex = baseExtraction({
+      description_of_operations: {
+        text: "City of Springfield is named as additional insured per contract.",
+        mentions_additional_insured: true,
+        mentions_primary_noncontributory: false,
+        mentions_waiver_of_subrogation: false,
+        confidence: 0.95,
+      },
+    });
+    const lines = evaluatePropertyValidation(ex, {
+      additional_insured_wording: "City of Springfield is named as additional insured",
+    });
+    const l = lines.find(
+      (x) => x.rule_id === "property_additional_insured_wording",
+    );
+    assert.ok(l);
+    assert.equal(l.verdict, "PASS");
+  });
+
+  it("AI wording: MISSING (review) when AI mentioned but exact wording unconfirmed", () => {
+    const ex = baseExtraction({
+      description_of_operations: {
+        text: "Additional insured status applies.",
+        mentions_additional_insured: true,
+        mentions_primary_noncontributory: false,
+        mentions_waiver_of_subrogation: false,
+        confidence: 0.9,
+      },
+    });
+    const lines = evaluatePropertyValidation(ex, {
+      additional_insured_wording: "City of Springfield, its officers and employees",
+    });
+    const l = lines.find(
+      (x) => x.rule_id === "property_additional_insured_wording",
+    );
+    assert.ok(l);
+    assert.equal(l.verdict, "MISSING");
+  });
+
+  it("AI wording: FAIL when no additional insured mentioned at all", () => {
+    const lines = evaluatePropertyValidation(baseExtraction(), {
+      additional_insured_wording: "City of Springfield",
+    });
+    const l = lines.find(
+      (x) => x.rule_id === "property_additional_insured_wording",
+    );
+    assert.ok(l);
+    assert.equal(l.verdict, "FAIL");
+  });
+
+  it("no property validation lines emitted when neither field configured", () => {
+    assert.equal(evaluatePropertyValidation(baseExtraction(), {}).length, 0);
+  });
+
+  it("property validation escalates overall verdict via runRequirementsEngine", () => {
+    const ex = baseExtraction({
+      certificate_holder: {
+        name: "Wrong Holder",
+        address: null,
+        confidence: 0.95,
+      },
+    });
+    const result = runRequirementsEngine(ex, DEFAULT_GLOBAL_RULES, {
+      certificate_holder_name: "City of Springfield",
+    });
+    assert.ok(
+      result.lines.some(
+        (l) => l.rule_id === "property_certificate_holder" && l.verdict === "FAIL",
+      ),
+    );
+    assert.equal(result.overall, "FAIL");
   });
 });

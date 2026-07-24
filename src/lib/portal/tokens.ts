@@ -23,7 +23,18 @@ export type PortalContext = {
   preferredLocale: "en" | "es";
   agentEmail: string | null;
   trade: string | null;
+  /** F2 white-label — sanitized hex color, or null. */
+  brandColor: string | null;
+  /** F2 white-label — customer logo URL, or null. */
+  logoUrl: string | null;
 };
+
+/** Accept only a valid #rgb/#rrggbb hex so it's safe to inline as CSS. */
+export function sanitizeHexColor(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const v = value.trim();
+  return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(v) ? v : null;
+}
 
 /** Mint a portal token for a vendor. Returns plaintext once (hash stored). */
 export async function issuePortalToken(input: {
@@ -90,7 +101,11 @@ export async function resolvePortalToken(
       .eq("id", row.vendor_id)
       .eq("org_id", row.org_id)
       .maybeSingle(),
-    admin.from("orgs").select("id, name").eq("id", row.org_id).maybeSingle(),
+    admin
+      .from("orgs")
+      .select("id, name, brand_primary_color, logo_url")
+      .eq("id", row.org_id)
+      .maybeSingle(),
   ]);
 
   if (!vendor || !org) return null;
@@ -111,5 +126,10 @@ export async function resolvePortalToken(
     preferredLocale: vendor.preferred_locale === "es" ? "es" : "en",
     agentEmail: vendor.agent_email,
     trade: vendor.trade,
+    brandColor: sanitizeHexColor(org.brand_primary_color),
+    logoUrl:
+      typeof org.logo_url === "string" && org.logo_url.trim()
+        ? org.logo_url.trim()
+        : null,
   };
 }

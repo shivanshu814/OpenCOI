@@ -13,6 +13,8 @@ export type ComplianceReport = {
   brand: "CertShield";
   generated_at: string;
   org_name: string;
+  /** F2 white-label — sanitized hex accent color for the report, or null. */
+  brand_color?: string | null;
   vendor: {
     id: string;
     name: string;

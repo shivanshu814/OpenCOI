@@ -1,12 +1,15 @@
 import { inngest } from "@/inngest/client";
-import { extractCoiFromPdfBase64, MODEL_VERSION } from "@/lib/ai/extract";
+import { extractCoiWithRetry, MODEL_VERSION } from "@/lib/ai/extract";
 import {
   isClaudeConfigured,
   shouldQueueViaInngest,
 } from "@/lib/config";
 import { PROMPT_VERSION } from "@/lib/extraction/schema";
 import { runRequirementsEngine } from "@/lib/requirements/engine";
-import { loadMergedRulesForDocument } from "@/lib/requirements/merge";
+import {
+  loadMergedRulesForDocument,
+  loadPropertyValidation,
+} from "@/lib/requirements/merge";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -169,7 +172,7 @@ export async function runExtractInline(args: {
   orgId: string;
   pdfBase64: string;
 }) {
-  const extraction = await extractCoiFromPdfBase64({
+  const extraction = await extractCoiWithRetry({
     pdfBase64: args.pdfBase64,
   });
   const admin = createAdminClient();
@@ -189,7 +192,12 @@ export async function runExtractInline(args: {
     projectId: doc.project_id,
     supabase: admin,
   });
-  const checks = runRequirementsEngine(extraction, rules);
+  const propertyValidation = await loadPropertyValidation({
+    orgId: args.orgId,
+    propertyId: doc.property_id,
+    supabase: admin,
+  });
+  const checks = runRequirementsEngine(extraction, rules, propertyValidation);
 
   await admin.from("extractions").insert({
     org_id: args.orgId,

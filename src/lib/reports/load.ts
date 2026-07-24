@@ -6,6 +6,7 @@ import {
   DEMO_VENDORS,
   getDemoDocument,
 } from "@/lib/demo/store";
+import { sanitizeHexColor } from "@/lib/portal/tokens";
 import type { CheckLine, Verdict } from "@/lib/requirements/engine";
 import { createClient } from "@/lib/supabase/server";
 import { buildComplianceReport } from "./build";
@@ -23,12 +24,19 @@ export async function loadComplianceReport(
   if (!session) return null;
 
   const supabase = await createClient();
-  const { data: vendor, error } = await supabase
-    .from("vendors")
-    .select("id, name, email, trade, status")
-    .eq("id", vendorId)
-    .eq("org_id", session.orgId)
-    .maybeSingle();
+  const [{ data: vendor, error }, { data: org }] = await Promise.all([
+    supabase
+      .from("vendors")
+      .select("id, name, email, trade, status")
+      .eq("id", vendorId)
+      .eq("org_id", session.orgId)
+      .maybeSingle(),
+    supabase
+      .from("orgs")
+      .select("brand_primary_color")
+      .eq("id", session.orgId)
+      .maybeSingle(),
+  ]);
 
   if (error || !vendor) return null;
 
@@ -76,6 +84,7 @@ export async function loadComplianceReport(
 
   return buildComplianceReport({
     orgName: session.orgName,
+    brandColor: sanitizeHexColor(org?.brand_primary_color),
     vendor: {
       id: vendor.id,
       name: vendor.name,

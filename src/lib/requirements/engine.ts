@@ -4,8 +4,22 @@ import {
   type AmBestRating,
 } from "@/lib/carriers/ratings";
 import type { Extraction } from "@/lib/extraction/schema";
+import { nameSimilarity, normalizeVendorName } from "@/lib/vendors/fuzzy-match";
 
 const CONFIDENCE_THRESHOLD = 0.9;
+
+/** Minimum name-token similarity to accept a certificate-holder match (D1). */
+const HOLDER_MATCH_THRESHOLD = 0.55;
+
+/**
+ * D1 — per-property certificate-holder + additional-insured wording the cert
+ * must name. Stored on the property; validated here against the extraction.
+ * Absent/unconfirmed routes to internal review (MISSING), never a silent pass.
+ */
+export type PropertyValidation = {
+  certificate_holder_name?: string | null;
+  additional_insured_wording?: string | null;
+};
 
 export type Verdict = "PASS" | "FAIL" | "MISSING" | "EXPIRING";
 
@@ -190,9 +204,94 @@ export const DEFAULT_GLOBAL_RULES: RequirementRule[] = [
   },
 ];
 
+/**
+ * D1 — validate the extracted certificate-holder name and additional-insured
+ * wording against what the property requires. Conservative: a clear mismatch
+ * FAILs; anything we can't confirm is MISSING (→ internal review), never PASS
+ * by omission.
+ */
+export function evaluatePropertyValidation(
+  extraction: Extraction,
+  pv: PropertyValidation,
+): CheckLine[] {
+  const lines: CheckLine[] = [];
+
+  const requiredHolder = pv.certificate_holder_name?.trim();
+  if (requiredHolder) {
+    const holder = extraction.certificate_holder;
+    const found = holder.name?.trim();
+    const lowConf = holder.confidence < CONFIDENCE_THRESHOLD;
+    if (!found) {
+      lines.push({
+        rule_id: "property_certificate_holder",
+        label: "Certificate holder matches property",
+        verdict: "MISSING",
+        reason: `No certificate holder found on cert; property requires "${requiredHolder}".`,
+        low_confidence: true,
+      });
+    } else if (nameSimilarity(found, requiredHolder) >= HOLDER_MATCH_THRESHOLD) {
+      lines.push({
+        rule_id: "property_certificate_holder",
+        label: "Certificate holder matches property",
+        verdict: "PASS",
+        reason: "Certificate holder matches the property.",
+        low_confidence: lowConf,
+      });
+    } else {
+      lines.push({
+        rule_id: "property_certificate_holder",
+        label: "Certificate holder matches property",
+        verdict: "FAIL",
+        reason: `Certificate holder on cert is "${found}", property requires "${requiredHolder}".`,
+        low_confidence: lowConf,
+      });
+    }
+  }
+
+  const requiredWording = pv.additional_insured_wording?.trim();
+  if (requiredWording) {
+    const desc = extraction.description_of_operations;
+    const descText = normalizeVendorName(desc.text ?? "");
+    const wordingNorm = normalizeVendorName(requiredWording);
+    const lowConf = desc.confidence < CONFIDENCE_THRESHOLD;
+    if (wordingNorm && descText.includes(wordingNorm)) {
+      lines.push({
+        rule_id: "property_additional_insured_wording",
+        label: "Additional-insured wording matches property",
+        verdict: "PASS",
+        reason: "Required additional-insured wording found on cert.",
+        low_confidence: lowConf,
+      });
+    } else if (desc.mentions_additional_insured) {
+      // Cert names an additional insured but not the exact property wording —
+      // don't hard-FAIL on wording nuance; route to review.
+      lines.push({
+        rule_id: "property_additional_insured_wording",
+        label: "Additional-insured wording matches property",
+        verdict: "MISSING",
+        reason:
+          "Cert mentions an additional insured, but the exact wording the property requires was not confirmed — needs review.",
+        low_confidence: true,
+      });
+    } else {
+      lines.push({
+        rule_id: "property_additional_insured_wording",
+        label: "Additional-insured wording matches property",
+        verdict: "FAIL",
+        reason:
+          "Property requires additional-insured wording; none found in the certificate's description of operations.",
+        low_confidence: lowConf,
+      });
+    }
+  }
+
+  return lines;
+}
+
 export function runRequirementsEngine(
   extraction: Extraction,
   rules: RequirementRule[] = DEFAULT_GLOBAL_RULES,
+  propertyValidation?: PropertyValidation,
 ): RequirementsResult {
   const lines: CheckLine[] = [];
 
@@ -310,6 +409,10 @@ export function runRequirementsEngine(
       reason,
       low_confidence,
     });
+  }
+
+  if (propertyValidation) {
+    lines.push(...evaluatePropertyValidation(extraction, propertyValidation));
   }
 
   const overall = lines.reduce<Verdict>(

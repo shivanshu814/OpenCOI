@@ -1,5 +1,6 @@
 import {
   DEFAULT_GLOBAL_RULES,
+  type PropertyValidation,
   type RequirementRule,
 } from "@/lib/requirements/engine";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -93,4 +94,35 @@ export async function loadMergedRulesForDocument(input: {
     : [];
 
   return mergeRequirementRules({ global, trade, property, project });
+}
+
+/**
+ * D1 — load the property's required certificate-holder + additional-insured
+ * wording so the verdict engine can validate the cert against them. Returns
+ * undefined when no property is attached or neither field is configured.
+ */
+export async function loadPropertyValidation(input: {
+  orgId: string;
+  propertyId?: string | null;
+  supabase?: SupabaseClient;
+}): Promise<PropertyValidation | undefined> {
+  if (!input.propertyId) return undefined;
+  const db = input.supabase ?? createAdminClient();
+
+  const { data: property } = await db
+    .from("properties")
+    .select("certificate_holder_name, additional_insured_wording")
+    .eq("id", input.propertyId)
+    .eq("org_id", input.orgId)
+    .maybeSingle();
+
+  if (!property) return undefined;
+  const holder = property.certificate_holder_name?.trim();
+  const wording = property.additional_insured_wording?.trim();
+  if (!holder && !wording) return undefined;
+
+  return {
+    certificate_holder_name: holder || null,
+    additional_insured_wording: wording || null,
+  };
 }

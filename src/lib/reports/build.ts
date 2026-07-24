@@ -64,6 +64,7 @@ export function buildSummary(input: {
 
 export function buildComplianceReport(input: {
   orgName: string;
+  brandColor?: string | null;
   vendor: {
     id: string;
     name: string;
@@ -103,6 +104,7 @@ export function buildComplianceReport(input: {
     brand: "CertShield",
     generated_at: (input.generatedAt ?? new Date()).toISOString(),
     org_name: input.orgName,
+    brand_color: input.brandColor ?? null,
     vendor: input.vendor,
     document: input.document,
     summary: buildSummary({

@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" font-family="'Segoe UI',Inter,Helvetica,Arial,sans-serif">
+<defs>
+<marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 z" fill="#495057"/></marker>
+</defs>
+<rect x="0" y="0" width="1600" height="1000" fill="#ffffff"/>
+
+<text x="800" y="46" text-anchor="middle" font-size="32" font-weight="800" fill="#1e1e1e">CertShield — How it works</text>
+<text x="800" y="78" text-anchor="middle" font-size="16" fill="#868e96">Vendor insurance (COI) tracking for US property managers &amp; contractors</text>
+
+<!-- PROBLEM -->
+<rect x="60" y="100" width="1480" height="205" rx="16" fill="#fff5f5" stroke="#ffc9c9" stroke-width="1.5"/>
+<text x="84" y="132" font-size="18" font-weight="700" fill="#e03131">THE PROBLEM  (today)</text>
+<rect x="110" y="152" width="630" height="92" rx="12" fill="#ffc9c9" stroke="#e03131" stroke-width="2"/>
+<text x="425" y="188" text-anchor="middle" font-size="16" font-weight="600" fill="#1e1e1e">Vendors send messy COI PDFs by email</text>
+<text x="425" y="214" text-anchor="middle" font-size="13" fill="#495057">(plumber, roofer, landscaper — ACORD 25)</text>
+<rect x="770" y="152" width="680" height="92" rx="12" fill="#ffc9c9" stroke="#e03131" stroke-width="2"/>
+<text x="1110" y="184" text-anchor="middle" font-size="16" font-weight="600" fill="#1e1e1e">Staff check by hand — limits, dates &amp;</text>
+<text x="1110" y="210" text-anchor="middle" font-size="13" fill="#495057">endorsements (CG 20 10 / 20 37) missed; certs expire</text>
+<text x="800" y="280" text-anchor="middle" font-size="17" font-weight="700" fill="#c92a2a">Result:  uninsured vendors on site  +  liability risk  +  wasted staff time</text>
+<line x1="800" y1="306" x2="800" y2="330" stroke="#495057" stroke-width="2" marker-end="url(#ah)"/>
+
+<!-- HOW IT WORKS -->
+<rect x="60" y="338" width="1480" height="372" rx="16" fill="#e6fcf5" stroke="#96f2d7" stroke-width="1.5"/>
+<text x="84" y="370" font-size="18" font-weight="700" fill="#0ca678">HOW CERTSHIELD WORKS</text>
+<!-- step generator output -->
+<g>
+<!-- 1 -->
+<rect x="88" y="398" width="178" height="214" rx="12" fill="#a5d8ff" stroke="#1971c2" stroke-width="2"/>
+<circle cx="177" cy="434" r="18" fill="#1971c2"/><text x="177" y="441" text-anchor="middle" font-size="20" font-weight="800" fill="#fff">1</text>
+<text x="177" y="476" text-anchor="middle" font-size="16" font-weight="700" fill="#1e1e1e">Intake</text>
+<text x="177" y="506" text-anchor="middle" font-size="12.5" fill="#495057">Upload · forward</text>
+<text x="177" y="524" text-anchor="middle" font-size="12.5" fill="#495057">email · vendor link</text>
+<path d="M269,505 h24" stroke="#495057" stroke-width="2" marker-end="url(#ah)"/>
+<!-- 2 -->
+<rect x="296" y="398" width="178" height="214" rx="12" fill="#a5d8ff" stroke="#1971c2" stroke-width="2"/>
+<circle cx="385" cy="434" r="18" fill="#1971c2"/><text x="385" y="441" text-anchor="middle" font-size="20" font-weight="800" fill="#fff">2</text>
+<text x="385" y="476" text-anchor="middle" font-size="16" font-weight="700" fill="#1e1e1e">AI reads the PDF</text>
+<text x="385" y="502" text-anchor="middle" font-size="12.5" fill="#495057">limits, dates, carriers,</text>
+<text x="385" y="520" text-anchor="middle" font-size="12.5" fill="#495057">endorsements + confidence</text>
+<path d="M477,505 h24" stroke="#495057" stroke-width="2" marker-end="url(#ah)"/>
+<!-- 3 -->
+<rect x="504" y="398" width="178" height="214" rx="12" fill="#a5d8ff" stroke="#1971c2" stroke-width="2"/>
+<circle cx="593" cy="434" r="18" fill="#1971c2"/><text x="593" y="441" text-anchor="middle" font-size="20" font-weight="800" fill="#fff">3</text>
+<text x="593" y="476" text-anchor="middle" font-size="16" font-weight="700" fill="#1e1e1e">Rules check</text>
+<text x="593" y="504" text-anchor="middle" font-size="12.5" fill="#495057">PASS / FAIL /</text>
+<text x="593" y="522" text-anchor="middle" font-size="12.5" fill="#495057">needs attention</text>
+<circle cx="560" cy="548" r="7" fill="#2f9e44"/><circle cx="593" cy="548" r="7" fill="#f59f00"/><circle cx="626" cy="548" r="7" fill="#e03131"/>
+<path d="M685,505 h24" stroke="#495057" stroke-width="2" marker-end="url(#ah)"/>
+<!-- 4 -->
+<rect x="712" y="398" width="178" height="214" rx="12" fill="#c3fae8" stroke="#0ca678" stroke-width="2"/>
+<circle cx="801" cy="434" r="18" fill="#0ca678"/><text x="801" y="441" text-anchor="middle" font-size="20" font-weight="800" fill="#fff">4</text>
+<text x="801" y="476" text-anchor="middle" font-size="16" font-weight="700" fill="#1e1e1e">Human review</text>
+<text x="801" y="504" text-anchor="middle" font-size="12.5" fill="#495057">low-confidence or FAIL</text>
+<text x="801" y="522" text-anchor="middle" font-size="12.5" fill="#495057">never auto-approved</text>
+<path d="M893,505 h24" stroke="#495057" stroke-width="2" marker-end="url(#ah)"/>
+<!-- 5 -->
+<rect x="920" y="398" width="178" height="214" rx="12" fill="#c3fae8" stroke="#0ca678" stroke-width="2"/>
+<circle cx="1009" cy="434" r="18" fill="#0ca678"/><text x="1009" y="441" text-anchor="middle" font-size="20" font-weight="800" fill="#fff">5</text>
+<text x="1009" y="476" text-anchor="middle" font-size="16" font-weight="700" fill="#1e1e1e">You approve</text>
+<text x="1009" y="504" text-anchor="middle" font-size="12.5" fill="#495057">customer is the</text>
+<text x="1009" y="522" text-anchor="middle" font-size="12.5" fill="#495057">final sign-off</text>
+<path d="M1101,505 h24" stroke="#495057" stroke-width="2" marker-end="url(#ah)"/>
+<!-- 6 -->
+<rect x="1128" y="398" width="178" height="214" rx="12" fill="#a5d8ff" stroke="#1971c2" stroke-width="2"/>
+<circle cx="1217" cy="434" r="18" fill="#1971c2"/><text x="1217" y="441" text-anchor="middle" font-size="20" font-weight="800" fill="#fff">6</text>
+<text x="1217" y="476" text-anchor="middle" font-size="16" font-weight="700" fill="#1e1e1e">Auto-chase</text>
+<text x="1217" y="504" text-anchor="middle" font-size="12.5" fill="#495057">EN + ES email reminders</text>
+<text x="1217" y="522" text-anchor="middle" font-size="12.5" fill="#495057">to vendor + agent</text>
+<path d="M1309,505 h24" stroke="#495057" stroke-width="2" marker-end="url(#ah)"/>
+<!-- 7 -->
+<rect x="1336" y="398" width="178" height="214" rx="12" fill="#a5d8ff" stroke="#1971c2" stroke-width="2"/>
+<circle cx="1425" cy="434" r="18" fill="#1971c2"/><text x="1425" y="441" text-anchor="middle" font-size="20" font-weight="800" fill="#fff">7</text>
+<text x="1425" y="474" text-anchor="middle" font-size="15" font-weight="700" fill="#1e1e1e">Audit trail + report</text>
+<text x="1425" y="502" text-anchor="middle" font-size="12.5" fill="#495057">one-click compliance</text>
+<text x="1425" y="520" text-anchor="middle" font-size="12.5" fill="#495057">PDF, audit-ready</text>
+</g>
+<line x1="800" y1="712" x2="800" y2="742" stroke="#495057" stroke-width="2" marker-end="url(#ah)"/>
+
+<!-- RESULT -->
+<rect x="60" y="748" width="1480" height="150" rx="16" fill="#ebfbee" stroke="#b2f2bb" stroke-width="1.5"/>
+<text x="84" y="780" font-size="18" font-weight="700" fill="#2f9e44">THE RESULT</text>
+<text x="800" y="808" text-anchor="middle" font-size="19" font-weight="700" fill="#1e1e1e">Fewer uninsured vendors   ·   no more spreadsheet chasing   ·   audit-ready proof</text>
+<rect x="600" y="834" width="400" height="48" rx="24" fill="#b2f2bb" stroke="#2f9e44" stroke-width="2"/>
+<text x="800" y="864" text-anchor="middle" font-size="18" font-weight="700" fill="#1e1e1e">$99  /  $249  /  $499  per month</text>
+
+<!-- honesty -->
+<text x="800" y="928" text-anchor="middle" font-size="13" fill="#868e96">We chase expirations; mid-term cancellations are mitigated via agent confirmation — not auto-detected.</text>
+<text x="800" y="950" text-anchor="middle" font-size="13" fill="#adb5bd">Document review assistance — not legal or insurance advice.</text>
+</svg>

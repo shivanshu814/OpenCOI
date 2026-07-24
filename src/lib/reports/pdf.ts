@@ -11,6 +11,16 @@ const MUTED = rgb(0.4, 0.42, 0.46);
 const RULE = rgb(0.82, 0.84, 0.86);
 const BRAND = rgb(0.08, 0.22, 0.45);
 const FAIL = rgb(0.72, 0.12, 0.12);
+
+/** F2 — parse a #rgb/#rrggbb hex to a pdf-lib color; falls back to BRAND. */
+function brandColor(hex: string | null | undefined) {
+  if (!hex) return BRAND;
+  let h = hex.replace("#", "");
+  if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+  if (!/^[0-9a-fA-F]{6}$/.test(h)) return BRAND;
+  const n = parseInt(h, 16);
+  return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
+}
 const PASS = rgb(0.1, 0.45, 0.28);
 const WARN = rgb(0.72, 0.45, 0.05);
 const MISS = rgb(0.35, 0.38, 0.42);
@@ -89,12 +99,13 @@ function ensureSpace(ctx: Ctx, need: number) {
 
 function drawHeader(ctx: Ctx) {
   const { page, fontBold, font, report } = ctx;
+  const accent = brandColor(report.brand_color);
   page.drawText("CertShield", {
     x: MARGIN,
     y: ctx.y,
     size: 18,
     font: fontBold,
-    color: BRAND,
+    color: accent,
   });
   page.drawText("Vendor compliance report", {
     x: MARGIN,
@@ -183,7 +194,7 @@ function drawSectionTitle(ctx: Ctx, title: string) {
   drawTextBlock(ctx, title, {
     size: 11,
     bold: true,
-    color: BRAND,
+    color: brandColor(ctx.report.brand_color),
     gap: 6,
   });
 }

@@ -1,5 +1,5 @@
 import { inngest } from "@/inngest/client";
-import { extractCoiFromPdfBase64, MODEL_VERSION } from "@/lib/ai/extract";
+import { extractCoiWithRetry, MODEL_VERSION } from "@/lib/ai/extract";
 import type { Extraction } from "@/lib/extraction/schema";
 import { PROMPT_VERSION } from "@/lib/extraction/schema";
 import {
@@ -9,7 +9,10 @@ import {
   type FraudSignal,
 } from "@/lib/fraud/signals";
 import { runRequirementsEngine } from "@/lib/requirements/engine";
-import { loadMergedRulesForDocument } from "@/lib/requirements/merge";
+import {
+  loadMergedRulesForDocument,
+  loadPropertyValidation,
+} from "@/lib/requirements/merge";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { nameSimilarity } from "@/lib/vendors/fuzzy-match";
 
@@ -26,7 +29,7 @@ export const extractDocument = inngest.createFunction(
     };
 
     const extraction = await step.run("claude-extract", async () => {
-      return extractCoiFromPdfBase64({ pdfBase64 });
+      return extractCoiWithRetry({ pdfBase64 });
     });
 
     const fraudSignals = await step.run("fraud-signals", async () => {
@@ -53,7 +56,12 @@ export const extractDocument = inngest.createFunction(
         projectId: doc.project_id,
         supabase,
       });
-      return runRequirementsEngine(extraction, rules);
+      const propertyValidation = await loadPropertyValidation({
+        orgId,
+        propertyId: doc.property_id,
+        supabase,
+      });
+      return runRequirementsEngine(extraction, rules, propertyValidation);
     });
 
     await step.run("persist-and-queue-review", async () => {
