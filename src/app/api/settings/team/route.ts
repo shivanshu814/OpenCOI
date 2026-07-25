@@ -121,13 +121,34 @@ export async function POST(request: Request) {
   }
 
   if (body.action === "update_branding") {
+    const { sanitizeHexColor, sanitizeLogoUrl } = await import(
+      "@/lib/portal/tokens"
+    );
+    const brand = body.brand_primary_color?.trim()
+      ? sanitizeHexColor(body.brand_primary_color)
+      : null;
+    if (body.brand_primary_color?.trim() && !brand) {
+      return NextResponse.json(
+        { error: "brand_primary_color must be #rgb or #rrggbb" },
+        { status: 400 },
+      );
+    }
+    const logo = body.logo_url?.trim()
+      ? sanitizeLogoUrl(body.logo_url)
+      : null;
+    if (body.logo_url?.trim() && !logo) {
+      return NextResponse.json(
+        { error: "logo_url must be an https URL" },
+        { status: 400 },
+      );
+    }
     const { error } = await supabase
       .from("orgs")
       .update({
         from_email: body.from_email?.trim() || null,
         reply_to_email: body.reply_to_email?.trim() || null,
-        brand_primary_color: body.brand_primary_color?.trim() || null,
-        logo_url: body.logo_url?.trim() || null,
+        brand_primary_color: brand,
+        logo_url: logo,
         chase_notify_email: body.chase_notify_email?.trim() || null,
       })
       .eq("id", session.orgId);

@@ -2,7 +2,19 @@ import { DISCLAIMER } from "@/lib/extraction/schema";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
-export function DisclaimerFooter({ className }: { className?: string }) {
+const DISCLAIMER_ES =
+  "Asistencia para revisión de documentos — no es asesoría legal, de seguros ni profesional.";
+
+export function DisclaimerFooter({
+  className,
+  locale = "en",
+  showBothLocales = false,
+}: {
+  className?: string;
+  locale?: "en" | "es";
+  /** Vendor portal: always show EN + ES (layout has no token locale). */
+  showBothLocales?: boolean;
+}) {
   return (
     <div
       className={cn(
@@ -10,7 +22,14 @@ export function DisclaimerFooter({ className }: { className?: string }) {
         className,
       )}
     >
-      <p>{DISCLAIMER}</p>
+      {showBothLocales ? (
+        <>
+          <p>{DISCLAIMER}</p>
+          <p className="mt-1">{DISCLAIMER_ES}</p>
+        </>
+      ) : (
+        <p>{locale === "es" ? DISCLAIMER_ES : DISCLAIMER}</p>
+      )}
       <p className="mt-1 flex flex-wrap justify-center gap-3">
         <Link href="/security" className="hover:text-foreground underline">
           Security

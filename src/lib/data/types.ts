@@ -16,7 +16,8 @@ export type DocumentPipelineStatus =
   | "published"
   | "accepted"
   | "overridden"
-  | "disputed";
+  | "disputed"
+  | "extraction_failed";
 
 export type Vendor = {
   id: string;

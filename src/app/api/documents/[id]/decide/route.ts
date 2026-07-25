@@ -150,18 +150,48 @@ export async function POST(request: Request, ctx: Ctx) {
     customer_decision: null as string | null,
   };
 
+  // Atomic claim: only one decision wins when customer_decision is still null.
+  const { data: decidedRows, error: decideClaimErr } = await supabase
+    .from("compliance_checks")
+    .update({
+      customer_decision: resolved.customer_decision,
+      customer_decision_reason: resolved.reason,
+    })
+    .eq("id", check.id)
+    .is("customer_decision", null)
+    .select("id");
+
+  if (decideClaimErr) {
+    return NextResponse.json({ error: decideClaimErr.message }, { status: 500 });
+  }
+  if (!decidedRows?.length) {
+    return NextResponse.json(
+      { error: "Customer decision already recorded" },
+      { status: 409 },
+    );
+  }
+
   // Dispute: audit published → disputed, then land on in_internal_review.
   if (resolved.intermediate_status === "disputed") {
-    const { error: disputeErr } = await supabase
+    const { data: disputedRows, error: disputeErr } = await supabase
       .from("documents")
       .update({
         status: "disputed",
         updated_at: new Date().toISOString(),
       })
-      .eq("id", id);
+      .eq("id", id)
+      .eq("org_id", session.orgId)
+      .eq("status", "published")
+      .select("id");
 
     if (disputeErr) {
       return NextResponse.json({ error: disputeErr.message }, { status: 500 });
+    }
+    if (!disputedRows?.length) {
+      return NextResponse.json(
+        { error: "Document left published state concurrently" },
+        { status: 409 },
+      );
     }
 
     await supabase.from("audit_events").insert({
@@ -181,25 +211,31 @@ export async function POST(request: Request, ctx: Ctx) {
     });
   }
 
-  const { error: statusErr } = await supabase
+  const { data: statusRows, error: statusErr } = await supabase
     .from("documents")
     .update({
       status: resolved.document_status,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("org_id", session.orgId)
+    .in(
+      "status",
+      resolved.intermediate_status === "disputed"
+        ? ["disputed"]
+        : ["published"],
+    )
+    .select("id");
 
   if (statusErr) {
     return NextResponse.json({ error: statusErr.message }, { status: 500 });
   }
-
-  await supabase
-    .from("compliance_checks")
-    .update({
-      customer_decision: resolved.customer_decision,
-      customer_decision_reason: resolved.reason,
-    })
-    .eq("id", check.id);
+  if (!statusRows?.length) {
+    return NextResponse.json(
+      { error: "Document status changed concurrently" },
+      { status: 409 },
+    );
+  }
 
   await supabase
     .from("vendors")

@@ -1,3 +1,4 @@
+import { canWriteOrgData } from "@/lib/auth/roles";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import type { RequirementRule } from "@/lib/requirements/engine";
@@ -91,6 +92,9 @@ export async function PATCH(
   const session = await getSessionOrg();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!canWriteOrgData(session.role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const parsed = patchSchema.safeParse(await request.json());

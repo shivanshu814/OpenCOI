@@ -1,27 +1,44 @@
 import { isSupabaseConfigured } from "@/lib/config";
 import { postmarkInboundSchema } from "@/lib/email/postmark-inbound";
 import { processInboundEmail } from "@/lib/email/process-inbound";
+import { isProductionRuntime } from "@/lib/runtime-env";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-function authorizeInbound(request: Request): boolean {
-  const user = process.env.POSTMARK_INBOUND_BASIC_USER;
-  const pass = process.env.POSTMARK_INBOUND_BASIC_PASSWORD;
-  const bearer = process.env.POSTMARK_INBOUND_HOOK_TOKEN;
+function safeEqualString(a: string, b: string): boolean {
+  const ba = Buffer.from(a);
+  const bb = Buffer.from(b);
+  if (ba.length !== bb.length) return false;
+  return timingSafeEqual(ba, bb);
+}
 
-  // No secrets configured → allow (local/dev); set secrets in production.
-  if (!user && !pass && !bearer) return true;
+function authorizeInbound(request: Request): boolean {
+  const user = process.env.POSTMARK_INBOUND_BASIC_USER?.trim();
+  const pass = process.env.POSTMARK_INBOUND_BASIC_PASSWORD?.trim();
+  const bearer = process.env.POSTMARK_INBOUND_HOOK_TOKEN?.trim();
+
+  // Prod fail-closed: require at least one secret on deployed hosts.
+  if (!user && !pass && !bearer) {
+    return !isProductionRuntime();
+  }
 
   const auth = request.headers.get("authorization");
-  if (bearer && auth === `Bearer ${bearer}`) return true;
+  if (bearer && auth?.startsWith("Bearer ")) {
+    const token = auth.slice(7).trim();
+    if (safeEqualString(token, bearer)) return true;
+  }
 
   if (user && pass && auth?.startsWith("Basic ")) {
     const decoded = Buffer.from(auth.slice(6), "base64").toString("utf8");
-    const [u, p] = decoded.split(":");
-    if (u === user && p === pass) return true;
+    const colon = decoded.indexOf(":");
+    if (colon < 0) return false;
+    const u = decoded.slice(0, colon);
+    const p = decoded.slice(colon + 1);
+    if (safeEqualString(u, user) && safeEqualString(p, pass)) return true;
   }
 
   return false;

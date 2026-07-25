@@ -25,7 +25,7 @@ export default function PortalLayout({
         <PortalLiveTicker />
         {children}
       </main>
-      <DisclaimerFooter />
+      <DisclaimerFooter showBothLocales />
       <p className="text-muted-foreground pb-6 text-center text-xs">
         No account required.{" "}
         <Link href="/" className="underline underline-offset-2">

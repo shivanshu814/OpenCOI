@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { isProductionRuntime } from "@/lib/runtime-env";
 
 /**
  * Validate Twilio's `X-Twilio-Signature` (C3 hardening).
@@ -29,9 +30,16 @@ export function validateTwilioSignature(input: {
 }
 
 /**
- * Whether inbound Twilio webhooks must be signature-verified. False in
- * demo/local (no auth token) so testing stays frictionless; true in prod.
+ * Whether inbound Twilio webhooks must be signature-verified.
+ * Always required in production; local/demo may skip when token unset.
  */
 export function twilioVerificationEnabled(): boolean {
-  return Boolean(process.env.TWILIO_AUTH_TOKEN?.trim());
+  return (
+    isProductionRuntime() || Boolean(process.env.TWILIO_AUTH_TOKEN?.trim())
+  );
+}
+
+/** True when verification is required but TWILIO_AUTH_TOKEN is missing. */
+export function twilioVerificationMisconfigured(): boolean {
+  return twilioVerificationEnabled() && !process.env.TWILIO_AUTH_TOKEN?.trim();
 }

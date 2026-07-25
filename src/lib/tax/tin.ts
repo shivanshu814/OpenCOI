@@ -1,4 +1,5 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "crypto";
+import { isProductionRuntime } from "@/lib/runtime-env";
 
 const ALGO = "aes-256-gcm";
 
@@ -29,6 +30,11 @@ export function encryptTin(plain: string): EncryptedTin {
   const last4 = digits.slice(-4);
   const key = encryptionKey();
   if (!key) {
+    if (isProductionRuntime()) {
+      throw new Error(
+        "TIN_ENCRYPTION_KEY is required in production to store W-9/TIN data",
+      );
+    }
     // Demo / missing key: store base64 marker (not production-safe; flagged)
     const iv = randomBytes(12).toString("base64url");
     return {
@@ -72,7 +78,10 @@ export function decryptTin(ciphertext: string, iv: string): string | null {
   }
 }
 
-export function maskTin(last4: string | null | undefined, tinType?: string | null): string {
+export function maskTin(
+  last4: string | null | undefined,
+  tinType?: string | null,
+): string {
   if (!last4) return "—";
   if (tinType === "ssn") return `***-**-${last4}`;
   return `**-***${last4}`;

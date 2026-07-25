@@ -1,3 +1,4 @@
+import { canWriteOrgData } from "@/lib/auth/roles";
 import { getSessionOrg } from "@/lib/auth/session";
 import {
   FREE_AUDIT_SLA_NOTE,
@@ -30,6 +31,9 @@ export async function POST(request: Request) {
   const session = await getSessionOrg();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!canWriteOrgData(session.role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const form = await request.formData();

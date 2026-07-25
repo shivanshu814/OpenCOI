@@ -56,6 +56,20 @@ export async function POST(request: Request, ctx: Ctx) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  // Corrections only during internal review (or after dispute re-entry).
+  // Published/accepted docs must not silently rewrite the published verdict.
+  if (
+    doc.status !== "in_internal_review" &&
+    doc.status !== "disputed"
+  ) {
+    return NextResponse.json(
+      {
+        error: `Cannot correct from status ${doc.status}. Re-open via dispute or keep corrections in internal review.`,
+      },
+      { status: 400 },
+    );
+  }
+
   const { data: extRow } = await supabase
     .from("extractions")
     .select("id, payload")
@@ -171,6 +185,19 @@ export async function POST(request: Request, ctx: Ctx) {
     reason: "Human correction in internal review",
   });
 
+  // Ensure disputed corrections land back in internal review.
+  if (doc.status === "disputed") {
+    await supabase
+      .from("documents")
+      .update({
+        status: "in_internal_review",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id)
+      .eq("org_id", session.orgId)
+      .eq("status", "disputed");
+  }
+
   return NextResponse.json({
     ok: true,
     overall: checks.overall,
@@ -182,10 +209,15 @@ function getByPath(obj: Record<string, unknown>, path: string): unknown {
   const parts = path.replace(/\[(\d+)\]/g, ".$1").split(".").filter(Boolean);
   let cur: unknown = obj;
   for (const p of parts) {
+    if (isDangerousPathSegment(p)) return undefined;
     if (cur == null || typeof cur !== "object") return undefined;
     cur = (cur as Record<string, unknown>)[p];
   }
   return cur;
+}
+
+function isDangerousPathSegment(p: string): boolean {
+  return p === "__proto__" || p === "constructor" || p === "prototype";
 }
 
 function setByPath(
@@ -194,6 +226,9 @@ function setByPath(
   value: unknown,
 ): void {
   const parts = path.replace(/\[(\d+)\]/g, ".$1").split(".").filter(Boolean);
+  if (parts.some(isDangerousPathSegment)) {
+    throw new Error("Invalid field_path");
+  }
   let cur: Record<string, unknown> = obj;
   for (let i = 0; i < parts.length - 1; i++) {
     const p = parts[i]!;

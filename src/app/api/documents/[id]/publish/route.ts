@@ -73,13 +73,22 @@ export async function POST(_request: Request, ctx: Ctx) {
 
   const before = { status: doc.status, version: doc.version };
 
-  const { error: statusErr } = await supabase
+  const { data: publishedRows, error: statusErr } = await supabase
     .from("documents")
     .update({ status: "published", updated_at: new Date().toISOString() })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("org_id", session.orgId)
+    .eq("status", "in_internal_review")
+    .select("id");
 
   if (statusErr) {
     return NextResponse.json({ error: statusErr.message }, { status: 500 });
+  }
+  if (!publishedRows?.length) {
+    return NextResponse.json(
+      { error: "Document was already published or left review" },
+      { status: 409 },
+    );
   }
 
   if (check) {

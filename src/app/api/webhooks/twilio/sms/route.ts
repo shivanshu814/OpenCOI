@@ -1,6 +1,8 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { phoneLast10, phoneMatchOrFilter } from "@/lib/sms/phone-match";
 import {
   twilioVerificationEnabled,
+  twilioVerificationMisconfigured,
   validateTwilioSignature,
 } from "@/lib/sms/twilio-signature";
 import { NextResponse } from "next/server";
@@ -10,11 +12,19 @@ import { NextResponse } from "next/server";
  * Configure Messaging Service → webhook URL: {APP_URL}/api/webhooks/twilio/sms
  */
 export async function POST(request: Request) {
+  // Prod fail-closed: never accept unauthenticated STOP on a deployed host.
+  if (twilioVerificationMisconfigured()) {
+    console.error(
+      "twilio sms webhook: TWILIO_AUTH_TOKEN required in production",
+    );
+    return new NextResponse("<Response></Response>", {
+      status: 503,
+      headers: { "Content-Type": "text/xml" },
+    });
+  }
+
   const form = await request.formData();
 
-  // C3 hardening: when TWILIO_AUTH_TOKEN is set (prod), require a valid
-  // X-Twilio-Signature so a spoofed request can't force vendor opt-outs.
-  // Demo/local (no token) skips verification so testing stays frictionless.
   if (twilioVerificationEnabled()) {
     const params: Record<string, string> = {};
     for (const [k, v] of form.entries()) params[k] = String(v);
@@ -56,25 +66,35 @@ export async function POST(request: Request) {
   if (isStop) {
     try {
       const admin = createAdminClient();
-      const digits = from.replace(/\D/g, "");
-      const variants = [
-        from,
-        digits,
-        digits.length === 11 && digits.startsWith("1")
-          ? `+${digits}`
-          : `+1${digits.slice(-10)}`,
-      ];
+      const orFilter = phoneMatchOrFilter(from);
+      const last10 = phoneLast10(from);
 
-      const { data: vendors } = await admin
-        .from("vendors")
-        .select("id, org_id, phone")
-        .not("phone", "is", null)
-        .limit(500);
+      // Prefer exact-variant SQL filter; fall back to last-10 ilike only for
+      // that suffix — never load an unbounded cross-tenant vendor list.
+      let matches: { id: string; org_id: string; phone: string | null }[] = [];
 
-      const matches = (vendors ?? []).filter((v) => {
-        const p = (v.phone as string).replace(/\D/g, "");
-        return variants.some((x) => x.replace(/\D/g, "").endsWith(p.slice(-10)));
-      });
+      if (orFilter) {
+        const { data } = await admin
+          .from("vendors")
+          .select("id, org_id, phone")
+          .or(orFilter)
+          .limit(50);
+        matches = (data ?? []) as typeof matches;
+      }
+
+      // Catch formatting variants PostgREST equality missed (spaces, dots).
+      if (matches.length === 0 && last10) {
+        const { data } = await admin
+          .from("vendors")
+          .select("id, org_id, phone")
+          .not("phone", "is", null)
+          .like("phone", `%${last10}`)
+          .limit(50);
+        matches = ((data ?? []) as typeof matches).filter((v) => {
+          const p = phoneLast10(v.phone ?? "");
+          return p === last10;
+        });
+      }
 
       const now = new Date().toISOString();
       for (const v of matches) {

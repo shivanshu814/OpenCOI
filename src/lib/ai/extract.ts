@@ -4,6 +4,7 @@ import {
   PROMPT_VERSION,
   type Extraction,
 } from "@/lib/extraction/schema";
+import { extractionToolInputSchema } from "@/lib/extraction/tool-schema";
 import Anthropic from "@anthropic-ai/sdk";
 
 /** OpenRouter model slug — Claude via OpenRouter (docs stack: Claude vision → JSON). */
@@ -118,10 +119,9 @@ export async function extractCoiFromPdfBase64(params: {
         name: "submit_extraction",
         description:
           "Submit the COI extraction as strict JSON matching Appendix A.",
-        input_schema: {
-          type: "object",
-          additionalProperties: true,
-        },
+        // Strict Appendix A JSON Schema (not additionalProperties: true).
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        input_schema: extractionToolInputSchema as any,
       },
     ],
     tool_choice: { type: "tool", name: "submit_extraction" },

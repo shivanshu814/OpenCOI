@@ -36,6 +36,20 @@ export function sanitizeHexColor(value: unknown): string | null {
   return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(v) ? v : null;
 }
 
+/** Allow only https: logo URLs (blocks javascript:/data: and non-TLS hosts). */
+export function sanitizeLogoUrl(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const v = value.trim();
+  if (!v) return null;
+  try {
+    const u = new URL(v);
+    if (u.protocol !== "https:") return null;
+    return u.toString();
+  } catch {
+    return null;
+  }
+}
+
 /** Mint a portal token for a vendor. Returns plaintext once (hash stored). */
 export async function issuePortalToken(input: {
   orgId: string;
@@ -127,9 +141,6 @@ export async function resolvePortalToken(
     agentEmail: vendor.agent_email,
     trade: vendor.trade,
     brandColor: sanitizeHexColor(org.brand_primary_color),
-    logoUrl:
-      typeof org.logo_url === "string" && org.logo_url.trim()
-        ? org.logo_url.trim()
-        : null,
+    logoUrl: sanitizeLogoUrl(org.logo_url),
   };
 }

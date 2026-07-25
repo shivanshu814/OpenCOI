@@ -61,9 +61,71 @@ function planFromSub(sub: SubLike): PlanId | null {
 export async function syncSubscriptionFromPaddle(
   sub: SubLike,
 ): Promise<{ ok: true; orgId: string | null } | { ok: false; error: string }> {
-  const orgId = orgIdFromCustomData(sub.customData);
+  const orgIdFromCheckout = orgIdFromCustomData(sub.customData);
   const planId = planFromSub(sub);
   const supabase = createAdminClient();
+
+  // Ownership check: never bind a subscription to an arbitrary org_id from
+  // client-influenced customData. Prefer an existing paddle_customer_id match;
+  // otherwise only accept customData.org_id when that org has no customer yet
+  // or already owns this customer id.
+  let orgId: string | null = null;
+
+  if (sub.customerId) {
+    const { data: byCustomer } = await supabase
+      .from("orgs")
+      .select("id, paddle_customer_id")
+      .eq("paddle_customer_id", sub.customerId)
+      .maybeSingle();
+    if (byCustomer?.id) {
+      orgId = byCustomer.id as string;
+    }
+  }
+
+  if (!orgId && orgIdFromCheckout) {
+    const { data: claimed } = await supabase
+      .from("orgs")
+      .select("id, paddle_customer_id")
+      .eq("id", orgIdFromCheckout)
+      .maybeSingle();
+
+    if (!claimed) {
+      return { ok: false, error: "org_id from checkout not found" };
+    }
+
+    const existingCustomer = claimed.paddle_customer_id as string | null;
+    if (
+      existingCustomer &&
+      sub.customerId &&
+      existingCustomer !== sub.customerId
+    ) {
+      return {
+        ok: false,
+        error: "org already bound to a different Paddle customer",
+      };
+    }
+
+    orgId = claimed.id as string;
+  }
+
+  if (!orgId) {
+    // Still record the subscription row for ops, but do not touch any org plan.
+    const rowOrphan = {
+      paddle_subscription_id: sub.id,
+      paddle_customer_id: sub.customerId ?? null,
+      org_id: null as string | null,
+      plan: planId,
+      status: sub.status,
+      current_period_start: sub.currentBillingPeriod?.startsAt ?? null,
+      current_period_end: sub.currentBillingPeriod?.endsAt ?? null,
+      updated_at: new Date().toISOString(),
+    };
+    const { error: orphanErr } = await supabase
+      .from("subscriptions")
+      .upsert(rowOrphan, { onConflict: "paddle_subscription_id" });
+    if (orphanErr) return { ok: false, error: orphanErr.message };
+    return { ok: true, orgId: null };
+  }
 
   const row = {
     paddle_subscription_id: sub.id,
@@ -81,33 +143,31 @@ export async function syncSubscriptionFromPaddle(
   });
   if (error) return { ok: false, error: error.message };
 
-  if (orgId) {
-    const active =
-      sub.status === "active" ||
-      sub.status === "trialing" ||
-      sub.status === "past_due";
+  const active =
+    sub.status === "active" ||
+    sub.status === "trialing" ||
+    sub.status === "past_due";
 
-    await supabase
-      .from("orgs")
-      .update({
-        plan: active && planId ? planId : null,
-        paddle_customer_id: sub.customerId ?? null,
-        paddle_subscription_id: sub.id,
-        subscription_status: sub.status,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", orgId);
+  await supabase
+    .from("orgs")
+    .update({
+      plan: active && planId ? planId : null,
+      paddle_customer_id: sub.customerId ?? null,
+      paddle_subscription_id: sub.id,
+      subscription_status: sub.status,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", orgId);
 
-    await supabase.from("audit_events").insert({
-      org_id: orgId,
-      actor_type: "system",
-      actor_id: "paddle:webhook",
-      entity_type: "subscription",
-      entity_id: orgId,
-      action: `subscription_${sub.status}`,
-      after_state: row,
-    });
-  }
+  await supabase.from("audit_events").insert({
+    org_id: orgId,
+    actor_type: "system",
+    actor_id: "paddle:webhook",
+    entity_type: "subscription",
+    entity_id: orgId,
+    action: `subscription_${sub.status}`,
+    after_state: row,
+  });
 
   return { ok: true, orgId };
 }

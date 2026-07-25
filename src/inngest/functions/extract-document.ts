@@ -3,6 +3,10 @@ import { extractCoiWithRetry, MODEL_VERSION } from "@/lib/ai/extract";
 import type { Extraction } from "@/lib/extraction/schema";
 import { PROMPT_VERSION } from "@/lib/extraction/schema";
 import {
+  downloadPdfBase64FromStorage,
+  markExtractionFailed,
+} from "@/lib/documents/ingest";
+import {
   analyzePdfMetadata,
   insuredNameMismatchSignal,
   policyReuseSignals,
@@ -20,13 +24,57 @@ export const extractDocument = inngest.createFunction(
   {
     id: "extract-document",
     triggers: [{ event: "document/uploaded" }],
+    onFailure: async ({ event, error }) => {
+      const data = event.data as {
+        event?: {
+          data?: {
+            documentId?: string;
+            orgId?: string;
+          };
+        };
+      };
+      const documentId = data.event?.data?.documentId;
+      const orgId = data.event?.data?.orgId;
+      if (!documentId || !orgId) return;
+      await markExtractionFailed({
+        documentId,
+        orgId,
+        error: error.message,
+        actorId: "inngest:extract-document:onFailure",
+      });
+    },
   },
   async ({ event, step }) => {
-    const { documentId, orgId, pdfBase64 } = event.data as {
+    const payload = event.data as {
       documentId: string;
       orgId: string;
-      pdfBase64: string;
+      /** Preferred: Storage path (no PDF in event body). */
+      storagePath?: string;
+      /** Legacy in-flight events may still carry base64. */
+      pdfBase64?: string;
     };
+    const { documentId, orgId } = payload;
+
+    const pdfBase64 = await step.run("load-pdf", async () => {
+      if (payload.storagePath) {
+        return downloadPdfBase64FromStorage(payload.storagePath);
+      }
+      if (payload.pdfBase64) {
+        return payload.pdfBase64;
+      }
+      // Resolve path from documents row when only ids were sent.
+      const supabase = createAdminClient();
+      const { data: doc } = await supabase
+        .from("documents")
+        .select("storage_path")
+        .eq("id", documentId)
+        .eq("org_id", orgId)
+        .maybeSingle();
+      if (!doc?.storage_path || doc.storage_path === "pending") {
+        throw new Error("PDF storage path missing");
+      }
+      return downloadPdfBase64FromStorage(doc.storage_path);
+    });
 
     const extraction = await step.run("claude-extract", async () => {
       return extractCoiWithRetry({ pdfBase64 });
