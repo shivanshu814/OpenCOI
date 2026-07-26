@@ -9,8 +9,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type {
   CustomerDecision,
@@ -59,16 +67,16 @@ const CORRECTION_PRESETS: CorrectionPreset[] = [
     label: "Policy expiration date",
     path: "policies[0].expiration_date",
     kind: "date",
-    hint: "Copy the date from the PDF. Enter as YYYY-MM-DD (e.g. 01/01/2027 → 2027-01-01).",
-    placeholder: "YYYY-MM-DD",
+    hint: "Pick the expiration date exactly as printed on the PDF.",
+    placeholder: "Pick the date from the PDF",
   },
   {
     id: "effective",
     label: "Policy effective date",
     path: "policies[0].effective_date",
     kind: "date",
-    hint: "Copy the date from the PDF. Enter as YYYY-MM-DD.",
-    placeholder: "YYYY-MM-DD",
+    hint: "Pick the effective date exactly as printed on the PDF.",
+    placeholder: "Pick the date from the PDF",
   },
   {
     id: "policy_number",
@@ -167,6 +175,20 @@ export function ReviewActions({
   const selectedPreset = useMemo(
     () => CORRECTION_PRESETS.find((p) => p.id === presetId) ?? null,
     [presetId],
+  );
+
+  const presetItems = useMemo(
+    () => CORRECTION_PRESETS.map((p) => ({ label: p.label, value: p.id })),
+    [],
+  );
+
+  const reasonItems = useMemo(
+    () =>
+      OVERRIDE_REASON_CODES.map((code) => ({
+        label: OVERRIDE_REASON_LABELS[code],
+        value: code,
+      })),
+    [],
   );
 
   const fieldPath =
@@ -365,21 +387,25 @@ export function ReviewActions({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="reason_code">Reason</Label>
-              <select
-                id="reason_code"
-                className="border-input bg-background h-9 w-full rounded-lg border px-2.5 text-sm"
+              <Select
+                items={reasonItems}
                 value={reasonCode}
-                onChange={(e) =>
-                  setReasonCode(e.target.value as OverrideReasonCode)
-                }
+                onValueChange={(value: OverrideReasonCode | null) => {
+                  if (value) setReasonCode(value);
+                }}
                 disabled={busy !== null}
               >
-                {OVERRIDE_REASON_CODES.map((code) => (
-                  <option key={code} value={code}>
-                    {OVERRIDE_REASON_LABELS[code]}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="reason_code" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {reasonItems.map((r) => (
+                    <SelectItem key={r.value} value={r.value}>
+                      {r.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             {reasonCode === "other" ? (
               <div className="space-y-1.5">
@@ -464,25 +490,26 @@ export function ReviewActions({
 
           <div className="space-y-1.5">
             <Label htmlFor="correction_field">Field to correct</Label>
-            <select
-              id="correction_field"
-              className="border-input bg-background h-9 w-full rounded-lg border px-2.5 text-sm"
-              value={presetId}
-              onChange={(e) => {
-                setPresetId(e.target.value);
+            <Select
+              items={presetItems}
+              value={presetId || null}
+              onValueChange={(value: string | null) => {
+                setPresetId(value ?? "");
                 setAfterValue("");
               }}
               disabled={busy !== null}
             >
-              <option value="" disabled>
-                Select a field…
-              </option>
-              {CORRECTION_PRESETS.map((preset) => (
-                <option key={preset.id} value={preset.id}>
-                  {preset.label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger id="correction_field" className="w-full">
+                <SelectValue placeholder="Select a field…" />
+              </SelectTrigger>
+              <SelectContent>
+                {presetItems.map((preset) => (
+                  <SelectItem key={preset.value} value={preset.value}>
+                    {preset.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {presetId === "other" ? (
@@ -505,17 +532,27 @@ export function ReviewActions({
           {selectedPreset ? (
             <div className="space-y-1.5">
               <Label htmlFor="after_value">Corrected value</Label>
-              <Input
-                id="after_value"
-                value={afterValue}
-                onChange={(e) => setAfterValue(e.target.value)}
-                placeholder={selectedPreset.placeholder}
-                disabled={busy !== null}
-                autoComplete="off"
-                inputMode={
-                  selectedPreset.kind === "number" ? "numeric" : undefined
-                }
-              />
+              {selectedPreset.kind === "date" ? (
+                <DatePicker
+                  id="after_value"
+                  value={afterValue}
+                  onChange={setAfterValue}
+                  placeholder={selectedPreset.placeholder}
+                  disabled={busy !== null}
+                />
+              ) : (
+                <Input
+                  id="after_value"
+                  value={afterValue}
+                  onChange={(e) => setAfterValue(e.target.value)}
+                  placeholder={selectedPreset.placeholder}
+                  disabled={busy !== null}
+                  autoComplete="off"
+                  inputMode={
+                    selectedPreset.kind === "number" ? "numeric" : undefined
+                  }
+                />
+              )}
               <p className="text-muted-foreground text-xs leading-relaxed">
                 {selectedPreset.hint}
               </p>
