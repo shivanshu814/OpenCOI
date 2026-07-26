@@ -1,6 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import Anthropic from "@anthropic-ai/sdk";
+import { ZodError } from "zod";
 import {
+  describeExtractionError,
   estimateCostUsd,
   needsLowConfidenceRetry,
   pickBetterExtraction,
@@ -87,4 +90,50 @@ test("pickBetterExtraction: keeps first when retry did not improve confidence", 
   const merged = pickBetterExtraction(first, second);
   assert.equal(merged.extraction_meta.overall_confidence, 0.9);
   assert.ok(Math.abs(merged.extraction_meta.cost_usd - 0.021) < 1e-9);
+});
+
+// --- describeExtractionError: user-safe failure messages, no key leaks ---
+
+test("describeExtractionError: missing OPENROUTER_API_KEY names the fix", () => {
+  const msg = describeExtractionError(new Error("OPENROUTER_API_KEY is not set"));
+  assert.match(msg, /OPENROUTER_API_KEY is missing/);
+});
+
+test("describeExtractionError: 401/403 → invalid key message", () => {
+  const err = new Anthropic.APIError(401, {}, "unauthorized", new Headers());
+  assert.match(describeExtractionError(err), /rejected the API key/);
+});
+
+test("describeExtractionError: 429 → rate-limit retry message", () => {
+  const err = new Anthropic.APIError(429, {}, "rate limited", new Headers());
+  assert.match(describeExtractionError(err), /rate-limiting/);
+});
+
+test("describeExtractionError: 5xx → temporary provider problem", () => {
+  const err = new Anthropic.APIError(503, {}, "upstream down", new Headers());
+  assert.match(describeExtractionError(err), /temporary problem/);
+});
+
+test("describeExtractionError: timeout classified before generic connection", () => {
+  const err = new Anthropic.APIConnectionTimeoutError({ message: "timed out" });
+  assert.match(describeExtractionError(err), /timed out/);
+});
+
+test("describeExtractionError: malformed model JSON (ZodError) → retry, no crash", () => {
+  const err = new ZodError([]);
+  assert.match(describeExtractionError(err), /malformed extraction data/);
+});
+
+test("describeExtractionError: missing tool_use block → structured-output message", () => {
+  const err = new Error("Claude did not return submit_extraction tool use");
+  assert.match(describeExtractionError(err), /structured extraction output/);
+});
+
+test("describeExtractionError: never leaks an sk-or-... key in messages", () => {
+  const err = new Error(
+    "request failed for key sk-or-v1-abcdef0123456789abcdef0123456789",
+  );
+  const msg = describeExtractionError(err);
+  assert.ok(!msg.includes("sk-or-"), "API key material must be redacted");
+  assert.match(msg, /\[redacted\]/);
 });
