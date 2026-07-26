@@ -217,10 +217,19 @@ export function IntegrationsClient() {
         </CardContent>
 
         <ul className="divide-y border-t">
+          {keys.length > 0 ? (
+            <li
+              className="text-muted-foreground bg-muted/40 hidden items-center gap-x-3 border-b px-4 py-2 text-[11px] font-medium tracking-wide uppercase sm:grid sm:grid-cols-[minmax(0,1fr)_auto]"
+              aria-hidden
+            >
+              <span>Key</span>
+              <span className="text-right">Action</span>
+            </li>
+          ) : null}
           {keys.map((k) => (
             <li
               key={k.id}
-              className="flex items-center justify-between gap-2 px-4 py-2.5"
+              className="hover:bg-muted/40 grid items-center gap-x-3 gap-y-1 px-4 py-2.5 transition-colors sm:grid-cols-[minmax(0,1fr)_auto]"
             >
               <div className="min-w-0">
                 <span className="text-sm font-medium">{k.name}</span>
@@ -237,7 +246,13 @@ export function IntegrationsClient() {
                 <AlertDialog>
                   <AlertDialogTrigger
                     disabled={busy}
-                    render={<Button size="sm" variant="ghost" />}
+                    render={
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="justify-self-start sm:justify-self-end"
+                      />
+                    }
                   >
                     Revoke
                   </AlertDialogTrigger>

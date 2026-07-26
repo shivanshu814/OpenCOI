@@ -148,44 +148,71 @@ export default async function VendorDetailPage({
                   </Button>
                 </div>
               ) : (
-                documents.map((doc) => (
+                <>
                   <div
-                    key={doc.id}
-                    className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
+                    className="text-muted-foreground bg-muted/40 hidden items-center gap-x-3 border-b px-4 py-2 text-[11px] font-medium tracking-wide uppercase lg:grid lg:grid-cols-[minmax(12rem,1.4fr)_minmax(8rem,0.9fr)_9rem_8.5rem_auto]"
+                    aria-hidden
                   >
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span className="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-lg">
-                        <FileText className="size-4" aria-hidden />
-                      </span>
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">
-                          {doc.file_name}
-                        </p>
-                        <p className="text-muted-foreground truncate text-xs">
-                          {doc.created_at
-                            ? `Uploaded ${formatDistanceToNow(
-                                new Date(doc.created_at),
-                                { addSuffix: true },
-                              )}`
-                            : "Upload time unavailable"}
-                        </p>
+                    <span>Document</span>
+                    <span>Uploaded</span>
+                    <span>Pipeline</span>
+                    <span>Verdict</span>
+                    <span className="text-right">Action</span>
+                  </div>
+                  {documents.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="hover:bg-muted/40 flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 transition-colors lg:grid lg:grid-cols-[minmax(12rem,1.4fr)_minmax(8rem,0.9fr)_9rem_8.5rem_auto]"
+                    >
+                      <div className="flex min-w-0 flex-1 items-center gap-3 lg:flex-none">
+                        <span className="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-lg">
+                          <FileText className="size-4" aria-hidden />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium">
+                            {doc.file_name}
+                          </p>
+                          <p className="text-muted-foreground truncate text-xs lg:hidden">
+                            {doc.created_at
+                              ? `Uploaded ${formatDistanceToNow(
+                                  new Date(doc.created_at),
+                                  { addSuffix: true },
+                                )}`
+                              : "Upload time unavailable"}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-muted-foreground hidden truncate text-xs lg:block">
+                        {doc.created_at
+                          ? formatDistanceToNow(new Date(doc.created_at), {
+                              addSuffix: true,
+                            })
+                          : "—"}
+                      </div>
+                      <div className="flex items-center">
+                        <DocumentStatusBadge status={doc.status} />
+                      </div>
+                      <div className="flex items-center">
+                        {doc.overall_verdict ? (
+                          <VerdictBadge verdict={doc.overall_verdict} />
+                        ) : (
+                          <span className="text-muted-foreground text-xs">
+                            —
+                          </span>
+                        )}
+                      </div>
+                      <div className="ml-auto flex justify-end lg:ml-0">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          render={<Link href={`/app/review/${doc.id}`} />}
+                        >
+                          Open
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {doc.overall_verdict ? (
-                        <VerdictBadge verdict={doc.overall_verdict} />
-                      ) : null}
-                      <DocumentStatusBadge status={doc.status} />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        render={<Link href={`/app/review/${doc.id}`} />}
-                      >
-                        Open
-                      </Button>
-                    </div>
-                  </div>
-                ))
+                  ))}
+                </>
               )}
             </CardContent>
           </Card>

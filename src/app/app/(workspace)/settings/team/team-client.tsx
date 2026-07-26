@@ -135,10 +135,19 @@ export function TeamSettingsClient() {
         </CardHeader>
 
         <ul className="divide-y">
+          {members.length > 0 ? (
+            <li
+              className="text-muted-foreground bg-muted/40 hidden items-center gap-x-3 border-b px-4 py-2 text-[11px] font-medium tracking-wide uppercase sm:grid sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]"
+              aria-hidden
+            >
+              <span>User</span>
+              <span>Role</span>
+            </li>
+          ) : null}
           {members.map((m) => (
             <li
               key={m.id}
-              className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5"
+              className="hover:bg-muted/40 grid items-center gap-x-3 gap-y-1 px-4 py-2.5 transition-colors sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]"
             >
               <span className="font-mono text-xs">
                 {m.user_id.slice(0, 8)}…

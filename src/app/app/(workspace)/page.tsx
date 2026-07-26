@@ -105,10 +105,19 @@ function QueueList({
         </CardAction>
       </CardHeader>
       <CardContent className="divide-y px-0">
+        {rows.length > 0 ? (
+          <div
+            className="text-muted-foreground bg-muted/40 hidden items-center gap-x-3 border-b px-4 py-1.5 text-[11px] font-medium tracking-wide uppercase sm:grid sm:grid-cols-[minmax(0,1fr)_auto]"
+            aria-hidden
+          >
+            <span>Document</span>
+            <span>Action</span>
+          </div>
+        ) : null}
         {rows.map((row) => (
           <div
             key={row.id}
-            className="hover:bg-muted/40 flex items-center justify-between gap-3 px-4 py-2.5 transition-colors"
+            className="hover:bg-muted/40 grid items-center gap-3 px-4 py-2.5 transition-colors sm:grid-cols-[minmax(0,1fr)_auto]"
           >
             <div className="min-w-0">
               <p className="truncate text-sm font-medium">{row.primary}</p>
@@ -119,6 +128,7 @@ function QueueList({
             <Button
               variant="outline"
               size="sm"
+              className="justify-self-start sm:justify-self-end"
               render={<Link href={`/app/review/${row.id}`} />}
             >
               {action}
@@ -327,27 +337,43 @@ export default async function DashboardPage() {
         <Card className="gap-0 overflow-hidden py-0">
           <CardLiveAccent />
           <CardContent className="divide-y px-0">
+            {attention.length > 0 ? (
+              <div
+                className="text-muted-foreground bg-muted/40 hidden items-center gap-x-3 border-b px-4 py-2 text-[11px] font-medium tracking-wide uppercase lg:grid lg:grid-cols-[minmax(14rem,1.4fr)_minmax(8rem,0.7fr)_10.5rem_auto]"
+                aria-hidden
+              >
+                <span>Vendor</span>
+                <span>Trade</span>
+                <span>Status</span>
+                <span className="text-right">Actions</span>
+              </div>
+            ) : null}
             {attention.map((v) => (
               <div
                 key={v.id}
-                className="hover:bg-muted/40 flex flex-wrap items-center justify-between gap-3 px-4 py-3 transition-colors"
+                className="hover:bg-muted/40 flex flex-wrap items-center gap-x-3 gap-y-2.5 px-4 py-3.5 transition-colors lg:grid lg:grid-cols-[minmax(14rem,1.4fr)_minmax(8rem,0.7fr)_10.5rem_auto]"
               >
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1 lg:flex-none">
                   <Link
                     href={`/app/vendors/${v.id}`}
-                    className="text-sm font-medium hover:underline"
+                    className="text-sm font-medium underline-offset-4 hover:underline"
                   >
                     {v.name}
                   </Link>
-                  <p className="text-muted-foreground text-xs">
+                  <p className="text-muted-foreground text-xs lg:hidden">
                     {[v.trade, `score ${vendorComplianceScore(v.status)}`]
                       .filter(Boolean)
                       .join(" · ")}
                   </p>
                 </div>
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="text-muted-foreground hidden truncate text-sm lg:block">
+                  {v.trade || "—"}
+                </div>
+                <div className="flex items-center">
                   <VendorStatusBadge status={v.status} />
-                  <DownloadReportButton vendorId={v.id} />
+                </div>
+                <div className="ml-auto flex flex-wrap items-center justify-end gap-2 lg:ml-0">
+                  <DownloadReportButton vendorId={v.id} label="Report" />
                   {v.email ? (
                     <SendChaseButton vendorId={v.id} vendorName={v.name} />
                   ) : null}

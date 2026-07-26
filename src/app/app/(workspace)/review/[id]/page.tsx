@@ -17,17 +17,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { isSupabaseConfigured } from "@/lib/config";
 import { getDocument, listVendors } from "@/lib/data/documents";
 import type { Verdict } from "@/lib/requirements/engine";
+import { formatUsd } from "@/lib/ui/format";
+import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
 import { Check, Clock, Minus, TriangleAlert, X } from "lucide-react";
 import { notFound } from "next/navigation";
@@ -42,6 +36,9 @@ const VERDICT_ICON: Record<Verdict, { Icon: typeof Check; className: string }> =
     EXPIRING: { Icon: Clock, className: "bg-amber-100 text-amber-700" },
     MISSING: { Icon: Minus, className: "bg-slate-100 text-slate-600" },
   };
+
+const FIELD_GRID = "grid-cols-[minmax(6rem,0.7fr)_minmax(0,1.4fr)_auto]";
+const CHECK_GRID = "grid-cols-[minmax(0,1fr)_auto]";
 
 export default async function ReviewDocumentPage({
   params,
@@ -253,53 +250,49 @@ export default async function ReviewDocumentPage({
                 PDF.
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="text-muted-foreground text-xs font-medium">
-                      Field
-                    </TableHead>
-                    <TableHead className="text-muted-foreground text-right text-xs font-medium">
-                      Value
-                    </TableHead>
-                    <TableHead className="text-muted-foreground text-right text-xs font-medium">
-                      Confidence
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <FieldRow
-                    label="Insured"
-                    value={ex.insured.name}
-                    conf={ex.insured.confidence}
-                  />
-                  <FieldRow
-                    label="Producer"
-                    value={ex.producer.name}
-                    conf={ex.producer.confidence}
-                  />
-                  <FieldRow
-                    label="GL each-occurrence"
-                    value={glEachOccurrence?.amount?.toLocaleString() ?? "—"}
-                    conf={glEachOccurrence?.confidence}
-                  />
-                  <FieldRow
-                    label="Expiration"
-                    value={ex.policies[0]?.expiration_date ?? "—"}
-                    conf={ex.policies[0]?.confidence}
-                  />
-                  <FieldRow
-                    label="Endorsements"
-                    value={
-                      ex.endorsement_forms_detected
-                        .map((e) => e.form)
-                        .join(", ") || "None detected"
-                    }
-                    conf={ex.endorsement_forms_detected[0]?.confidence}
-                  />
-                </TableBody>
-              </Table>
+            <CardContent className="px-0 pb-0">
+              <div
+                className={cn(
+                  "text-muted-foreground bg-muted/40 grid items-center gap-x-3 border-b px-4 py-2 text-[11px] font-medium tracking-wide uppercase",
+                  FIELD_GRID,
+                )}
+                aria-hidden
+              >
+                <span>Field</span>
+                <span>Value</span>
+                <span className="text-right">Conf.</span>
+              </div>
+              <div className="divide-y">
+                <FieldRow
+                  label="Insured"
+                  value={ex.insured.name}
+                  conf={ex.insured.confidence}
+                />
+                <FieldRow
+                  label="Producer"
+                  value={ex.producer.name}
+                  conf={ex.producer.confidence}
+                />
+                <FieldRow
+                  label="GL each-occurrence"
+                  value={formatUsd(glEachOccurrence?.amount)}
+                  conf={glEachOccurrence?.confidence}
+                />
+                <FieldRow
+                  label="Expiration"
+                  value={ex.policies[0]?.expiration_date ?? "—"}
+                  conf={ex.policies[0]?.confidence}
+                />
+                <FieldRow
+                  label="Endorsements"
+                  value={
+                    ex.endorsement_forms_detected
+                      .map((e) => e.form)
+                      .join(", ") || "None detected"
+                  }
+                  conf={ex.endorsement_forms_detected[0]?.confidence}
+                />
+              </div>
             </CardContent>
           </Card>
 
@@ -327,47 +320,49 @@ export default async function ReviewDocumentPage({
                 </p>
               </CardAction>
             </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="text-muted-foreground text-xs font-medium">
-                      Requirement
-                    </TableHead>
-                    <TableHead className="text-muted-foreground text-right text-xs font-medium">
-                      Status
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {doc.check_lines.map((line) => {
-                    const { Icon, className } = VERDICT_ICON[line.verdict];
-                    return (
-                      <TableRow key={line.rule_id}>
-                        <TableCell className="whitespace-normal py-3">
-                          <div className="flex min-w-0 items-start gap-3">
-                            <span
-                              className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full ${className}`}
-                              aria-hidden
-                            >
-                              <Icon className="size-3" strokeWidth={3} />
-                            </span>
-                            <div className="min-w-0">
-                              <p className="font-medium">{line.label}</p>
-                              <p className="text-muted-foreground text-xs leading-relaxed">
-                                {line.reason}
-                              </p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-3 text-right align-top">
-                          <VerdictBadge verdict={line.verdict} />
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+            <CardContent className="px-0 pb-0">
+              <div
+                className={cn(
+                  "text-muted-foreground bg-muted/40 grid items-center gap-x-3 border-b px-4 py-2 text-[11px] font-medium tracking-wide uppercase",
+                  CHECK_GRID,
+                )}
+                aria-hidden
+              >
+                <span>Requirement</span>
+                <span className="text-right">Status</span>
+              </div>
+              <div className="divide-y">
+                {doc.check_lines.map((line) => {
+                  const { Icon, className } = VERDICT_ICON[line.verdict];
+                  return (
+                    <div
+                      key={line.rule_id}
+                      className={cn(
+                        "grid items-start gap-x-3 px-4 py-3",
+                        CHECK_GRID,
+                      )}
+                    >
+                      <div className="flex min-w-0 items-start gap-3">
+                        <span
+                          className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full ${className}`}
+                          aria-hidden
+                        >
+                          <Icon className="size-3" strokeWidth={3} />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium">{line.label}</p>
+                          <p className="text-muted-foreground text-xs leading-relaxed">
+                            {line.reason}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex justify-end pt-0.5">
+                        <VerdictBadge verdict={line.verdict} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </CardContent>
           </Card>
 
@@ -441,17 +436,17 @@ function FieldRow({
 }) {
   const low = conf != null && conf < 0.9;
   return (
-    <TableRow>
-      <TableCell className="text-muted-foreground text-xs">{label}</TableCell>
-      <TableCell className="whitespace-normal text-right text-sm font-medium tabular-nums">
+    <div className={cn("grid items-center gap-x-3 px-4 py-2.5", FIELD_GRID)}>
+      <span className="text-muted-foreground text-xs">{label}</span>
+      <span className="min-w-0 text-sm font-medium break-words tabular-nums">
         {value ?? "—"}
-      </TableCell>
-      <TableCell className="text-right">
+      </span>
+      <span className="justify-self-end">
         {conf != null ? (
           low ? (
             <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800 tabular-nums">
               <TriangleAlert className="size-3" aria-hidden />
-              {Math.round(conf * 100)}% — verify
+              {Math.round(conf * 100)}%
             </span>
           ) : (
             <span className="text-muted-foreground text-xs tabular-nums">
@@ -461,7 +456,7 @@ function FieldRow({
         ) : (
           <span className="text-muted-foreground text-xs">—</span>
         )}
-      </TableCell>
-    </TableRow>
+      </span>
+    </div>
   );
 }

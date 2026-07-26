@@ -2,9 +2,13 @@ import { DownloadOwnerReportButton } from "@/components/download-owner-report-bu
 import {
   CardLiveAccent,
   LiveBadge,
-  LiveDot,
   PageLiveStrip,
 } from "@/components/live-activity";
+import {
+  ListLiveCount,
+  ListTableHead,
+  ListTableRow,
+} from "@/components/list-table";
 import {
   ContentSurface,
   PageFrame,
@@ -16,16 +20,12 @@ import { ScoreRing } from "@/components/product-preview";
 import { ReportsEmptyState } from "@/components/reports-empty-state";
 import { SendOwnerReportButton } from "@/components/send-owner-report-button";
 import { Button } from "@/components/ui/button";
-import {
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { listOwnerReportRows } from "@/lib/reports/owner-load";
 import { Building2, Plus } from "lucide-react";
 import Link from "next/link";
+
+const ROW_GRID =
+  "lg:grid-cols-[minmax(14rem,1.3fr)_minmax(7rem,0.55fr)_minmax(5rem,0.4fr)_minmax(5rem,0.4fr)_minmax(5rem,0.4fr)_auto]";
 
 export default async function ReportsPage() {
   const properties = await listOwnerReportRows();
@@ -104,44 +104,53 @@ export default async function ReportsPage() {
       {properties.length === 0 ? (
         <ReportsEmptyState />
       ) : (
-        <ContentSurface className="gap-0 py-0 shadow-xs" rail={false}>
+        <ContentSurface className="shadow-xs" rail={false}>
           <CardLiveAccent />
-          <CardHeader className="gap-0.5 border-b px-4 py-3.5 sm:px-5">
-            <div className="flex flex-wrap items-center gap-2">
-              <CardTitle className="text-sm font-semibold">
-                By property
-              </CardTitle>
-              <LiveBadge label="Live" tone="ok" />
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-3.5 sm:px-5">
+            <div className="min-w-0 space-y-0.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-sm font-semibold tracking-tight">
+                  By property
+                </h2>
+                <LiveBadge label="Live" tone="ok" />
+                <ListLiveCount>{properties.length}</ListLiveCount>
+              </div>
+              <p className="text-muted-foreground text-xs">
+                One report per property — download anytime, or email the owner
+                on file.
+              </p>
             </div>
-            <CardDescription className="text-xs">
-              One report per property — download anytime, or email the owner on
-              file. Enable monthly auto-send on the property detail.
-            </CardDescription>
-            <CardAction className="text-muted-foreground flex items-center gap-1.5 text-xs tabular-nums">
-              <LiveDot tone="ok" />
-              {properties.length}
-            </CardAction>
-          </CardHeader>
-          <CardContent className="divide-y px-0">
+          </div>
+
+          <ListTableHead
+            gridClassName={ROW_GRID}
+            columns={[
+              "Property",
+              "Covered",
+              "Docs",
+              "Risks",
+              "Vendors",
+              { label: "Actions", className: "text-right" },
+            ]}
+          />
+
+          <div className="divide-y">
             {properties.map((p) => {
               const location = [p.city, p.state].filter(Boolean).join(", ");
               return (
-                <div
-                  key={p.id}
-                  className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5 sm:px-5"
-                >
-                  <div className="flex min-w-0 items-start gap-3.5 sm:items-center">
+                <ListTableRow key={p.id} gridClassName={ROW_GRID}>
+                  <div className="flex min-w-0 flex-1 items-center gap-3 lg:flex-none">
                     <ScoreRing
                       score={p.compliance_percent}
                       size="sm"
                       animate={false}
                       pulse={p.vendor_count > 0 && p.risks_flagged === 0}
                     />
-                    <div className="min-w-0 space-y-1.5">
+                    <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <Link
                           href={`/app/properties/${p.id}`}
-                          className="truncate text-sm font-semibold hover:underline"
+                          className="truncate text-sm font-semibold underline-offset-4 hover:underline"
                         >
                           {p.name}
                         </Link>
@@ -159,12 +168,10 @@ export default async function ReportsPage() {
                                 : "bg-slate-400"
                             }`}
                           />
-                          {p.owner_report_enabled
-                            ? "Monthly on"
-                            : "Monthly off"}
+                          {p.owner_report_enabled ? "Monthly on" : "Off"}
                         </span>
                       </div>
-                      <p className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+                      <p className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
                         <span className="inline-flex items-center gap-1">
                           <Building2
                             className="size-3 opacity-70"
@@ -173,27 +180,27 @@ export default async function ReportsPage() {
                           />
                           {location || "Location not set"}
                         </span>
-                        <span aria-hidden>·</span>
-                        <span>
-                          {p.owner_report_email
-                            ? p.owner_report_email
-                            : "No owner email — set on property"}
+                        <span aria-hidden className="hidden sm:inline">
+                          ·
+                        </span>
+                        <span className="truncate">
+                          {p.owner_report_email || "No owner email"}
                         </span>
                       </p>
-                      <dl className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
-                        <div className="flex items-center gap-1.5">
+                      <dl className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs lg:hidden">
+                        <div className="flex gap-1">
                           <dt className="text-muted-foreground">Covered</dt>
-                          <dd className="font-semibold tabular-nums text-brand">
+                          <dd className="text-brand font-semibold tabular-nums">
                             {p.compliance_percent}%
                           </dd>
                         </div>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex gap-1">
                           <dt className="text-muted-foreground">Docs</dt>
                           <dd className="font-medium tabular-nums">
                             {p.documents_on_file}
                           </dd>
                         </div>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex gap-1">
                           <dt className="text-muted-foreground">Risks</dt>
                           <dd
                             className={`font-medium tabular-nums ${
@@ -205,20 +212,33 @@ export default async function ReportsPage() {
                             {p.risks_flagged}
                           </dd>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <dt className="text-muted-foreground">Vendors</dt>
-                          <dd className="font-medium tabular-nums">
-                            {p.vendor_count}
-                          </dd>
-                        </div>
                       </dl>
                     </div>
                   </div>
 
-                  <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+                  <div className="text-brand hidden text-sm font-semibold tabular-nums lg:block">
+                    {p.compliance_percent}%
+                  </div>
+                  <div className="hidden text-sm font-medium tabular-nums lg:block">
+                    {p.documents_on_file}
+                  </div>
+                  <div
+                    className={`hidden text-sm font-medium tabular-nums lg:block ${
+                      p.risks_flagged > 0
+                        ? "text-amber-700"
+                        : "text-foreground"
+                    }`}
+                  >
+                    {p.risks_flagged}
+                  </div>
+                  <div className="hidden text-sm font-medium tabular-nums lg:block">
+                    {p.vendor_count}
+                  </div>
+
+                  <div className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-2 lg:ml-0">
                     <DownloadOwnerReportButton
                       propertyId={p.id}
-                      label="Download PDF"
+                      label="PDF"
                     />
                     <SendOwnerReportButton
                       propertyId={p.id}
@@ -226,10 +246,10 @@ export default async function ReportsPage() {
                       variant="primary"
                     />
                   </div>
-                </div>
+                </ListTableRow>
               );
             })}
-          </CardContent>
+          </div>
         </ContentSurface>
       )}
 
