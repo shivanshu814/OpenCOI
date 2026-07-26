@@ -457,10 +457,15 @@ function dayLabel(d: Date): string {
   );
   if (diffDays === 0) return "Today";
   if (diffDays === 1) return "Yesterday";
-  return d.toLocaleDateString(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: d.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
-  });
+  try {
+    const opts: Intl.DateTimeFormatOptions = {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    };
+    if (d.getFullYear() !== now.getFullYear()) opts.year = "numeric";
+    return d.toLocaleDateString("en-US", opts);
+  } catch {
+    return d.toISOString().slice(0, 10);
+  }
 }

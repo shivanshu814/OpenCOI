@@ -85,27 +85,49 @@ export function extractWhy(
   return null;
 }
 
+/**
+ * Safe US-friendly absolute timestamp for audit UI.
+ * Never mix dateStyle/timeStyle with timeZoneName (ECMA-402 throws
+ * "TypeError: Invalid option : option"). Always fall back to ISO.
+ */
+export function formatAbsoluteTimestamp(d: Date): string {
+  if (Number.isNaN(d.getTime())) return "Invalid date";
+  try {
+    return d.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+      timeZoneName: "short",
+    });
+  } catch {
+    return d.toISOString();
+  }
+}
+
 export function formatTimestampDetailed(iso: string): {
   absolute: string;
   relative: string;
   timezone: string;
 } {
   const d = new Date(iso);
-  const tz =
-    Intl.DateTimeFormat().resolvedOptions().timeZone || "local timezone";
-  const absolute = d.toLocaleString(undefined, {
-    dateStyle: "medium",
-    timeStyle: "medium",
-    timeZoneName: "short",
-  });
+  let tz = "local timezone";
+  try {
+    tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz;
+  } catch {
+    /* keep fallback */
+  }
   return {
-    absolute,
+    absolute: formatAbsoluteTimestamp(d),
     relative: formatRelativeTime(d),
     timezone: tz,
   };
 }
 
-function formatRelativeTime(d: Date): string {
+export function formatRelativeTime(d: Date): string {
+  if (Number.isNaN(d.getTime())) return "Invalid date";
   const now = Date.now();
   const diffSec = Math.round((now - d.getTime()) / 1000);
   if (diffSec < 45) return "Just now";
@@ -121,12 +143,16 @@ function formatRelativeTime(d: Date): string {
     const days = Math.max(1, Math.round(diffSec / 86400));
     return `${days}d ago`;
   }
-  return d.toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  try {
+    return d.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  } catch {
+    return d.toISOString();
+  }
 }
 
 /** Truncate UA for display. */
