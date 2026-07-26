@@ -26,6 +26,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { productRoleLabel, toProductRole } from "@/lib/auth/roles";
+import {
+  notifyApiError,
+  notifyError,
+  notifySuccess,
+  notifyWarning,
+} from "@/lib/ui/toast";
 import { useCallback, useEffect, useState } from "react";
 
 const ROLE_ITEMS: ReadonlyArray<{
@@ -50,7 +56,7 @@ export function TeamSettingsClient() {
   const [replyTo, setReplyTo] = useState("");
   const [color, setColor] = useState("");
   const [logo, setLogo] = useState("");
-  const [msg, setMsg] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -67,9 +73,11 @@ export function TeamSettingsClient() {
       error?: string;
     };
     if (data.error) {
-      setMsg(data.error);
+      setLoadError(data.error);
+      notifyError(data.error);
       return;
     }
+    setLoadError(null);
     setMembers(data.members ?? []);
     setInvites(data.invites ?? []);
     setFromEmail(data.branding?.from_email ?? "");
@@ -84,7 +92,6 @@ export function TeamSettingsClient() {
 
   async function post(body: Record<string, unknown>) {
     setBusy(true);
-    setMsg(null);
     try {
       const res = await fetch("/api/settings/team", {
         method: "POST",
@@ -93,10 +100,16 @@ export function TeamSettingsClient() {
       });
       const data = (await res.json()) as { error?: string; note?: string };
       if (!res.ok) {
-        setMsg(data.error ?? "Failed");
+        notifyApiError(data, "Could not save");
         return;
       }
-      setMsg(data.note ?? "Saved");
+      if (body.action === "invite") {
+        notifySuccess(`Invite sent to ${String(body.email)}`);
+      } else if (data.note) {
+        notifyWarning(data.note);
+      } else {
+        notifySuccess("Branding saved");
+      }
       await load();
     } finally {
       setBusy(false);
@@ -267,9 +280,9 @@ export function TeamSettingsClient() {
         </CardContent>
       </Card>
 
-      {msg ? (
-        <Alert>
-          <AlertDescription>{msg}</AlertDescription>
+      {loadError ? (
+        <Alert variant="destructive">
+          <AlertDescription>{loadError}</AlertDescription>
         </Alert>
       ) : null}
     </div>

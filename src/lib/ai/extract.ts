@@ -6,6 +6,7 @@ import {
 } from "@/lib/extraction/schema";
 import { extractionToolInputSchema } from "@/lib/extraction/tool-schema";
 import Anthropic from "@anthropic-ai/sdk";
+import { ZodError } from "zod";
 
 /** OpenRouter model slug — Claude via OpenRouter (docs stack: Claude vision → JSON). */
 export const MODEL_VERSION =
@@ -71,11 +72,60 @@ function getOpenRouterClient() {
   return new Anthropic({
     apiKey,
     baseURL: OPENROUTER_BASE_URL,
+    // Transient 429/5xx/connection errors retry with exponential backoff in
+    // the SDK; a hard timeout keeps a hung upstream from pinning the request.
+    maxRetries: 2,
+    timeout: 120_000,
     defaultHeaders: {
       "HTTP-Referer": appUrl,
       "X-Title": "CertShield",
     },
   });
+}
+
+/** Strip anything that looks like an API key before a message can surface. */
+function redactSecrets(text: string): string {
+  return text.replace(/\b(sk-or-v?\d?-?|sk-ant-)[A-Za-z0-9_-]{8,}\b/g, "[redacted]");
+}
+
+/**
+ * Map an extraction failure to a user-safe, actionable message. Never leaks
+ * the API key; never pretends success. Shown in upload/review UI and stored
+ * on the extraction_failed audit event.
+ */
+export function describeExtractionError(err: unknown): string {
+  if (err instanceof Error && err.message.includes("OPENROUTER_API_KEY")) {
+    return "AI extraction is not configured — OPENROUTER_API_KEY is missing. Set it, then use Run extraction now.";
+  }
+  if (err instanceof ZodError) {
+    return "The AI returned malformed extraction data. Retry extraction; if it persists, upload a clearer PDF.";
+  }
+  if (err instanceof Anthropic.APIConnectionTimeoutError) {
+    return "The AI request timed out. Retry extraction — the document is safe.";
+  }
+  if (err instanceof Anthropic.APIConnectionError) {
+    return "Could not reach the AI provider. Check connectivity and retry extraction.";
+  }
+  if (err instanceof Anthropic.APIError) {
+    const status = typeof err.status === "number" ? err.status : 0;
+    if (status === 401 || status === 403) {
+      return "The AI provider rejected the API key. Verify OPENROUTER_API_KEY, then retry extraction.";
+    }
+    if (status === 429) {
+      return "The AI provider is rate-limiting requests. Wait a minute and retry extraction.";
+    }
+    if (status >= 500) {
+      return "The AI provider had a temporary problem. Retry extraction in a moment.";
+    }
+    return redactSecrets(
+      `AI extraction failed (provider error ${status || "unknown"}). Retry extraction.`,
+    );
+  }
+  if (err instanceof Error && err.message.includes("submit_extraction")) {
+    return "The AI did not return structured extraction output. Retry extraction; if it persists, upload a clearer PDF.";
+  }
+  const raw = err instanceof Error ? err.message : "Unknown error";
+  return redactSecrets(`AI extraction failed: ${raw}. Retry extraction.`);
 }
 
 export async function extractCoiFromPdfBase64(params: {

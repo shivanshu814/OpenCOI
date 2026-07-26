@@ -13,7 +13,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Vendor } from "@/lib/data/types";
-import { FileText, FileUp, X } from "lucide-react";
+import {
+  notifyApiError,
+  notifyCaughtError,
+  notifyInfo,
+  notifyWarning,
+} from "@/lib/ui/toast";
+import { ArrowRight, FileText, FileUp, X } from "lucide-react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 
@@ -44,7 +51,7 @@ export default function UploadPage({ vendors }: { vendors: Vendor[] }) {
   const preselected = search.get("vendor") ?? "";
   const [vendorId, setVendorId] = useState(preselected);
   const [file, setFile] = useState<File | null>(null);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -56,9 +63,14 @@ export default function UploadPage({ vendors }: { vendors: Vendor[] }) {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!file || !vendorId) return;
+    if (!file || !vendorId) {
+      setFormError(
+        !vendorId ? "Select a vendor before uploading." : "Choose a certificate file.",
+      );
+      return;
+    }
     setBusy(true);
-    setMsg(null);
+    setFormError(null);
     try {
       const form = new FormData();
       form.set("vendorId", vendorId);
@@ -75,30 +87,51 @@ export default function UploadPage({ vendors }: { vendors: Vendor[] }) {
         sla?: string;
         reviewPath?: string;
         queued?: boolean;
+        extractionError?: string;
       };
       if (!res.ok) {
-        setMsg(
-          data.sla
-            ? `${data.error ?? "Upload failed"} ${data.sla}`
-            : (data.error ?? "Upload failed"),
-        );
+        const line = data.sla
+          ? `${data.error ?? "Upload failed"} ${data.sla}`
+          : (data.error ?? "Upload failed");
+        setFormError(line);
+        notifyApiError({ error: line }, "Upload failed");
         return;
       }
       if (data.demo) {
-        setMsg(data.message ?? "Demo mode");
+        setFormError(
+          data.message ??
+            "Demo mode — document not stored. Connect Supabase to upload live.",
+        );
+        notifyWarning(
+          data.message ??
+            "Demo mode — document not stored. Connect Supabase to upload live.",
+        );
         return;
       }
-      setMsg(
-        data.queued
-          ? "Uploaded — extraction queued. Opening review…"
-          : "Uploaded (status: uploaded). Set OPENROUTER_API_KEY or run Inngest to extract.",
-      );
+      // Upload stored but AI extraction failed — say so honestly (never a
+      // success toast) and land on the review page, which has the retry.
+      if (data.extractionError) {
+        notifyWarning(`Uploaded, but AI extraction failed. ${data.extractionError}`);
+        if (data.reviewPath) {
+          router.push(data.reviewPath);
+          router.refresh();
+        }
+        return;
+      }
+      // Route change is the success signal — no duplicate toast.
       if (data.reviewPath) {
         router.push(data.reviewPath);
         router.refresh();
+        return;
       }
+      notifyInfo(
+        data.queued
+          ? "Uploaded — extraction queued"
+          : "Uploaded. Set OPENROUTER_API_KEY or run Inngest to extract.",
+      );
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : "Upload failed");
+      notifyCaughtError(err, "Upload failed");
+      setFormError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setBusy(false);
     }
@@ -117,24 +150,41 @@ export default function UploadPage({ vendors }: { vendors: Vendor[] }) {
           <CardContent className="space-y-5 py-5">
             <div className="space-y-1.5">
               <Label htmlFor="vendor">Vendor</Label>
-              <Select
-                items={vendorItems}
-                value={vendorId || null}
-                onValueChange={(value: string | null) =>
-                  setVendorId(value ?? "")
-                }
-              >
-                <SelectTrigger id="vendor" className="w-full">
-                  <SelectValue placeholder="Select vendor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {vendorItems.map((v) => (
-                    <SelectItem key={v.value} value={v.value}>
-                      {v.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {vendors.length === 0 ? (
+                <div className="bg-muted/40 space-y-1.5 rounded-lg border border-dashed px-3.5 py-3">
+                  <p className="text-sm font-medium">No vendors yet</p>
+                  <p className="text-muted-foreground text-xs leading-relaxed">
+                    Every COI belongs to a vendor. Add one first — it takes ten
+                    seconds — then come back to upload their certificate.
+                  </p>
+                  <Link
+                    href="/app/vendors"
+                    className="text-foreground inline-flex items-center gap-1 text-xs font-medium underline-offset-2 hover:underline"
+                  >
+                    Add a vendor
+                    <ArrowRight className="size-3" aria-hidden />
+                  </Link>
+                </div>
+              ) : (
+                <Select
+                  items={vendorItems}
+                  value={vendorId || null}
+                  onValueChange={(value: string | null) =>
+                    setVendorId(value ?? "")
+                  }
+                >
+                  <SelectTrigger id="vendor" className="w-full">
+                    <SelectValue placeholder="Select vendor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vendorItems.map((v) => (
+                      <SelectItem key={v.value} value={v.value}>
+                        {v.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             <div className="space-y-1.5">
@@ -212,7 +262,8 @@ export default function UploadPage({ vendors }: { vendors: Vendor[] }) {
               <SampleCoiPicker
                 onSelect={(sampleFile) => {
                   setFile(sampleFile);
-                  setMsg(`Sample attached: ${sampleFile.name}`);
+                  setFormError(null);
+                  notifyInfo(`Sample attached: ${sampleFile.name}`);
                 }}
               />
             </div>
@@ -224,9 +275,9 @@ export default function UploadPage({ vendors }: { vendors: Vendor[] }) {
             >
               {busy ? "Uploading…" : "Queue extraction"}
             </Button>
-            {msg ? (
-              <p className="text-muted-foreground text-xs leading-relaxed">
-                {msg}
+            {formError ? (
+              <p className="text-destructive text-xs leading-relaxed" role="alert">
+                {formError}
               </p>
             ) : null}
           </CardContent>

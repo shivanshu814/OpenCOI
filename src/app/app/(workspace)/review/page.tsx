@@ -14,15 +14,50 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { listReviewQueue, listVendors } from "@/lib/data/documents";
+import type { Verdict } from "@/lib/requirements/engine";
+import { cn } from "@/lib/utils";
+import { formatDistanceToNow } from "date-fns";
 import { FileText } from "lucide-react";
 import Link from "next/link";
 
-export default async function ReviewQueuePage() {
-  const [queue, vendors] = await Promise.all([
+const VERDICT_FILTERS: { value: Verdict | "pending"; label: string }[] = [
+  { value: "FAIL", label: "Fail" },
+  { value: "MISSING", label: "Missing" },
+  { value: "EXPIRING", label: "Expiring" },
+  { value: "PASS", label: "Pass" },
+  { value: "pending", label: "No verdict yet" },
+];
+
+export default async function ReviewQueuePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ verdict?: string }>;
+}) {
+  const [{ verdict: rawVerdict }, queue, vendors] = await Promise.all([
+    searchParams,
     listReviewQueue(),
     listVendors(),
   ]);
   const vendorById = new Map(vendors.map((v) => [v.id, v]));
+
+  const activeFilter = VERDICT_FILTERS.some((f) => f.value === rawVerdict)
+    ? (rawVerdict as Verdict | "pending")
+    : null;
+
+  const countFor = (value: Verdict | "pending") =>
+    queue.filter((doc) =>
+      value === "pending"
+        ? doc.overall_verdict === null
+        : doc.overall_verdict === value,
+    ).length;
+
+  const filtered = activeFilter
+    ? queue.filter((doc) =>
+        activeFilter === "pending"
+          ? doc.overall_verdict === null
+          : doc.overall_verdict === activeFilter,
+      )
+    : queue;
 
   return (
     <PageFrame>
@@ -44,6 +79,47 @@ export default async function ReviewQueuePage() {
         }
       />
 
+      {queue.length > 0 ? (
+        <nav
+          aria-label="Filter queue by verdict"
+          className="flex flex-wrap items-center gap-1.5"
+        >
+          <Link
+            href="/app/review"
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+              activeFilter === null
+                ? "border-ink bg-ink text-ink-foreground"
+                : "text-muted-foreground hover:text-foreground bg-card",
+            )}
+            aria-current={activeFilter === null ? "page" : undefined}
+          >
+            All
+            <span className="tabular-nums opacity-70">{queue.length}</span>
+          </Link>
+          {VERDICT_FILTERS.map((f) => {
+            const count = countFor(f.value);
+            if (count === 0 && activeFilter !== f.value) return null;
+            return (
+              <Link
+                key={f.value}
+                href={`/app/review?verdict=${f.value}`}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                  activeFilter === f.value
+                    ? "border-ink bg-ink text-ink-foreground"
+                    : "text-muted-foreground hover:text-foreground bg-card",
+                )}
+                aria-current={activeFilter === f.value ? "page" : undefined}
+              >
+                {f.label}
+                <span className="tabular-nums opacity-70">{count}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      ) : null}
+
       <ContentSurface className="gap-0 py-0">
         <CardHeader className="border-b">
           <CardTitle>Documents awaiting review</CardTitle>
@@ -53,7 +129,7 @@ export default async function ReviewQueuePage() {
                 <span className="bg-brand absolute inline-flex size-full animate-ping rounded-full opacity-40" />
                 <span className="bg-brand relative inline-flex size-1.5 rounded-full" />
               </span>
-              {queue.length}
+              {activeFilter ? `${filtered.length} of ${queue.length}` : queue.length}
             </span>
           </CardAction>
         </CardHeader>
@@ -69,9 +145,22 @@ export default async function ReviewQueuePage() {
                 icon={<FileText className="size-5" aria-hidden />}
               />
             </div>
+          ) : filtered.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
+              <p className="text-sm font-medium">
+                Nothing matches this filter
+              </p>
+              <p className="text-muted-foreground text-xs">
+                {queue.length} document{queue.length === 1 ? "" : "s"} in the
+                queue under other verdicts.
+              </p>
+              <Button variant="outline" size="sm" render={<Link href="/app/review" />}>
+                Show all
+              </Button>
+            </div>
           ) : (
             <div className="divide-y">
-              {queue.map((doc) => {
+              {filtered.map((doc) => {
                 const vendor = vendorById.get(doc.vendor_id);
                 return (
                   <div
@@ -88,6 +177,12 @@ export default async function ReviewQueuePage() {
                         </p>
                         <p className="text-muted-foreground truncate text-xs">
                           {doc.file_name}
+                          {doc.created_at
+                            ? ` · uploaded ${formatDistanceToNow(
+                                new Date(doc.created_at),
+                                { addSuffix: true },
+                              )}`
+                            : ""}
                         </p>
                       </div>
                     </div>

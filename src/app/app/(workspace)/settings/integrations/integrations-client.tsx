@@ -33,6 +33,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ChevronDown } from "lucide-react";
+import {
+  notifyApiError,
+  notifyError,
+  notifySuccess,
+  notifyWarning,
+} from "@/lib/ui/toast";
 import { useCallback, useEffect, useState } from "react";
 
 export function IntegrationsClient() {
@@ -51,7 +57,7 @@ export function IntegrationsClient() {
   const [url, setUrl] = useState("");
   const [rawKey, setRawKey] = useState<string | null>(null);
   const [secret, setSecret] = useState<string | null>(null);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -62,9 +68,11 @@ export function IntegrationsClient() {
       error?: string;
     };
     if (data.error) {
-      setMsg(data.error);
+      setLoadError(data.error);
+      notifyError(data.error);
       return;
     }
+    setLoadError(null);
     setKeys(data.keys ?? []);
     setWebhooks(data.webhooks ?? []);
   }, []);
@@ -75,7 +83,6 @@ export function IntegrationsClient() {
 
   async function post(body: Record<string, unknown>) {
     setBusy(true);
-    setMsg(null);
     try {
       const res = await fetch("/api/settings/integrations", {
         method: "POST",
@@ -89,12 +96,22 @@ export function IntegrationsClient() {
         warning?: string;
       };
       if (!res.ok) {
-        setMsg(data.error ?? "Failed");
+        notifyApiError(data, "Could not save");
         return;
       }
-      if (data.raw_key) setRawKey(data.raw_key);
-      if (data.secret) setSecret(data.secret);
-      setMsg(data.warning ?? "Saved");
+      if (data.raw_key) {
+        setRawKey(data.raw_key);
+        notifySuccess("API key created — copy it now");
+      } else if (data.secret) {
+        setSecret(data.secret);
+        notifySuccess("Webhook added — store the signing secret");
+      } else if (body.action === "revoke_key") {
+        notifySuccess("API key revoked");
+      } else if (data.warning) {
+        notifyWarning(data.warning);
+      } else {
+        notifySuccess("Saved");
+      }
       await load();
     } finally {
       setBusy(false);
@@ -350,9 +367,9 @@ export function IntegrationsClient() {
         </ul>
       </Card>
 
-      {msg ? (
-        <Alert>
-          <AlertDescription>{msg}</AlertDescription>
+      {loadError ? (
+        <Alert variant="destructive">
+          <AlertDescription>{loadError}</AlertDescription>
         </Alert>
       ) : null}
     </div>

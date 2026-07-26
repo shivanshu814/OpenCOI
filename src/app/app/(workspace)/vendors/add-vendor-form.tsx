@@ -9,6 +9,12 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  notifyApiError,
+  notifyCaughtError,
+  notifySuccess,
+  notifyWarning,
+} from "@/lib/ui/toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -17,13 +23,13 @@ export function AddVendorForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [trade, setTrade] = useState("");
-  const [note, setNote] = useState<string | null>(null);
+  const [fieldError, setFieldError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
-    setNote(null);
+    setFieldError(null);
     try {
       const res = await fetch("/api/vendors", {
         method: "POST",
@@ -38,20 +44,26 @@ export function AddVendorForm() {
         vendor?: { name: string };
       };
       if (!res.ok) {
-        setNote(data.error ?? "Failed to create vendor");
+        // Validation / create errors stay near the form.
+        setFieldError(data.error ?? "Could not add vendor");
+        notifyApiError(data, "Could not add vendor");
         return;
       }
       if (data.demo) {
-        setNote(data.message ?? "Demo mode");
-      } else {
-        setNote(`Created ${data.vendor?.name ?? name}`);
-        setName("");
-        setEmail("");
-        setTrade("");
-        router.refresh();
+        notifyWarning(
+          data.message ??
+            "Demo mode — vendor not saved to the cloud. Connect Supabase.",
+        );
+        return;
       }
+      const created = data.vendor?.name ?? name;
+      notifySuccess(`Vendor added: ${created}`);
+      setName("");
+      setEmail("");
+      setTrade("");
+      router.refresh();
     } catch (err) {
-      setNote(err instanceof Error ? err.message : "Request failed");
+      notifyCaughtError(err, "Could not add vendor");
     } finally {
       setBusy(false);
     }
@@ -102,8 +114,10 @@ export function AddVendorForm() {
         <Button type="submit" disabled={busy}>
           {busy ? "Saving…" : "Add vendor"}
         </Button>
-        {note ? (
-          <p className="text-muted-foreground text-xs sm:col-span-4">{note}</p>
+        {fieldError ? (
+          <p className="text-destructive text-xs sm:col-span-4" role="alert">
+            {fieldError}
+          </p>
         ) : null}
       </form>
     </Card>

@@ -11,6 +11,10 @@ import {
 import { DatePicker } from "@/components/ui/date-picker";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  notifyApiError,
+  notifyCaughtError,
+} from "@/lib/ui/toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -20,12 +24,12 @@ export function AddProjectForm() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
-    setMsg(null);
+    setFormError(null);
     try {
       const res = await fetch("/api/projects", {
         method: "POST",
@@ -41,7 +45,9 @@ export function AddProjectForm() {
         project?: { id: string };
       };
       if (!res.ok) {
-        setMsg(data.error ?? "Create failed");
+        const err = data.error ?? "Could not create project";
+        setFormError(err);
+        notifyApiError(data, err);
         return;
       }
       setName("");
@@ -52,10 +58,10 @@ export function AddProjectForm() {
         router.refresh();
         return;
       }
-      setMsg("Created");
       router.refresh();
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : "Create failed");
+      notifyCaughtError(err, "Could not create project");
+      setFormError(err instanceof Error ? err.message : "Could not create project");
     } finally {
       setBusy(false);
     }
@@ -105,7 +111,11 @@ export function AddProjectForm() {
             <Button type="submit" disabled={busy}>
               {busy ? "Creating…" : "Create project"}
             </Button>
-            {msg ? <p className="text-muted-foreground text-xs">{msg}</p> : null}
+            {formError ? (
+              <p className="text-destructive text-xs" role="alert">
+                {formError}
+              </p>
+            ) : null}
           </div>
         </form>
       </CardContent>

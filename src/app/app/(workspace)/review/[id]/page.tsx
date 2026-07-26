@@ -54,14 +54,24 @@ export default async function ReviewDocumentPage({
 
   // Uploaded but extraction hasn't landed yet — show why, don't 404.
   if (!doc.extraction) {
+    const extractionFailed = doc.status === "extraction_failed";
     return (
       <PageFrame width="wide">
         <DetailHeader
           backHref="/app/review"
           backLabel="Review queue"
-          title="Preparing your COI review"
+          title={
+            extractionFailed
+              ? "Extraction needs a retry"
+              : "Preparing your COI review"
+          }
           meta={doc.file_name}
-          badge={<LiveBadge label="Waiting" tone="warn" />}
+          badge={
+            <LiveBadge
+              label={extractionFailed ? "Failed" : "Waiting"}
+              tone={extractionFailed ? "bad" : "warn"}
+            />
+          }
         />
 
         <DocumentPipelineTracker status={doc.status} />
@@ -71,28 +81,48 @@ export default async function ReviewDocumentPage({
           <CardContent className="grid gap-8 p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-center lg:p-10">
             <div className="space-y-5">
               <div className="flex items-start gap-4">
-                <span className="bg-brand-muted text-brand flex size-11 shrink-0 items-center justify-center rounded-full">
-                  <Clock className="size-5" />
+                <span
+                  className={`flex size-11 shrink-0 items-center justify-center rounded-full ${
+                    extractionFailed
+                      ? "bg-red-100 text-red-700"
+                      : "bg-brand-muted text-brand"
+                  }`}
+                >
+                  {extractionFailed ? (
+                    <TriangleAlert className="size-5" />
+                  ) : (
+                    <Clock className="size-5" />
+                  )}
                 </span>
                 <div className="min-w-0">
                   <CardTitle className="flex flex-wrap items-center gap-2 text-lg">
-                    AI extraction pending
-                    <LiveBadge label="Waiting" tone="warn" />
+                    {extractionFailed
+                      ? "AI extraction failed"
+                      : "AI extraction pending"}
+                    <LiveBadge
+                      label={extractionFailed ? "Failed" : "Waiting"}
+                      tone={extractionFailed ? "bad" : "warn"}
+                    />
                   </CardTitle>
                   <CardDescription className="mt-1 max-w-xl leading-relaxed">
-                    The upload is safe. CertShield is reading policy dates,
-                    limits, insured details, and endorsements before creating
-                    the review.
+                    {extractionFailed
+                      ? "The upload is safe — nothing was lost. The AI read of this certificate did not complete, so no verdict exists yet. Retry below; if it keeps failing, upload a clearer PDF."
+                      : "The upload is safe. CertShield is reading policy dates, limits, insured details, and endorsements before creating the review."}
                   </CardDescription>
                 </div>
               </div>
 
               <Alert className="px-4 py-3">
                 <TriangleAlert />
-                <AlertTitle>Taking longer than expected</AlertTitle>
+                <AlertTitle>
+                  {extractionFailed
+                    ? "No verdict was produced"
+                    : "Taking longer than expected"}
+                </AlertTitle>
                 <AlertDescription>
-                  You can retry extraction now. Nothing will be published
-                  automatically—every result still goes through review.
+                  {extractionFailed
+                    ? "The failure is recorded in the audit trail. Retrying is safe — nothing will be published automatically; every result still goes through review."
+                    : "You can retry extraction now. Nothing will be published automatically—every result still goes through review."}
                 </AlertDescription>
               </Alert>
             </div>

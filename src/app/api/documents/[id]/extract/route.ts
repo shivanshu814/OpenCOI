@@ -1,3 +1,4 @@
+import { describeExtractionError } from "@/lib/ai/extract";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isClaudeConfigured, isSupabaseConfigured } from "@/lib/config";
 import { extractDocumentFromStorage } from "@/lib/documents/ingest";
@@ -18,7 +19,10 @@ export async function POST(_request: Request, ctx: Ctx) {
 
   if (!isClaudeConfigured()) {
     return NextResponse.json(
-      { error: "OPENROUTER_API_KEY is not set" },
+      {
+        error:
+          "AI extraction is not configured — OPENROUTER_API_KEY is missing. Set it, then retry.",
+      },
       { status: 400 },
     );
   }
@@ -39,8 +43,9 @@ export async function POST(_request: Request, ctx: Ctx) {
       reviewPath: `/app/review/${id}`,
     });
   } catch (err) {
+    // User-safe, actionable message — never leaks the key, never fakes success.
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Extraction failed" },
+      { error: describeExtractionError(err) },
       { status: 400 },
     );
   }

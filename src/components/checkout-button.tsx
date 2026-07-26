@@ -1,10 +1,14 @@
 "use client";
 
-import { LiveDot } from "@/components/live-activity";
 import { Button } from "@/components/ui/button";
 import type { PlanId } from "@/lib/billing/plans";
 import { initializePaddle, type Paddle } from "@paddle/paddle-js";
 import { cn } from "@/lib/utils";
+import {
+  notifyApiError,
+  notifyCaughtError,
+  notifyWarning,
+} from "@/lib/ui/toast";
 import { ArrowRight, LoaderCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -27,7 +31,6 @@ export function CheckoutButton({
   const router = useRouter();
   const [paddle, setPaddle] = useState<Paddle | undefined>();
   const [busy, setBusy] = useState(false);
-  const [note, setNote] = useState<string | null>(null);
 
   const token = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
   const env =
@@ -51,7 +54,6 @@ export function CheckoutButton({
 
   async function onClick() {
     setBusy(true);
-    setNote(null);
     try {
       const res = await fetch("/api/billing/checkout", {
         method: "POST",
@@ -78,21 +80,21 @@ export function CheckoutButton({
       };
 
       if (!res.ok) {
-        setNote(data.error ?? "Checkout failed");
+        notifyApiError(data, "Checkout failed");
         return;
       }
 
       if (data.demo || !token) {
-        setNote(
+        notifyWarning(
           data.message ??
-            "Paddle not configured yet. Sign in and use the onboarding wizard — founder can invoice manually until Paddle KYC clears.",
+            "Paddle is not live yet — continue onboarding; founder can invoice until KYC clears.",
         );
         router.push("/app/onboarding");
         return;
       }
 
       if (!paddle || !data.priceId) {
-        setNote("Paddle.js still loading — try again in a second.");
+        notifyWarning("Paddle is still loading — try again in a second.");
         return;
       }
 
@@ -105,47 +107,39 @@ export function CheckoutButton({
         settings: data.successUrl ? { successUrl: data.successUrl } : undefined,
       });
     } catch (err) {
-      setNote(err instanceof Error ? err.message : "Checkout failed");
+      notifyCaughtError(err, "Checkout failed");
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <div className={cn("space-y-2", className)}>
-      <Button
-        type="button"
-        variant={variant}
-        size={size}
-        className={cn(className?.includes("w-full") && "w-full")}
-        disabled={busy}
-        onClick={onClick}
-      >
-        {busy ? (
-          <>
-            <LoaderCircle
-              data-icon="inline-start"
-              className="size-4 animate-spin"
-            />
-            Opening…
-          </>
-        ) : (
-          <>
-            {label}
-            <ArrowRight
-              data-icon="inline-end"
-              className="size-4"
-              strokeWidth={2.25}
-            />
-          </>
-        )}
-      </Button>
-      {note ? (
-        <p className="text-muted-foreground flex items-start gap-1.5 text-xs leading-relaxed">
-          <LiveDot tone="warn" className="mt-1" />
-          <span>{note}</span>
-        </p>
-      ) : null}
-    </div>
+    <Button
+      type="button"
+      variant={variant}
+      size={size}
+      className={cn(className, className?.includes("w-full") && "w-full")}
+      disabled={busy}
+      onClick={onClick}
+    >
+      {busy ? (
+        <>
+          <LoaderCircle
+            data-icon="inline-start"
+            className="size-4 animate-spin"
+          />
+          Opening…
+        </>
+      ) : (
+        <>
+          {label}
+          <ArrowRight
+            data-icon="inline-end"
+            className="size-4"
+            strokeWidth={2.25}
+          />
+        </>
+      )}
+    </Button>
   );
 }

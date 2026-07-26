@@ -18,6 +18,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  notifyApiError,
+  notifyCaughtError,
+  notifySuccess,
+  notifyWarning,
+} from "@/lib/ui/toast";
 import { useEffect, useState } from "react";
 
 const TIN_TYPE_ITEMS: ReadonlyArray<{ label: string; value: "ein" | "ssn" }> = [
@@ -41,7 +47,7 @@ export function VendorOnboardingPanel({ vendorId }: Props) {
   const [agreements, setAgreements] = useState<
     { id: string; title: string; status: string; signing_url: string | null }[]
   >([]);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [signingUrl, setSigningUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const [legalName, setLegalName] = useState("");
@@ -71,7 +77,7 @@ export function VendorOnboardingPanel({ vendorId }: Props) {
 
   async function post(body: Record<string, unknown>) {
     setBusy(true);
-    setMsg(null);
+    setSigningUrl(null);
     try {
       const res = await fetch(`/api/vendors/${vendorId}/onboarding`, {
         method: "POST",
@@ -84,22 +90,27 @@ export function VendorOnboardingPanel({ vendorId }: Props) {
         demo?: boolean;
       };
       if (!res.ok) {
-        setMsg(data.error ?? "Failed");
+        notifyApiError(data, "Could not save onboarding");
         return;
       }
       if (data.agreement?.signing_url) {
-        setMsg(
-          data.demo
-            ? `Demo e-sign link: ${data.agreement.signing_url}`
-            : `Signing link sent / ready: ${data.agreement.signing_url}`,
-        );
+        setSigningUrl(data.agreement.signing_url);
+        if (data.demo) {
+          notifyWarning("E-sign link ready (demo — Documenso not live)");
+        } else {
+          notifySuccess("Signing link ready for the vendor");
+        }
+      } else if (body.action === "add_license") {
+        notifySuccess("License added");
+      } else if (body.action === "upsert_tax") {
+        notifySuccess("W-9 / TIN saved");
       } else {
-        setMsg("Saved");
+        notifySuccess("Saved");
       }
       setTin("");
       await load();
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : "Failed");
+      notifyCaughtError(e, "Could not save onboarding");
     } finally {
       setBusy(false);
     }
@@ -275,9 +286,19 @@ export function VendorOnboardingPanel({ vendorId }: Props) {
         </section>
       </div>
 
-      {msg ? (
+      {signingUrl ? (
         <CardFooter className="py-3">
-          <p className="text-muted-foreground text-xs break-all">{msg}</p>
+          <p className="text-muted-foreground text-xs break-all">
+            Signing link:{" "}
+            <a
+              className="text-foreground underline underline-offset-4"
+              href={signingUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {signingUrl}
+            </a>
+          </p>
         </CardFooter>
       ) : null}
     </Card>

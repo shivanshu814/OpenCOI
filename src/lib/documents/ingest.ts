@@ -1,5 +1,9 @@
 import { inngest } from "@/inngest/client";
-import { extractCoiWithRetry, MODEL_VERSION } from "@/lib/ai/extract";
+import {
+  describeExtractionError,
+  extractCoiWithRetry,
+  MODEL_VERSION,
+} from "@/lib/ai/extract";
 import {
   isClaudeConfigured,
   shouldQueueViaInngest,
@@ -34,6 +38,13 @@ export type IngestPdfResult = {
   documentId: string;
   storagePath: string;
   queued: boolean;
+  /**
+   * Set when the upload stored fine but inline AI extraction failed. The
+   * document is already marked extraction_failed with an audit event; the
+   * caller should surface this honestly (never a success toast) and point at
+   * "Run extraction now" — the upload itself did NOT fail.
+   */
+  extractionError?: string;
 };
 
 /** Persist PDF → Storage → documents row → queue extraction (Inngest or sync). */
@@ -115,16 +126,27 @@ export async function ingestPdfDocument(
     }
   }
 
+  let extractionError: string | undefined;
+
   if (!queued && isClaudeConfigured()) {
-    await runExtractInline({
-      documentId: doc.id,
-      orgId: args.orgId,
-      pdfBase64: args.pdfBytes.toString("base64"),
-    });
-    queued = true;
+    try {
+      await runExtractInline({
+        documentId: doc.id,
+        orgId: args.orgId,
+        pdfBase64: args.pdfBytes.toString("base64"),
+      });
+      queued = true;
+    } catch (err) {
+      // The upload itself succeeded — the doc is stored and already marked
+      // extraction_failed (+ audit) by runExtractInline. Fail soft so the
+      // caller can land the user on the review page with a retry, instead of
+      // a dishonest "Upload failed" 500.
+      extractionError = describeExtractionError(err);
+      console.error("[ingest] inline extraction failed:", extractionError);
+    }
   }
 
-  return { documentId: doc.id, storagePath, queued };
+  return { documentId: doc.id, storagePath, queued, extractionError };
 }
 
 /** Re-run extraction for a stuck `uploaded` / `extraction_failed` doc. */
@@ -250,7 +272,10 @@ export async function runExtractInline(args: {
     });
     const checks = runRequirementsEngine(extraction, rules, propertyValidation);
 
-    await admin.from("extractions").insert({
+    // Throw on persist errors (matches the Inngest path) — otherwise the doc
+    // would advance to in_internal_review with no extraction row and strand
+    // with neither data nor a retry button.
+    const { error: extErr } = await admin.from("extractions").insert({
       org_id: args.orgId,
       document_id: args.documentId,
       payload: extraction,
@@ -260,14 +285,16 @@ export async function runExtractInline(args: {
       cost_usd: extraction.extraction_meta.cost_usd,
       latency_ms: extraction.extraction_meta.latency_ms,
     });
+    if (extErr) throw new Error(extErr.message);
 
-    await admin.from("compliance_checks").insert({
+    const { error: checkErr } = await admin.from("compliance_checks").insert({
       org_id: args.orgId,
       document_id: args.documentId,
       vendor_id: doc.vendor_id,
       lines: checks.lines,
       overall_verdict: checks.overall,
     });
+    if (checkErr) throw new Error(checkErr.message);
 
     await admin
       .from("documents")

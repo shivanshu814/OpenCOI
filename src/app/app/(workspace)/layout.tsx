@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/app-shell";
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import { redirect } from "next/navigation";
@@ -17,5 +18,10 @@ export default async function WorkspaceLayout({
     }
   }
 
-  return <AppShell live={live}>{children}</AppShell>;
+  return (
+    <AppShell live={live}>
+      {live ? <RealtimeRefresh /> : null}
+      {children}
+    </AppShell>
+  );
 }

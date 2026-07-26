@@ -14,6 +14,11 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { RequirementRule } from "@/lib/requirements/engine";
+import {
+  notifyApiError,
+  notifyCaughtError,
+  notifySuccess,
+} from "@/lib/ui/toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -68,7 +73,6 @@ export function PropertyEditor({
     return String(r?.min_amount ?? 1_000_000);
   });
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
 
   function toggleVendor(id: string) {
     setSelected((prev) => {
@@ -82,7 +86,6 @@ export function PropertyEditor({
   async function onSave(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
-    setMsg(null);
     try {
       const min = Number(glMin.replace(/,/g, ""));
       const nextRules: RequirementRule[] = rules.length
@@ -133,13 +136,13 @@ export function PropertyEditor({
       });
       const data = (await res.json()) as { error?: string };
       if (!res.ok) {
-        setMsg(data.error ?? "Save failed");
+        notifyApiError(data, "Could not save property");
         return;
       }
-      setMsg("Saved");
+      notifySuccess("Property saved");
       router.refresh();
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : "Save failed");
+      notifyCaughtError(err, "Could not save property");
     } finally {
       setBusy(false);
     }
@@ -351,7 +354,6 @@ export function PropertyEditor({
         <Button type="submit" disabled={busy}>
           {busy ? "Saving…" : "Save property"}
         </Button>
-        {msg ? <p className="text-muted-foreground text-xs">{msg}</p> : null}
       </div>
     </form>
   );

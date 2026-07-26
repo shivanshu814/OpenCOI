@@ -105,6 +105,9 @@ export async function POST(request: Request) {
       documentId: result.documentId,
       reviewPath: `/app/review/${result.documentId}`,
       queued: result.queued,
+      // Upload stored; inline AI extraction failed — honest signal for the UI
+      // (doc is extraction_failed with a Run-extraction-now retry).
+      extractionError: result.extractionError,
     });
   } catch (err) {
     return NextResponse.json(

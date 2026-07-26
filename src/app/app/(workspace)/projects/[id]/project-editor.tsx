@@ -23,6 +23,11 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import type { RequirementRule } from "@/lib/requirements/engine";
 import type { ProjectStatus } from "@/lib/projects/types";
+import {
+  notifyApiError,
+  notifyCaughtError,
+  notifySuccess,
+} from "@/lib/ui/toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -76,7 +81,6 @@ export function ProjectEditor({
     return String(r?.min_amount ?? 2_000_000);
   });
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
 
   function toggleVendor(id: string) {
     setSelected((prev) => {
@@ -90,7 +94,6 @@ export function ProjectEditor({
   async function onSave(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
-    setMsg(null);
     try {
       const min = Number(glMin.replace(/,/g, ""));
       const nextRules: RequirementRule[] = rules.length
@@ -131,13 +134,13 @@ export function ProjectEditor({
       });
       const data = (await res.json()) as { error?: string };
       if (!res.ok) {
-        setMsg(data.error ?? "Save failed");
+        notifyApiError(data, "Could not save project");
         return;
       }
-      setMsg("Saved");
+      notifySuccess("Project saved");
       router.refresh();
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : "Save failed");
+      notifyCaughtError(err, "Could not save project");
     } finally {
       setBusy(false);
     }
@@ -303,7 +306,6 @@ export function ProjectEditor({
         <Button type="submit" disabled={busy}>
           {busy ? "Saving…" : "Save project"}
         </Button>
-        {msg ? <p className="text-muted-foreground text-xs">{msg}</p> : null}
       </div>
     </form>
   );

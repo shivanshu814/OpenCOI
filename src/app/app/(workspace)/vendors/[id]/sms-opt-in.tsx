@@ -12,6 +12,11 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  notifyApiError,
+  notifyCaughtError,
+  notifySuccess,
+} from "@/lib/ui/toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -32,12 +37,10 @@ export function VendorSmsOptIn({
   const [phone, setPhone] = useState(initialPhone ?? "");
   const [optIn, setOptIn] = useState(Boolean(smsOptInAt) && !smsOptOutAt);
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
 
   async function onSave(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
-    setMsg(null);
     try {
       const res = await fetch(`/api/vendors/${vendorId}/sms-opt-in`, {
         method: "POST",
@@ -46,15 +49,17 @@ export function VendorSmsOptIn({
       });
       const data = (await res.json()) as { error?: string; ok?: boolean };
       if (!res.ok) {
-        setMsg(data.error ?? "Failed");
+        notifyApiError(data, "Could not save SMS settings");
         return;
       }
-      setMsg(
-        optIn ? "SMS opt-in saved (TCPA)." : "SMS disabled for this vendor.",
+      notifySuccess(
+        optIn
+          ? "SMS opt-in saved (TCPA consent logged)"
+          : "SMS disabled for this vendor",
       );
       router.refresh();
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : "Failed");
+      notifyCaughtError(err, "Could not save SMS settings");
     } finally {
       setBusy(false);
     }
@@ -111,7 +116,6 @@ export function VendorSmsOptIn({
           >
             {busy ? "Saving…" : "Save SMS settings"}
           </Button>
-          {msg ? <p className="text-muted-foreground text-xs">{msg}</p> : null}
         </CardContent>
       </form>
     </Card>

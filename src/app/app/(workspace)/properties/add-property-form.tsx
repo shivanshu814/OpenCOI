@@ -10,6 +10,10 @@ import {
 } from "@/components/ui/card";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  notifyApiError,
+  notifyCaughtError,
+} from "@/lib/ui/toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -18,12 +22,12 @@ export function AddPropertyForm() {
   const [name, setName] = useState("");
   const [holder, setHolder] = useState("");
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
-    setMsg(null);
+    setFormError(null);
     try {
       const res = await fetch("/api/properties", {
         method: "POST",
@@ -38,20 +42,23 @@ export function AddPropertyForm() {
         property?: { id: string };
       };
       if (!res.ok) {
-        setMsg(data.error ?? "Failed");
+        const err = data.error ?? "Could not create property";
+        setFormError(err);
+        notifyApiError(data, err);
         return;
       }
       if (data.property?.id) {
+        // Detail page is the success signal — no toast.
         router.push(`/app/properties/${data.property.id}`);
         router.refresh();
         return;
       }
-      setMsg("Created");
       setName("");
       setHolder("");
       router.refresh();
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : "Failed");
+      notifyCaughtError(err, "Could not create property");
+      setFormError(err instanceof Error ? err.message : "Could not create property");
     } finally {
       setBusy(false);
     }
@@ -92,8 +99,10 @@ export function AddPropertyForm() {
             <Button type="submit" disabled={busy}>
               {busy ? "Saving…" : "Add property"}
             </Button>
-            {msg ? (
-              <p className="text-muted-foreground text-xs">{msg}</p>
+            {formError ? (
+              <p className="text-destructive text-xs" role="alert">
+                {formError}
+              </p>
             ) : null}
           </div>
         </form>

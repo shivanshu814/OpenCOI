@@ -1,4 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
 import { Geist_Mono, Poppins } from "next/font/google";
 import "./globals.css";
@@ -40,6 +42,9 @@ export default function RootLayout({
       <body className="flex min-h-full flex-col font-sans">
         {children}
         <Toaster />
+        {/* Vercel built-ins — fail-soft: no-op locally / when blocked by ad-blockers. */}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

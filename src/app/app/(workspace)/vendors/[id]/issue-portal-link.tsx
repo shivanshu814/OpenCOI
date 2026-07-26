@@ -1,16 +1,19 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import {
+  notifyApiError,
+  notifyCaughtError,
+  notifySuccess,
+} from "@/lib/ui/toast";
 import { useState } from "react";
 
 export function IssuePortalLinkButton({ vendorId }: { vendorId: string }) {
   const [busy, setBusy] = useState(false);
   const [url, setUrl] = useState<string | null>(null);
-  const [err, setErr] = useState<string | null>(null);
 
   async function onClick() {
     setBusy(true);
-    setErr(null);
     try {
       const res = await fetch(`/api/vendors/${vendorId}/portal-link`, {
         method: "POST",
@@ -20,7 +23,7 @@ export function IssuePortalLinkButton({ vendorId }: { vendorId: string }) {
         error?: string;
       };
       if (!res.ok) {
-        setErr(data.error ?? "Failed");
+        notifyApiError(data, "Could not issue portal link");
         return;
       }
       const next = data.url ?? null;
@@ -28,12 +31,15 @@ export function IssuePortalLinkButton({ vendorId }: { vendorId: string }) {
       if (next && typeof navigator !== "undefined" && navigator.clipboard) {
         try {
           await navigator.clipboard.writeText(next);
+          notifySuccess("Portal magic link copied");
         } catch {
-          /* URL still shown below for manual copy */
+          notifySuccess("Portal link ready — copy from below");
         }
+      } else if (next) {
+        notifySuccess("Portal link ready — copy from below");
       }
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Failed");
+      notifyCaughtError(e, "Could not issue portal link");
     } finally {
       setBusy(false);
     }
@@ -59,7 +65,6 @@ export function IssuePortalLinkButton({ vendorId }: { vendorId: string }) {
           {url}
         </p>
       ) : null}
-      {err ? <p className="text-destructive text-xs">{err}</p> : null}
     </div>
   );
 }

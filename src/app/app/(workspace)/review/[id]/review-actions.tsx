@@ -331,11 +331,6 @@ export function ReviewActions({
           <p className="text-muted-foreground text-xs leading-relaxed">
             {DISCLAIMER}
           </p>
-          {msg ? (
-            <p className="text-muted-foreground text-xs leading-relaxed">
-              {msg}
-            </p>
-          ) : null}
         </CardContent>
       </Card>
     );
@@ -421,11 +416,6 @@ export function ReviewActions({
           <p className="text-muted-foreground text-xs leading-relaxed">
             {DISCLAIMER}
           </p>
-          {msg ? (
-            <p className="text-muted-foreground text-xs leading-relaxed">
-              {msg}
-            </p>
-          ) : null}
         </CardContent>
       </Card>
     );
@@ -481,7 +471,6 @@ export function ReviewActions({
               onChange={(e) => {
                 setPresetId(e.target.value);
                 setAfterValue("");
-                setMsg(null);
               }}
               disabled={busy !== null}
             >
@@ -582,14 +571,6 @@ export function ReviewActions({
         <p className="text-muted-foreground text-xs leading-relaxed">
           {DISCLAIMER}
         </p>
-        {msg ? (
-          <p
-            className="text-foreground bg-muted/40 rounded-md px-3 py-2 text-xs leading-relaxed"
-            role="status"
-          >
-            {msg}
-          </p>
-        ) : null}
       </CardContent>
     </Card>
   );

@@ -72,7 +72,8 @@ export async function listReviewQueue(): Promise<DocumentRow[]> {
     .select("id, org_id, vendor_id, file_name, storage_path, status, created_at")
     .eq("org_id", session.orgId)
     .eq("status", "in_internal_review")
-    .order("created_at", { ascending: false });
+    // FIFO — the UI tells reviewers to clear the oldest item first.
+    .order("created_at", { ascending: true });
 
   if (error || !docs?.length) {
     if (error) console.error("listReviewQueue", error);
