@@ -33,15 +33,27 @@ export function RunExtractionButton({ documentId }: { documentId: string }) {
 
   return (
     <div className="space-y-2">
-      <Button type="button" onClick={run} disabled={busy}>
+      <Button
+        type="button"
+        onClick={run}
+        disabled={busy}
+        className="w-full"
+      >
         {busy ? (
           <Loader2 className="size-4 animate-spin" />
         ) : (
           <Sparkles className="size-4" />
         )}
-        {busy ? "Extracting…" : "Run extraction now"}
+        {busy ? "Reading certificate…" : "Run extraction now"}
       </Button>
-      {msg ? <p className="text-muted-foreground text-xs">{msg}</p> : null}
+      {msg ? (
+        <p
+          className="text-muted-foreground text-xs leading-relaxed"
+          role="status"
+        >
+          {msg}
+        </p>
+      ) : null}
     </div>
   );
 }

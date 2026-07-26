@@ -1,3 +1,4 @@
+import { DocumentPipelineTracker } from "@/components/document-pipeline-tracker";
 import { DownloadReportButton } from "@/components/download-report-button";
 import { CardLiveAccent, LiveBadge } from "@/components/live-activity";
 import { VerdictBadge } from "@/components/status-badges";
@@ -49,38 +50,72 @@ export default async function ReviewDocumentPage({
   // Uploaded but extraction hasn't landed yet — show why, don't 404.
   if (!doc.extraction) {
     return (
-      <div className="mx-auto max-w-2xl space-y-4">
-        <Link
-          href="/app/review"
-          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm"
-        >
-          <ArrowLeft className="size-4" /> Review queue
-        </Link>
+      <div className="mx-auto w-full max-w-5xl space-y-6">
+        <div className="space-y-2">
+          <Link
+            href="/app/review"
+            className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm"
+          >
+            <ArrowLeft className="size-4" /> Review queue
+          </Link>
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Preparing your COI review
+            </h1>
+            <p className="text-muted-foreground mt-1 text-sm">
+              {doc.file_name}
+            </p>
+          </div>
+        </div>
+
+        <DocumentPipelineTracker status={doc.status} />
+
         <Card className="gap-0 overflow-hidden py-0">
           <CardLiveAccent />
-          <CardHeader className="pt-4">
-            <CardTitle className="flex flex-wrap items-center gap-2">
-              <Clock className="size-4" /> Extraction pending
-              <LiveBadge label="Waiting" tone="warn" />
-            </CardTitle>
-            <CardDescription>
-              {doc.file_name} uploaded successfully, but AI extraction hasn’t
-              completed yet. This page will show the verdict once it lands.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Alert>
-              <TriangleAlert />
-              <AlertTitle>Extraction hasn’t finished</AlertTitle>
-              <AlertDescription>
-                Document status is <code>{doc.status}</code>. Locally,
-                extraction runs inline via OpenRouter (no Inngest worker
-                needed). On production, Inngest handles it in the background.
-              </AlertDescription>
-            </Alert>
-            {doc.status === "uploaded" ? (
-              <RunExtractionButton documentId={doc.id} />
-            ) : null}
+          <CardContent className="grid gap-8 p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-center lg:p-10">
+            <div className="space-y-5">
+              <div className="flex items-start gap-4">
+                <span className="bg-brand-muted text-brand flex size-11 shrink-0 items-center justify-center rounded-full">
+                  <Clock className="size-5" />
+                </span>
+                <div className="min-w-0">
+                  <CardTitle className="flex flex-wrap items-center gap-2 text-lg">
+                    AI extraction pending
+                    <LiveBadge label="Waiting" tone="warn" />
+                  </CardTitle>
+                  <CardDescription className="mt-1 max-w-xl leading-relaxed">
+                    The upload is safe. CertShield is reading policy dates,
+                    limits, insured details, and endorsements before creating
+                    the review.
+                  </CardDescription>
+                </div>
+              </div>
+
+              <Alert className="px-4 py-3">
+                <TriangleAlert />
+                <AlertTitle>Taking longer than expected</AlertTitle>
+                <AlertDescription>
+                  You can retry extraction now. Nothing will be published
+                  automatically—every result still goes through review.
+                </AlertDescription>
+              </Alert>
+            </div>
+
+            <div className="border-border bg-muted/30 space-y-3 rounded-xl border p-5">
+              <p className="text-sm font-semibold">Next step</p>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Run extraction, then verify the fields and compliance checks
+                against the original certificate.
+              </p>
+              {doc.status === "uploaded" ||
+              doc.status === "extraction_failed" ? (
+                <RunExtractionButton documentId={doc.id} />
+              ) : (
+                <p className="text-muted-foreground text-xs">
+                  Processing is already underway — this page refreshes itself.
+                </p>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -141,6 +176,8 @@ export default async function ReviewDocumentPage({
           />
         </div>
       </div>
+
+      <DocumentPipelineTracker status={doc.status} />
 
       <div className="grid items-start gap-4 lg:grid-cols-2">
         <Card className="bg-muted/40 min-h-[420px] items-center justify-center py-0 lg:sticky lg:top-6">
