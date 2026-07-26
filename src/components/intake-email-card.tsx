@@ -10,10 +10,13 @@ import { cn } from "@/lib/utils";
 export function IntakeEmailCard({
   email,
   inboundLive,
+  /** When true, hide the Upload CTA (already on /app/upload). */
+  hideUploadCta = false,
 }: {
   email: string | null;
   /** True only when Postmark inbound webhook secrets are configured. */
   inboundLive: boolean;
+  hideUploadCta?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -36,25 +39,26 @@ export function IntakeEmailCard({
             <Upload className="text-muted-foreground size-5" />
           </div>
           <div className="min-w-0 space-y-1">
-            <p className="text-base font-semibold">Upload COIs from the app</p>
+            <p className="text-base font-semibold">Email-forward intake</p>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              Email-forward intake is not connected yet (needs Postmark + MX for
-              your inbound domain). For now, finish setup and use{" "}
+              Not connected yet (needs Postmark + MX). Use{" "}
               <strong className="text-foreground font-medium">Upload COI</strong>{" "}
-              — that path is live today.
+              in the sidebar — that path is live today.
             </p>
           </div>
         </div>
-        <Link
-          href="/app/upload"
-          className={cn(
-            buttonVariants({ variant: "outline", size: "lg" }),
-            "gap-2",
-          )}
-        >
-          <Upload className="size-4" />
-          Go to Upload COI
-        </Link>
+        {hideUploadCta ? null : (
+          <Link
+            href="/app/upload"
+            className={cn(
+              buttonVariants({ variant: "outline", size: "lg" }),
+              "gap-2",
+            )}
+          >
+            <Upload className="size-4" />
+            Go to Upload COI
+          </Link>
+        )}
       </div>
     );
   }

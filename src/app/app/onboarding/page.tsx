@@ -4,14 +4,18 @@ import {
   isEmailInboundConfigured,
   isSupabaseConfigured,
 } from "@/lib/config";
+import { redirect } from "next/navigation";
 
 export default async function OnboardingPage() {
   const live = isSupabaseConfigured();
   const session = live ? await getSessionOrg() : null;
-  const inboundLive = isEmailInboundConfigured();
 
+  if (session?.onboardingCompletedAt) {
+    redirect("/app");
+  }
+
+  const inboundLive = isEmailInboundConfigured();
   const orgName = session?.orgName ?? "My organization";
-  // Only show an address when inbound is actually wired; never fake LISTENING.
   const intakeEmail =
     inboundLive && session?.intakeEmail ? session.intakeEmail : null;
 

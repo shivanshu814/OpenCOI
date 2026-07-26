@@ -1,26 +1,17 @@
-import { IntakeEmailCard } from "@/components/intake-email-card";
 import { PageHeader } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getSessionOrg } from "@/lib/auth/session";
-import { isEmailInboundConfigured } from "@/lib/config";
 import { listVendors } from "@/lib/data/documents";
 import { Suspense } from "react";
 import UploadPage from "./upload-client";
 
 export default async function Page() {
-  const [vendors, session] = await Promise.all([
-    listVendors(),
-    getSessionOrg(),
-  ]);
-  const inboundLive = isEmailInboundConfigured();
-  const intakeEmail =
-    inboundLive && session?.intakeEmail ? session.intakeEmail : null;
+  const vendors = await listVendors();
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-6xl space-y-6">
       <PageHeader
         title="Upload COI"
-        description="Drop a vendor COI PDF here. Email-forward intake lights up once Postmark is connected."
+        description="Pick a vendor, drop the certificate PDF, and queue extraction."
         live
         liveLabel="Ready"
       />
@@ -40,8 +31,6 @@ export default async function Page() {
       >
         <UploadPage vendors={vendors} />
       </Suspense>
-
-      <IntakeEmailCard email={intakeEmail} inboundLive={inboundLive} />
     </div>
   );
 }
