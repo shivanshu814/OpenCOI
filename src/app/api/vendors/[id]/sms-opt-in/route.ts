@@ -70,7 +70,7 @@ export async function POST(
     org_id: session.orgId,
     actor_type: "admin",
     actor_id: session.userId,
-      actor_email: session.email,
+    actor_email: session.email,
     entity_type: "vendor",
     entity_id: vendorId,
     action: optIn ? "sms_opt_in" : "sms_opt_in_cleared",

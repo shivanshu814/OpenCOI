@@ -117,7 +117,7 @@ export async function POST(request: Request) {
     org_id: session.orgId,
     actor_type: "admin",
     actor_id: session.userId,
-      actor_email: session.email,
+    actor_email: session.email,
     entity_type: "property",
     entity_id: property.id,
     action: "created",

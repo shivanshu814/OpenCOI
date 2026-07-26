@@ -102,7 +102,7 @@ export async function GET(
     org_id: session.orgId,
     actor_type: "admin",
     actor_id: session.userId,
-      actor_email: session.email,
+    actor_email: session.email,
     entity_type: "property",
     entity_id: propertyId,
     action: "audit_pack_exported",

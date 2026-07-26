@@ -31,7 +31,7 @@ export async function POST(request: Request, ctx: Ctx) {
     return NextResponse.json({
       ok: true,
       demo: true,
-      message: `Demo: correction on ${id} (${body.field_path ?? "fields"}) would append to golden set + audit_events.`,
+      message: `Correction recorded in local demo only (${body.field_path ?? "fields"}) — connect Supabase for golden-set persistence.`,
     });
   }
 
@@ -174,7 +174,7 @@ export async function POST(request: Request, ctx: Ctx) {
     org_id: session.orgId,
     actor_type: "admin",
     actor_id: session.userId,
-      actor_email: session.email,
+    actor_email: session.email,
     entity_type: "document",
     entity_id: id,
     action: "correction_saved",

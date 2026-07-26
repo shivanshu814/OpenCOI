@@ -22,9 +22,8 @@ export type AuditInsert = {
 };
 
 type DbClient = {
-  from: (table: string) => {
-    insert: (row: Record<string, unknown>) => PromiseLike<{ error: unknown }>;
-  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  from: (table: string) => { insert: (row: Record<string, unknown>) => any };
 };
 
 export type InsertAuditOptions = {

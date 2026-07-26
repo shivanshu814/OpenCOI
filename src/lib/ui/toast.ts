@@ -70,7 +70,7 @@ export function notifyError(message: string, options?: NotifyOptions) {
 export function apiErrorMessage(
   data: {
     error?: string;
-    reason?: string;
+    reason?: string | null;
     message?: string;
     note?: string;
   } | null
@@ -88,7 +88,7 @@ export function apiErrorMessage(
 export function notifyApiError(
   data: {
     error?: string;
-    reason?: string;
+    reason?: string | null;
     message?: string;
     note?: string;
   } | null

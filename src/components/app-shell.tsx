@@ -2,7 +2,7 @@
 
 import { CertShieldMark } from "@/components/certshield-logo";
 import { DisclaimerFooter } from "@/components/disclaimer-footer";
-import { AppLiveTicker, LiveBadge, LiveDot } from "@/components/live-activity";
+import { LiveBadge, LiveDot } from "@/components/live-activity";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Breadcrumb,
@@ -284,7 +284,6 @@ function AppHeader({ live }: { live: boolean }) {
       </Breadcrumb>
 
       <div className="ml-auto flex h-8 items-center gap-2">
-        <AppLiveTicker demo={!live} />
         {live ? (
           <LiveBadge
             label="Online"

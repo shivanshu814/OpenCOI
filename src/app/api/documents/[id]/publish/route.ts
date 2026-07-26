@@ -24,7 +24,7 @@ export async function POST(_request: Request, ctx: Ctx) {
         demo: true,
         status: result.status,
         message:
-          "Demo: published after founder review. Customer accept/override next (Appendix B).",
+          "Published in local demo only — connect Supabase for live publish. Customer accept/override is next.",
       });
     } catch (err) {
       return NextResponse.json(
@@ -114,7 +114,7 @@ export async function POST(_request: Request, ctx: Ctx) {
     org_id: session.orgId,
     actor_type: "admin",
     actor_id: session.userId,
-      actor_email: session.email,
+    actor_email: session.email,
     entity_type: "document",
     entity_id: id,
     action: "published",
