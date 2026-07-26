@@ -13,7 +13,7 @@ export default async function Page() {
   const vendors = await listVendors();
 
   return (
-    <PageFrame width="default">
+    <PageFrame>
       <PageHeader
         title="Upload COI"
         description="Drop a vendor's certificate PDF so CertShield can extract coverage and queue a verdict for review."

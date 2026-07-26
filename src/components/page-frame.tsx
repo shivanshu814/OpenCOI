@@ -15,11 +15,12 @@ const WIDTH: Record<FrameWidth, string> = {
 /**
  * Shared CertShield app page frame.
  * Title/purpose → optional KPI strip → primary content → secondary/help.
- * Caps width so tables and forms don’t stretch endlessly on ultrawide.
+ * Workspace pages default to full bleed within the main pane; opt into a
+ * narrower cap only for long-form prose surfaces.
  */
 export function PageFrame({
   children,
-  width = "default",
+  width = "full",
   className,
 }: {
   children: React.ReactNode;

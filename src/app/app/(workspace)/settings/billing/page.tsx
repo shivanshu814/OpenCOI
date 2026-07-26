@@ -52,7 +52,7 @@ export default async function BillingSettingsPage() {
   const subStatus = session?.subscriptionStatus?.trim() || null;
 
   return (
-    <PageFrame width="wide" className="space-y-8">
+    <PageFrame className="space-y-8">
       <PageHeader
         title="Billing"
         description="Choose or change your CertShield plan. Paddle is merchant of record (US sales tax handled). After checkout, your workspace limits update automatically."

@@ -7,7 +7,7 @@ import { TeamSettingsClient } from "./team-client";
 
 export default function TeamSettingsPage() {
   return (
-    <PageFrame width="default">
+    <PageFrame>
       <PageHeader
         title="Team & branding"
         description="Invite teammates with the right role, and optionally brand chase emails with your logo."

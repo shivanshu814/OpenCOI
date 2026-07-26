@@ -68,7 +68,7 @@ export default async function VendorDetailPage({
   const meta = [vendor.trade, vendor.email, vendor.agent_email].filter(Boolean);
 
   return (
-    <PageFrame width="wide">
+    <PageFrame>
       <DetailHeader
         backHref="/app/vendors"
         backLabel="Vendors"

@@ -8,7 +8,7 @@ import { IntegrationsClient } from "./integrations-client";
 
 export default function IntegrationsSettingsPage() {
   return (
-    <PageFrame width="default">
+    <PageFrame>
       <PageHeader
         title="API & integrations"
         description="Connect CertShield to Zapier or your own tools so vendor status syncs elsewhere — most property managers can skip this."

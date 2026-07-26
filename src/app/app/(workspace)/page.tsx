@@ -153,7 +153,7 @@ export default async function DashboardPage() {
   const totalVendors = vendors.length;
 
   return (
-    <PageFrame width="wide">
+    <PageFrame>
       <div className="space-y-2">
         <PageHeader
           title="Needs attention today"

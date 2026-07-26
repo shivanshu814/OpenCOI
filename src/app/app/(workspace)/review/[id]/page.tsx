@@ -56,7 +56,7 @@ export default async function ReviewDocumentPage({
   if (!doc.extraction) {
     const extractionFailed = doc.status === "extraction_failed";
     return (
-      <PageFrame width="wide">
+      <PageFrame>
         <DetailHeader
           backHref="/app/review"
           backLabel="Review queue"
@@ -178,7 +178,7 @@ export default async function ReviewDocumentPage({
   );
 
   return (
-    <PageFrame width="wide">
+    <PageFrame>
       <DetailHeader
         backHref="/app/review"
         backLabel="Review queue"
