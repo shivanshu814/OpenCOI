@@ -166,7 +166,7 @@ export async function issueAgentConfirmation(input: {
     after_state: {
       confirmation_id: row.id,
       producer_email: producerEmail,
-      demo: send.demo,
+      transport: send.transport,
     },
   });
 
@@ -180,14 +180,14 @@ export async function issueAgentConfirmation(input: {
     to_email: producerEmail,
     subject,
     body_text: text,
-    provider: send.demo ? "demo" : "resend",
+    provider: send.transport,
     provider_message_id: send.id,
-    status: send.demo ? "demo" : "sent",
+    status: "sent",
   });
 
   return {
     ok: true,
-    demo: send.demo,
+    demo: false,
     confirmationId: row.id,
     urlConfirm,
     urlDeny,

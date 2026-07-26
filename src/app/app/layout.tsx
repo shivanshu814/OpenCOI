@@ -12,10 +12,10 @@ export default async function AppLayout({
   const live = isSupabaseConfigured();
   const headersList = await headers();
   const pathname = headersList.get("x-pathname") ?? "";
+  const onOnboarding = pathname.startsWith("/app/onboarding");
 
   if (live) {
     const session = await getSessionOrg();
-    const onOnboarding = pathname.startsWith("/app/onboarding");
     if (
       session &&
       !session.onboardingCompletedAt &&
@@ -24,6 +24,11 @@ export default async function AppLayout({
     ) {
       redirect("/app/onboarding");
     }
+  }
+
+  // Onboarding is a focused full-page flow — no app sidebar/chrome.
+  if (onOnboarding) {
+    return <>{children}</>;
   }
 
   return <AppShell live={live}>{children}</AppShell>;

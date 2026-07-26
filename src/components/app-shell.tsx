@@ -137,17 +137,17 @@ function AppSidebar({ live }: { live: boolean }) {
 
   return (
     <Sidebar collapsible="icon" className="border-r">
-      <SidebarHeader className="border-b border-sidebar-border">
+      <SidebarHeader className="border-b border-sidebar-border group-data-[collapsible=icon]:px-1.5">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
               render={<Link href="/app" />}
               tooltip="CertShield"
-              className="gap-2.5"
+              className="gap-2.5 overflow-hidden group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:p-0!"
             >
-              <CertShieldMark size={28} />
-              <span className="grid flex-1 text-left leading-tight">
+              <CertShieldMark size={22} />
+              <span className="grid min-w-0 flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="truncate text-sm font-semibold tracking-tight">
                   CertShield
                 </span>
@@ -160,7 +160,7 @@ function AppSidebar({ live }: { live: boolean }) {
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent className="gap-1 px-2 py-3">
+      <SidebarContent className="gap-1 overflow-x-hidden px-2 py-3 group-data-[collapsible=icon]:px-1.5">
         {NAV_GROUPS.map((group) => (
           <SidebarGroup key={group.label ?? "root"} className="px-0">
             {group.label ? (
@@ -169,7 +169,7 @@ function AppSidebar({ live }: { live: boolean }) {
               </SidebarGroupLabel>
             ) : null}
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="group-data-[collapsible=icon]:items-center">
                 {group.items.map((item) => {
                   const active = isActive(pathname, item);
                   return (
@@ -179,12 +179,14 @@ function AppSidebar({ live }: { live: boolean }) {
                         tooltip={item.label}
                         render={<Link href={item.href} />}
                         className={cn(
-                          "h-8 text-sm font-medium",
+                          "h-8 text-sm font-medium group-data-[collapsible=icon]:justify-center",
                           active && "sidebar-active-indicator text-brand",
                         )}
                       >
                         <item.icon />
-                        <span>{item.label}</span>
+                        <span className="group-data-[collapsible=icon]:hidden">
+                          {item.label}
+                        </span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );
@@ -195,29 +197,31 @@ function AppSidebar({ live }: { live: boolean }) {
         ))}
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="overflow-x-hidden group-data-[collapsible=icon]:px-1.5">
         <SidebarSeparator />
-        <SidebarMenu>
+        <SidebarMenu className="group-data-[collapsible=icon]:items-center">
           <SidebarMenuItem>
             <SidebarMenuButton
               tooltip="Help & docs"
               render={<Link href="/help" />}
-              className="h-8 text-sm"
+              className="h-8 text-sm group-data-[collapsible=icon]:justify-center"
             >
               <LifeBuoy />
-              <span>Help &amp; docs</span>
+              <span className="group-data-[collapsible=icon]:hidden">
+                Help &amp; docs
+              </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
               tooltip={live ? "Workspace connected" : "Demo mode"}
               render={<Link href="/login" />}
-              className="h-8 text-sm"
+              className="h-8 text-sm group-data-[collapsible=icon]:justify-center"
             >
               <span className="flex size-4 items-center justify-center">
                 <LiveDot tone={live ? "ok" : "warn"} />
               </span>
-              <span className="text-muted-foreground truncate text-xs">
+              <span className="text-muted-foreground truncate text-xs group-data-[collapsible=icon]:hidden">
                 {live ? "Workspace connected" : "Demo mode"}
               </span>
             </SidebarMenuButton>

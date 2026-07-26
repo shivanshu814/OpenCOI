@@ -106,11 +106,11 @@ ${listBlock("Non-compliant", nonCompliant)}
       score: portfolio.score,
       expiring: expiring.length,
       non_compliant: nonCompliant.length,
-      demo: send.demo,
+      transport: send.transport,
     },
   });
 
-  return { ok: true, demo: send.demo };
+  return { ok: true, demo: false };
 }
 
 function listBlock(

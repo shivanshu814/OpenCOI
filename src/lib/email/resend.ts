@@ -1,7 +1,19 @@
 import { Resend } from "resend";
+import {
+  getSmtpFromAddress,
+  isSmtpConfigured,
+  preferredOutboundLabel,
+  sendViaSmtp,
+} from "@/lib/email/smtp";
+import { isProductionRuntime } from "@/lib/runtime-env";
 
 export function isResendConfigured() {
   return Boolean(process.env.RESEND_API_KEY?.trim());
+}
+
+/** True when any real outbound transport is ready (SMTP or Resend). */
+export function isOutboundEmailConfigured() {
+  return preferredOutboundLabel() !== "none";
 }
 
 export function getResendFromAddress() {
@@ -9,6 +21,11 @@ export function getResendFromAddress() {
     process.env.RESEND_FROM_EMAIL?.trim() ||
     "CertShield <onboarding@resend.dev>"
   );
+}
+
+export function getOutboundFromAddress() {
+  if (isSmtpConfigured()) return getSmtpFromAddress();
+  return getResendFromAddress();
 }
 
 /** Domains Resend rejects in test/sandbox mode (and fake fixtures). */
@@ -27,7 +44,7 @@ export function isBlockedOutboundEmail(to: string): string | null {
   if (at < 1) return "Vendor email is missing or invalid.";
   const domain = email.slice(at + 1);
   if (BLOCKED_TEST_DOMAINS.has(domain) || domain.endsWith(".example")) {
-    return `Cannot send to @${domain} — Resend test mode blocks fixture domains. Edit the vendor to a real inbox (your Resend account email), or verify your sending domain in Resend for production sends.`;
+    return `Cannot send to @${domain} — use a real inbox (not a fixture domain).`;
   }
   return null;
 }
@@ -35,10 +52,10 @@ export function isBlockedOutboundEmail(to: string): string | null {
 export function mapResendError(message: string): string {
   const m = message.toLowerCase();
   if (m.includes("example.com") || m.includes("testing email")) {
-    return "Resend is still in test mode: it only delivers to your Resend account email, and blocks domains like example.com. Update the vendor email, or verify your sending domain in Resend.";
+    return "Resend is still in test mode: it only delivers to your Resend account email, and blocks domains like example.com. Update the vendor email, or verify your sending domain in Resend — or set SMTP_* for Gmail app-password sends.";
   }
   if (m.includes("only send testing emails to your own")) {
-    return "Resend test mode: recipient must be your Resend login email until a custom domain is verified.";
+    return "Resend test mode: recipient must be your Resend login email until a custom domain is verified. Prefer SMTP_* (Gmail app password) for now.";
   }
   return message;
 }
@@ -58,17 +75,20 @@ export type SendEmailInput = {
   text: string;
   html: string;
   replyTo?: string;
-  /** F2 white-label from (must be verified in Resend). */
+  /** White-label from (SMTP user domain or Resend-verified domain). */
   from?: string;
   tags?: { name: string; value: string }[];
 };
 
 export type SendEmailResult =
-  | { ok: true; demo: true; id: string }
-  | { ok: true; demo: false; id: string }
+  | { ok: true; demo: false; id: string; transport: "smtp" | "resend" }
   | { ok: false; error: string };
 
-/** Outbound via Resend; without API key, logs and returns demo id. */
+/**
+ * Outbound chase/digest mail.
+ * Prefer SMTP (personal Gmail app password) when configured;
+ * else Resend. Never pretend success in production without a transport.
+ */
 export async function sendOutboundEmail(
   input: SendEmailInput,
 ): Promise<SendEmailResult> {
@@ -80,15 +100,38 @@ export async function sendOutboundEmail(
     if (blocked) return { ok: false, error: blocked };
   }
 
-  const resend = getResendClient();
-  if (!resend) {
-    console.info("[resend:demo]", {
+  if (isSmtpConfigured()) {
+    const result = await sendViaSmtp({
       to: input.to,
       cc: input.cc,
       subject: input.subject,
+      text: input.text,
+      html: input.html,
+      replyTo: input.replyTo,
       from: input.from,
     });
-    return { ok: true, demo: true, id: `demo_${Date.now()}` };
+    if (!result.ok) return result;
+    return { ok: true, demo: false, id: result.id, transport: "smtp" };
+  }
+
+  const resend = getResendClient();
+  if (!resend) {
+    if (isProductionRuntime()) {
+      return {
+        ok: false,
+        error:
+          "No email transport configured. Set SMTP_HOST/SMTP_USER/SMTP_PASS (Gmail app password) or RESEND_API_KEY.",
+      };
+    }
+    console.info("[email:dev-skip]", {
+      to: input.to,
+      subject: input.subject,
+    });
+    return {
+      ok: false,
+      error:
+        "No email transport in this environment. Add SMTP_* or RESEND_API_KEY to .env.local.",
+    };
   }
 
   const { data, error } = await resend.emails.send({
@@ -106,5 +149,10 @@ export async function sendOutboundEmail(
     return { ok: false, error: mapResendError(error.message) };
   }
 
-  return { ok: true, demo: false, id: data?.id ?? `resend_${Date.now()}` };
+  return {
+    ok: true,
+    demo: false,
+    id: data?.id ?? `resend_${Date.now()}`,
+    transport: "resend",
+  };
 }

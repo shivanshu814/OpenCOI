@@ -80,7 +80,7 @@ export async function sendOwnerReportEmail(input: {
 
   return {
     ok: true,
-    demo: send.demo,
+    demo: false,
     filename: ownerReportFilename(report),
   };
 }
@@ -117,7 +117,6 @@ export async function sendMonthlyOwnerReportsForOrg(orgId: string): Promise<{
   let sent = 0;
   let skipped = 0;
   let failed = 0;
-  let anyDemo = false;
 
   for (const property of properties ?? []) {
     const to = (property.owner_report_email as string | null)?.trim();
@@ -199,7 +198,6 @@ export async function sendMonthlyOwnerReportsForOrg(orgId: string): Promise<{
       failed += 1;
       continue;
     }
-    if (send.demo) anyDemo = true;
     sent += 1;
 
     await supabase.from("audit_events").insert({
@@ -214,7 +212,7 @@ export async function sendMonthlyOwnerReportsForOrg(orgId: string): Promise<{
         compliance_percent: report.compliance_percent,
         risks_flagged: report.risks_flagged,
         documents_on_file: report.documents_on_file,
-        demo: send.demo,
+        transport: send.transport,
       },
     });
   }
@@ -224,7 +222,6 @@ export async function sendMonthlyOwnerReportsForOrg(orgId: string): Promise<{
     sent,
     skipped,
     failed,
-    demo: anyDemo || undefined,
   };
 }
 

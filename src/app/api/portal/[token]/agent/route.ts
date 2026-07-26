@@ -89,9 +89,9 @@ export async function POST(
     cc_emails: ctx.vendorEmail ? [ctx.vendorEmail] : [],
     subject,
     body_text: text,
-    provider: send.demo ? "demo" : "resend",
+    provider: send.transport,
     provider_message_id: send.id,
-    status: send.demo ? "demo" : "sent",
+    status: "sent",
   });
 
   await admin.from("audit_events").insert({
@@ -101,8 +101,12 @@ export async function POST(
     entity_type: "vendor",
     entity_id: ctx.vendorId,
     action: "portal_agent_handoff",
-    after_state: { agent_email: agentEmail, provider_message_id: send.id },
+    after_state: {
+      agent_email: agentEmail,
+      provider_message_id: send.id,
+      transport: send.transport,
+    },
   });
 
-  return NextResponse.json({ ok: true, demo: send.demo });
+  return NextResponse.json({ ok: true, demo: false, transport: send.transport });
 }

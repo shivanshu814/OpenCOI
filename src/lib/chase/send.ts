@@ -206,9 +206,9 @@ export async function sendChaseForVendor(
       cc_emails: cc,
       subject: rendered.subject,
       body_text: rendered.text,
-      provider: sendResult.demo ? "demo" : "resend",
+      provider: sendResult.transport,
       provider_message_id: sendResult.id,
-      status: sendResult.demo ? "demo" : "sent",
+      status: "sent",
     })
     .select("id")
     .single();
@@ -237,7 +237,7 @@ export async function sendChaseForVendor(
       template_key: templateKey,
       locale,
       provider_message_id: sendResult.id,
-      demo: sendResult.demo,
+      transport: sendResult.transport,
       message_id: msg?.id,
     },
   });
@@ -329,16 +329,16 @@ export async function sendChaseForVendor(
         cc_emails: [],
         subject: esc.subject,
         body_text: esc.text,
-        provider: escSend.demo ? "demo" : "resend",
+        provider: escSend.transport,
         provider_message_id: escSend.id,
-        status: escSend.demo ? "demo" : "sent",
+        status: "sent",
       });
     }
   }
 
   return {
     ok: true,
-    demo: sendResult.demo,
+    demo: false,
     messageId: sendResult.id,
     escalationMessageId,
     rendered,

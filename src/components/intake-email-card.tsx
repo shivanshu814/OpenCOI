@@ -1,27 +1,24 @@
 "use client";
 
-import { CardLiveAccent, LiveBadge, LiveDot } from "@/components/live-activity";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Check, Copy, Inbox } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
+import { Check, Copy, Inbox, Upload } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 export function IntakeEmailCard({
   email,
-  demo,
+  inboundLive,
 }: {
-  email: string;
-  demo?: boolean;
+  email: string | null;
+  /** True only when Postmark inbound webhook secrets are configured. */
+  inboundLive: boolean;
 }) {
   const [copied, setCopied] = useState(false);
 
   async function copy() {
+    if (!email) return;
     try {
       await navigator.clipboard.writeText(email);
       setCopied(true);
@@ -31,28 +28,54 @@ export function IntakeEmailCard({
     }
   }
 
-  return (
-    <Card className="gap-0 overflow-hidden py-0">
-      <CardLiveAccent />
-      <CardHeader className="gap-1 border-b pt-4">
-        <CardTitle className="flex flex-wrap items-center gap-2 text-sm font-semibold">
-          <Inbox className="text-muted-foreground size-4" />
-          Email-in intake
-          {demo ? (
-            <LiveBadge label="Demo" tone="warn" />
-          ) : (
-            <LiveBadge label="Listening" tone="ok" />
+  if (!inboundLive || !email) {
+    return (
+      <div className="border-border space-y-4 rounded-xl border px-5 py-5">
+        <div className="flex items-start gap-3">
+          <div className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-lg">
+            <Upload className="text-muted-foreground size-5" />
+          </div>
+          <div className="min-w-0 space-y-1">
+            <p className="text-base font-semibold">Upload COIs from the app</p>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Email-forward intake is not connected yet (needs Postmark + MX for
+              your inbound domain). For now, finish setup and use{" "}
+              <strong className="text-foreground font-medium">Upload COI</strong>{" "}
+              — that path is live today.
+            </p>
+          </div>
+        </div>
+        <Link
+          href="/app/upload"
+          className={cn(
+            buttonVariants({ variant: "outline", size: "lg" }),
+            "gap-2",
           )}
-        </CardTitle>
-        <CardDescription>
-          Forward COI PDFs to this address. We attach them to a vendor by name
-          match (or create a new vendor for review).
-          {demo ? " Demo address — connect Supabase for your org token." : null}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-wrap items-center gap-2 py-4">
-        <code className="bg-muted inline-flex items-center gap-2 rounded px-2 py-1.5 text-sm break-all">
-          {!demo ? <LiveDot tone="ok" /> : null}
+        >
+          <Upload className="size-4" />
+          Go to Upload COI
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="border-border space-y-4 rounded-xl border px-5 py-5">
+      <div className="flex items-start gap-3">
+        <div className="bg-brand-muted flex size-10 shrink-0 items-center justify-center rounded-lg">
+          <Inbox className="text-brand size-5" />
+        </div>
+        <div className="min-w-0 space-y-1">
+          <p className="text-base font-semibold">Email-in address (live)</p>
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            Forward vendor COI PDFs to this address. We match the insured name to
+            a vendor (or queue a new one for review). You can still upload from
+            the app anytime.
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <code className="bg-muted inline-flex max-w-full items-center rounded-lg px-3 py-2 text-sm break-all">
           {email}
         </code>
         <Button type="button" variant="outline" size="sm" onClick={copy}>
@@ -68,7 +91,7 @@ export function IntakeEmailCard({
             </>
           )}
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

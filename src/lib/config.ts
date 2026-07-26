@@ -36,6 +36,29 @@ export function isResendConfigured() {
   return Boolean(process.env.RESEND_API_KEY?.trim());
 }
 
+export function isSmtpConfigured() {
+  return Boolean(
+    process.env.SMTP_HOST?.trim() &&
+      process.env.SMTP_USER?.trim() &&
+      process.env.SMTP_PASS?.trim(),
+  );
+}
+
+/** Outbound chase email ready (SMTP preferred, else Resend). */
+export function isOutboundEmailConfigured() {
+  return isSmtpConfigured() || isResendConfigured();
+}
+
+/** Postmark inbound webhook auth configured (email-in listening). */
+export function isEmailInboundConfigured() {
+  const domain = process.env.INBOUND_EMAIL_DOMAIN?.trim();
+  const bearer = process.env.POSTMARK_INBOUND_HOOK_TOKEN?.trim();
+  const basic =
+    process.env.POSTMARK_INBOUND_BASIC_USER?.trim() &&
+    process.env.POSTMARK_INBOUND_BASIC_PASSWORD?.trim();
+  return Boolean(domain && (bearer || basic));
+}
+
 export function isPaddleCheckoutConfigured() {
   const token = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN?.trim();
   const hasPrice = Boolean(

@@ -2,8 +2,8 @@ import { IntakeEmailCard } from "@/components/intake-email-card";
 import { PageHeader } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getSessionOrg } from "@/lib/auth/session";
+import { isEmailInboundConfigured } from "@/lib/config";
 import { listVendors } from "@/lib/data/documents";
-import { DEMO_INTAKE_EMAIL } from "@/lib/email/intake-address";
 import { Suspense } from "react";
 import UploadPage from "./upload-client";
 
@@ -12,13 +12,15 @@ export default async function Page() {
     listVendors(),
     getSessionOrg(),
   ]);
-  const intakeEmail = session?.intakeEmail ?? DEMO_INTAKE_EMAIL;
+  const inboundLive = isEmailInboundConfigured();
+  const intakeEmail =
+    inboundLive && session?.intakeEmail ? session.intakeEmail : null;
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Upload COI"
-        description="Web upload path (email-in lands Week 2). Endorsement checks run on every extract."
+        description="Drop a vendor COI PDF here. Email-forward intake lights up once Postmark is connected."
         live
         liveLabel="Ready"
       />
@@ -39,7 +41,7 @@ export default async function Page() {
         <UploadPage vendors={vendors} />
       </Suspense>
 
-      <IntakeEmailCard email={intakeEmail} demo={!session?.intakeEmail} />
+      <IntakeEmailCard email={intakeEmail} inboundLive={inboundLive} />
     </div>
   );
 }

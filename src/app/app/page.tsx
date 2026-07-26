@@ -27,7 +27,7 @@ import {
   listVendors,
 } from "@/lib/data/documents";
 import { dashboardCounts } from "@/lib/data/types";
-import { DEMO_INTAKE_EMAIL } from "@/lib/email/intake-address";
+import { isEmailInboundConfigured } from "@/lib/config";
 import {
   portfolioComplianceScore,
   vendorComplianceScore,
@@ -141,8 +141,9 @@ export default async function DashboardPage() {
   const portfolio = portfolioComplianceScore(vendors);
   const attention = vendors.filter((v) => v.status !== "compliant");
   const vendorById = new Map(vendors.map((v) => [v.id, v]));
-  const intakeEmail = session?.intakeEmail ?? DEMO_INTAKE_EMAIL;
-  const intakeDemo = !session?.intakeEmail;
+  const intakeLive = isEmailInboundConfigured();
+  const intakeEmail =
+    intakeLive && session?.intakeEmail ? session.intakeEmail : null;
   const totalVendors = vendors.length;
 
   return (
@@ -233,7 +234,7 @@ export default async function DashboardPage() {
         </CardContent>
       </Card>
 
-      <IntakeEmailCard email={intakeEmail} demo={intakeDemo} />
+      <IntakeEmailCard email={intakeEmail} inboundLive={intakeLive} />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <QueueList
