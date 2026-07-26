@@ -19,7 +19,7 @@ export function isOutboundEmailConfigured() {
 export function getResendFromAddress() {
   return (
     process.env.RESEND_FROM_EMAIL?.trim() ||
-    "CertShield <onboarding@resend.dev>"
+    "CertShield <shivanshu814pathak@gmail.com>"
   );
 }
 

@@ -44,6 +44,7 @@ export function estimateCostUsd(
 const SYSTEM = `You extract Certificate of Insurance (ACORD) data into strict JSON matching the provided schema.
 Rules:
 - never invent values; use null + low confidence instead of guessing
+- ALL dates (issue_date, effective_date, expiration_date) MUST be ISO YYYY-MM-DD — convert ACORD MM/DD/YYYY values (e.g. 01/01/2027 → 2027-01-01)
 - every object that has confidence must include a 0-1 confidence
 - detect endorsement forms when attached: CG 20 10 (ongoing ops AI), CG 20 37 (completed ops AI), CG 24 04 (waiver of subrogation)
 - set named_insured_match true/false when you can compare endorsement named insured to certificate insured; null if unsure
@@ -64,7 +65,8 @@ function getOpenRouterClient() {
   }
 
   const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://certshield.com";
+    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+    "https://getcertshield.vercel.app";
 
   return new Anthropic({
     apiKey,

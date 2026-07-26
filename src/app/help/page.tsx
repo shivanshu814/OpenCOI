@@ -54,9 +54,9 @@ export default function HelpPage() {
             Short answers for day-one operators. Need a human?{" "}
             <a
               className="font-medium text-white underline-offset-2 hover:underline"
-              href="mailto:support@getcertshield.com"
+              href="mailto:shivanshu814pathak@gmail.com"
             >
-              support@getcertshield.com
+              shivanshu814pathak@gmail.com
             </a>{" "}
             (24h weekday SLA).
           </p>

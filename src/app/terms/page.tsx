@@ -70,9 +70,9 @@ export default function TermsPage() {
           Questions about these terms? Email{" "}
           <a
             className="text-foreground font-medium underline-offset-2 hover:underline"
-            href="mailto:support@getcertshield.com"
+            href="mailto:shivanshu814pathak@gmail.com"
           >
-            support@getcertshield.com
+            shivanshu814pathak@gmail.com
           </a>
           . Also see{" "}
           <Link

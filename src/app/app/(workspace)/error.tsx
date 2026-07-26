@@ -37,7 +37,7 @@ export default function AppError({
           </CardTitle>
           <CardDescription className="leading-relaxed">
             We hit an unexpected error. Try again. If it keeps happening, email
-            support@getcertshield.com with the time it occurred.
+            shivanshu814pathak@gmail.com with the time it occurred.
           </CardDescription>
         </CardHeader>
         {error.digest ? (

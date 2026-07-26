@@ -41,7 +41,7 @@ export default function GlobalError({
           </h1>
           <p style={{ color: "#525252", lineHeight: 1.5, marginBottom: 20 }}>
             We hit an unexpected error. Try again. If it keeps happening, email
-            support@getcertshield.com{error.digest ? ` (ref ${error.digest})` : ""}.
+            shivanshu814pathak@gmail.com{error.digest ? ` (ref ${error.digest})` : ""}.
           </p>
           <button
             type="button"
