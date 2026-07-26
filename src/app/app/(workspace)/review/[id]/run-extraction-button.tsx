@@ -20,13 +20,21 @@ export function RunExtractionButton({ documentId }: { documentId: string }) {
       const res = await fetch(`/api/documents/${documentId}/extract`, {
         method: "POST",
       });
-      const data = (await res.json()) as { ok?: boolean; error?: string };
+      const data = (await res.json()) as {
+        ok?: boolean;
+        alreadyExtracted?: boolean;
+        error?: string;
+      };
       if (!res.ok) {
         // Persistent failure belongs on the page via refresh/pipeline; toast once.
         notifyApiError(data, "Extraction failed");
         return;
       }
-      notifyInfo("Extraction finished — loading verdict…");
+      notifyInfo(
+        data.alreadyExtracted
+          ? "Already read — loading the review…"
+          : "Extraction finished — loading verdict…",
+      );
       router.refresh();
     } catch (err) {
       notifyCaughtError(err, "Extraction failed");

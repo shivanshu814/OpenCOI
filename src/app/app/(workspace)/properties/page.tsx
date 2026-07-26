@@ -171,13 +171,13 @@ export default async function PropertiesPage() {
                       <span
                         className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase ring-1 ring-inset ${
                           hasHolder
-                            ? "bg-emerald-50 text-emerald-700 ring-emerald-600/15"
-                            : "bg-amber-50 text-amber-800 ring-amber-600/15"
+                            ? "status-surface status-ok"
+                            : "status-surface status-warn"
                         }`}
                       >
                         <span
                           className={`size-1.5 rounded-full ${
-                            hasHolder ? "bg-emerald-500" : "bg-amber-400"
+                            hasHolder ? "bg-[var(--status-ok)]" : "bg-[var(--status-warn)]"
                           }`}
                         />
                         {hasHolder ? "Set" : "Needed"}

@@ -23,10 +23,10 @@ const VERDICT_FILTERS: { value: Verdict | "pending"; label: string }[] = [
 ];
 
 const VERDICT_DOT: Record<Verdict, string> = {
-  PASS: "bg-emerald-500",
-  FAIL: "bg-red-500",
-  MISSING: "bg-slate-400",
-  EXPIRING: "bg-amber-400",
+  PASS: "bg-[var(--status-ok)]",
+  FAIL: "bg-[var(--status-bad)]",
+  MISSING: "bg-[var(--status-neutral)]",
+  EXPIRING: "bg-[var(--status-warn)]",
 };
 
 /** Shared column template so the header strip and rows stay aligned. */

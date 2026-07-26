@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FileDropzone } from "@/components/ui/file-dropzone";
 import type { Vendor } from "@/lib/data/types";
 import {
   notifyApiError,
@@ -19,16 +20,10 @@ import {
   notifyInfo,
   notifyWarning,
 } from "@/lib/ui/toast";
-import { ArrowRight, FileText, FileUp, X } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
-
-function formatBytes(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
+import { useMemo, useState } from "react";
 
 const STEPS = [
   {
@@ -53,8 +48,6 @@ export default function UploadPage({ vendors }: { vendors: Vendor[] }) {
   const [file, setFile] = useState<File | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [dragging, setDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const vendorItems = useMemo(
     () => vendors.map((v) => ({ label: v.name, value: v.id })),
@@ -137,11 +130,6 @@ export default function UploadPage({ vendors }: { vendors: Vendor[] }) {
     }
   }
 
-  function clearFile() {
-    setFile(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  }
-
   return (
     <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
       <form onSubmit={onSubmit}>
@@ -189,76 +177,21 @@ export default function UploadPage({ vendors }: { vendors: Vendor[] }) {
 
             <div className="space-y-1.5">
               <Label htmlFor="file">Certificate (PDF, PNG, or JPEG)</Label>
-              <div
-                className={`relative rounded-xl border border-dashed transition-colors ${
-                  dragging
-                    ? "border-primary bg-primary/5"
-                    : "hover:border-muted-foreground/40 bg-muted/30"
-                }`}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDragging(true);
+              <FileDropzone
+                id="file"
+                value={file}
+                onChange={(next) => {
+                  setFile(next);
+                  setFormError(null);
                 }}
-                onDragLeave={() => setDragging(false)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setDragging(false);
-                  const dropped = e.dataTransfer.files?.[0];
-                  if (dropped) setFile(dropped);
+                accept="application/pdf,image/png,image/jpeg"
+                onReject={(message) => {
+                  setFormError(message);
+                  notifyWarning(message);
                 }}
-              >
-                {file ? (
-                  <div className="flex items-center justify-between gap-3 px-4 py-4">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-lg">
-                        <FileText className="size-4" aria-hidden />
-                      </span>
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">
-                          {file.name}
-                        </p>
-                        <p className="text-muted-foreground text-xs tabular-nums">
-                          {formatBytes(file.size)}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={clearFile}
-                      className="text-muted-foreground hover:text-foreground flex size-7 shrink-0 items-center justify-center rounded-md"
-                      aria-label="Remove file"
-                    >
-                      <X className="size-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <label
-                    htmlFor="file"
-                    className="flex cursor-pointer flex-col items-center gap-1.5 px-4 py-8 text-center"
-                  >
-                    <FileUp
-                      className="text-muted-foreground size-6"
-                      aria-hidden
-                    />
-                    <span className="text-sm font-medium">
-                      Drop the COI here, or browse
-                    </span>
-                    <span className="text-muted-foreground text-xs">
-                      ACORD 25 works best — we read limits, expirations, and
-                      endorsements
-                    </span>
-                  </label>
-                )}
-                <input
-                  ref={fileInputRef}
-                  id="file"
-                  type="file"
-                  accept="application/pdf,image/png,image/jpeg"
-                  required={!file}
-                  className="sr-only"
-                  onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                />
-              </div>
+                label="Drop the COI here, or browse"
+                hint="ACORD 25 works best — we read limits, expiration dates, and endorsement forms."
+              />
               <SampleCoiPicker
                 onSelect={(sampleFile) => {
                   setFile(sampleFile);

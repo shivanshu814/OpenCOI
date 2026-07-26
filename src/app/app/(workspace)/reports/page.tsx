@@ -157,15 +157,15 @@ export default async function ReportsPage() {
                         <span
                           className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase ring-1 ring-inset ${
                             p.owner_report_enabled
-                              ? "bg-emerald-50 text-emerald-700 ring-emerald-600/15"
+                              ? "status-surface status-ok"
                               : "bg-muted text-muted-foreground ring-border"
                           }`}
                         >
                           <span
                             className={`size-1.5 rounded-full ${
                               p.owner_report_enabled
-                                ? "bg-emerald-500"
-                                : "bg-slate-400"
+                                ? "bg-[var(--status-ok)]"
+                                : "bg-[var(--status-neutral)]"
                             }`}
                           />
                           {p.owner_report_enabled ? "Monthly on" : "Off"}
@@ -205,7 +205,7 @@ export default async function ReportsPage() {
                           <dd
                             className={`font-medium tabular-nums ${
                               p.risks_flagged > 0
-                                ? "text-amber-700"
+                                ? "text-[var(--status-warn)]"
                                 : "text-foreground"
                             }`}
                           >
@@ -225,7 +225,7 @@ export default async function ReportsPage() {
                   <div
                     className={`hidden text-sm font-medium tabular-nums lg:block ${
                       p.risks_flagged > 0
-                        ? "text-amber-700"
+                        ? "text-[var(--status-warn)]"
                         : "text-foreground"
                     }`}
                   >

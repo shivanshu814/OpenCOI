@@ -10,16 +10,21 @@ export default async function WorkspaceLayout({
   children: React.ReactNode;
 }) {
   const live = isSupabaseConfigured();
+  const session = live ? await getSessionOrg() : null;
 
-  if (live) {
-    const session = await getSessionOrg();
-    if (session && !session.onboardingCompletedAt) {
-      redirect("/app/onboarding");
-    }
+  if (session && !session.onboardingCompletedAt) {
+    redirect("/app/onboarding");
   }
 
   return (
-    <AppShell live={live}>
+    <AppShell
+      live={live}
+      branding={{
+        orgName: session?.orgName ?? null,
+        brandColor: session?.brandColor ?? null,
+        logoUrl: session?.logoUrl ?? null,
+      }}
+    >
       {live ? <RealtimeRefresh /> : null}
       {children}
     </AppShell>

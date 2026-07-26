@@ -1,4 +1,5 @@
 import { CheckoutButton } from "@/components/checkout-button";
+import { FaqAccordion } from "@/components/faq-accordion";
 import { INK_BG, InkAtmosphere, SURFACE_BG } from "@/components/ink-atmosphere";
 import { LiveOpsTicker } from "@/components/live-activity";
 import { MarketingShell } from "@/components/marketing-shell";
@@ -763,25 +764,8 @@ export default function HomePage() {
             Questions buyers ask first
           </h2>
 
-          <div className="mt-10 divide-y divide-border/60 border-y border-border/60">
-            {faq.map((item) => (
-              <details key={item.q} className="group py-5">
-                <summary className="cursor-pointer list-none text-sm font-semibold tracking-tight marker:content-none [&::-webkit-details-marker]:hidden">
-                  <span className="flex items-start justify-between gap-4">
-                    {item.q}
-                    <span
-                      aria-hidden
-                      className="text-muted-foreground mt-0.5 shrink-0 text-lg leading-none transition group-open:rotate-45"
-                    >
-                      +
-                    </span>
-                  </span>
-                </summary>
-                <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
-                  {item.a}
-                </p>
-              </details>
-            ))}
+          <div className="mt-10">
+            <FaqAccordion items={faq} />
           </div>
         </div>
       </section>

@@ -31,10 +31,10 @@ import { RunExtractionButton } from "./run-extraction-button";
 
 const VERDICT_ICON: Record<Verdict, { Icon: typeof Check; className: string }> =
   {
-    PASS: { Icon: Check, className: "bg-emerald-100 text-emerald-700" },
-    FAIL: { Icon: X, className: "bg-red-100 text-red-700" },
-    EXPIRING: { Icon: Clock, className: "bg-amber-100 text-amber-700" },
-    MISSING: { Icon: Minus, className: "bg-slate-100 text-slate-600" },
+    PASS: { Icon: Check, className: "status-surface status-ok" },
+    FAIL: { Icon: X, className: "status-surface status-bad" },
+    EXPIRING: { Icon: Clock, className: "status-surface status-warn" },
+    MISSING: { Icon: Minus, className: "status-surface status-neutral" },
   };
 
 const FIELD_GRID = "grid-cols-[minmax(6rem,0.7fr)_minmax(0,1.4fr)_auto]";
@@ -81,7 +81,7 @@ export default async function ReviewDocumentPage({
                 <span
                   className={`flex size-11 shrink-0 items-center justify-center rounded-full ${
                     extractionFailed
-                      ? "bg-red-100 text-red-700"
+                      ? "status-surface status-bad"
                       : "bg-brand-muted text-brand"
                   }`}
                 >
@@ -303,17 +303,17 @@ export default async function ReviewDocumentPage({
                 <p className="text-muted-foreground text-xs tabular-nums">
                   {passCount} pass
                   {failCount > 0 ? (
-                    <span className="ml-2 font-medium text-red-700">
+                    <span className="text-[var(--status-bad)] ml-2 font-medium">
                       {failCount} fail
                     </span>
                   ) : null}
                   {missingCount > 0 ? (
-                    <span className="ml-2 font-medium text-slate-600">
+                    <span className="text-[var(--status-neutral)] ml-2 font-medium">
                       {missingCount} missing
                     </span>
                   ) : null}
                   {expiringCount > 0 ? (
-                    <span className="ml-2 font-medium text-amber-700">
+                    <span className="text-[var(--status-warn)] ml-2 font-medium">
                       {expiringCount} expiring
                     </span>
                   ) : null}
@@ -367,8 +367,8 @@ export default async function ReviewDocumentPage({
           </Card>
 
           {(doc.fraud_signals?.length ?? 0) > 0 ? (
-            <Alert className="border-amber-200 bg-amber-50/50 text-amber-950">
-              <TriangleAlert className="size-4 text-amber-600" aria-hidden />
+            <Alert className="status-surface status-warn">
+              <TriangleAlert className="size-4" aria-hidden />
               <AlertTitle>Risk signals (not a guarantee)</AlertTitle>
               <AlertDescription>
                 <p className="text-muted-foreground text-xs">
@@ -377,7 +377,7 @@ export default async function ReviewDocumentPage({
                 <ul className="mt-3 space-y-2 text-sm">
                   {doc.fraud_signals!.map((s) => (
                     <li key={`${s.code}-${s.message.slice(0, 24)}`}>
-                      <span className="text-xs font-medium tracking-wide text-amber-900 uppercase">
+                      <span className="text-xs font-medium tracking-wide uppercase">
                         {s.severity}
                       </span>
                       <p className="text-foreground text-xs leading-relaxed">
@@ -444,7 +444,7 @@ function FieldRow({
       <span className="justify-self-end">
         {conf != null ? (
           low ? (
-            <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800 tabular-nums">
+            <span className="status-surface status-warn inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium tabular-nums">
               <TriangleAlert className="size-3" aria-hidden />
               {Math.round(conf * 100)}%
             </span>

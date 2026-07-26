@@ -230,3 +230,50 @@
     animation: none !important;
   }
 }
+
+/* ── Status surfaces ────────────────────────────────────────────────────
+ * Verdict/state tints used across badges, alerts, and icon chips.
+ *
+ * These exist because the app had light-only pairs hard-coded at the call
+ * site (`bg-emerald-50 text-emerald-700`, `bg-amber-50 text-amber-900`),
+ * which turned into unreadable near-white blocks in dark mode. Defining the
+ * pair once — surface, border, and foreground together — keeps contrast
+ * correct in both themes and gives every status the same visual weight.
+ */
+:root {
+  --status-ok: oklch(0.62 0.15 158);
+  --status-warn: oklch(0.72 0.15 78);
+  --status-bad: oklch(0.58 0.2 25);
+  --status-neutral: oklch(0.62 0.02 258);
+}
+
+.dark {
+  --status-ok: oklch(0.75 0.16 158);
+  --status-warn: oklch(0.82 0.15 82);
+  --status-bad: oklch(0.7 0.19 25);
+  --status-neutral: oklch(0.72 0.02 258);
+}
+
+.status-surface {
+  background-color: color-mix(in oklab, var(--status-tone) 12%, var(--card));
+  border-color: color-mix(in oklab, var(--status-tone) 32%, transparent);
+  color: color-mix(in oklab, var(--status-tone) 72%, var(--foreground));
+}
+
+.status-ok {
+  --status-tone: var(--status-ok);
+}
+.status-warn {
+  --status-tone: var(--status-warn);
+}
+.status-bad {
+  --status-tone: var(--status-bad);
+}
+.status-neutral {
+  --status-tone: var(--status-neutral);
+}
+
+/* Solid dot / bar in the same tone — pairs with `.status-*` on a parent. */
+.status-dot {
+  background-color: var(--status-tone, var(--status-neutral));
+}

@@ -254,12 +254,12 @@ const TONE_STYLES: Record<
 > = {
   brand: { icon: "bg-brand-muted text-brand", value: "text-foreground", dot: "brand" },
   ok: {
-    icon: "bg-emerald-50 text-emerald-700",
+    icon: "status-surface status-ok",
     value: "text-foreground",
     dot: "ok",
   },
   warn: {
-    icon: "bg-amber-50 text-amber-700",
+    icon: "status-surface status-warn",
     value: "text-foreground",
     dot: "warn",
   },
@@ -435,7 +435,7 @@ function GateMeter({ pct }: { pct: number }) {
         <div
           className={cn(
             "h-full rounded-full transition-all",
-            met ? "bg-emerald-500" : "bg-amber-400",
+            met ? "bg-[var(--status-ok)]" : "bg-[var(--status-warn)]",
           )}
           style={{ width: `${Math.min(100, Math.max(2, pct))}%` }}
         />

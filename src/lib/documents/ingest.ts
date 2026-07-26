@@ -149,11 +149,26 @@ export async function ingestPdfDocument(
   return { documentId: doc.id, storagePath, queued, extractionError };
 }
 
-/** Re-run extraction for a stuck `uploaded` / `extraction_failed` doc. */
+export type ExtractRetryResult =
+  /** Extraction ran now and the document moved forward in the pipeline. */
+  | { outcome: "extracted"; status: string }
+  /** Already past extraction — nothing to retry, just show the review. */
+  | { outcome: "already_extracted"; status: string };
+
+/**
+ * Re-run extraction for a stuck `uploaded` / `extraction_failed` doc.
+ *
+ * A document that is already `extracted`/`checked`/`in_internal_review` (or
+ * further) is NOT an error: the usual cause is a double-click or a stale tab
+ * where extraction finished between render and click. Reporting "Cannot
+ * extract from status in_internal_review. Retry extraction." was both wrong
+ * (retrying can never help) and alarming, so those statuses return
+ * `already_extracted` and the caller sends the user to the review instead.
+ */
 export async function extractDocumentFromStorage(args: {
   documentId: string;
   orgId: string;
-}) {
+}): Promise<ExtractRetryResult> {
   if (!isClaudeConfigured()) {
     throw new Error("OPENROUTER_API_KEY is not set");
   }
@@ -168,7 +183,7 @@ export async function extractDocumentFromStorage(args: {
 
   if (error || !doc) throw new Error(error?.message ?? "Document not found");
   if (doc.status !== "uploaded" && doc.status !== "extraction_failed") {
-    throw new Error(`Cannot extract from status ${doc.status}`);
+    return { outcome: "already_extracted", status: doc.status };
   }
   if (!doc.storage_path || doc.storage_path === "pending") {
     throw new Error("PDF not in storage yet");
@@ -195,6 +210,7 @@ export async function extractDocumentFromStorage(args: {
     orgId: args.orgId,
     pdfBase64,
   });
+  return { outcome: "extracted", status: "in_internal_review" };
 }
 
 export async function downloadPdfBase64FromStorage(

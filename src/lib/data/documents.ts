@@ -29,31 +29,151 @@ function mapVendor(row: {
 }
 
 export async function listVendors(): Promise<Vendor[]> {
+  const { vendors } = await queryVendors({ limit: VENDOR_PICKER_LIMIT });
+  return vendors;
+}
+
+/** Rows per vendors-page view. */
+export const VENDOR_PAGE_SIZE = 50;
+
+/**
+ * Upper bound for callers that need "the roster" in one array (vendor pickers
+ * on upload / property / project). PostgREST caps a request at 1000 rows
+ * regardless, so this makes the ceiling explicit instead of silently losing
+ * vendors past the cap.
+ */
+const VENDOR_PICKER_LIMIT = 500;
+
+export type VendorQuery = {
+  /** Case-insensitive match on name, trade, or email — applied in Postgres. */
+  search?: string;
+  status?: VendorStatus | null;
+  limit?: number;
+  offset?: number;
+};
+
+export type VendorQueryResult = {
+  vendors: Vendor[];
+  /** Total matching rows before paging — drives "N of M" and page count. */
+  total: number;
+};
+
+/**
+ * Vendors for one org, filtered and paged **in Postgres**.
+ *
+ * Filtering used to happen in JS over every row the page had loaded, which
+ * quietly broke past PostgREST's 1000-row ceiling: a search for a vendor at
+ * row 1200 returned "no results" on a roster that plainly contained them.
+ */
+export async function queryVendors(
+  query: VendorQuery = {},
+): Promise<VendorQueryResult> {
+  const limit = query.limit ?? VENDOR_PAGE_SIZE;
+  const offset = query.offset ?? 0;
+  const search = query.search?.trim().toLowerCase() ?? "";
+
   if (!isSupabaseConfigured()) {
-    return DEMO_VENDORS.map((v) => ({
+    const all = DEMO_VENDORS.map((v) => ({
       id: v.id,
       name: v.name,
       email: v.email,
       trade: v.trade,
       status: v.status,
-    }));
+    })).filter((v) => {
+      if (query.status && v.status !== query.status) return false;
+      if (!search) return true;
+      return [v.name, v.trade, v.email]
+        .filter(Boolean)
+        .some((field) => field!.toLowerCase().includes(search));
+    });
+    return { vendors: all.slice(offset, offset + limit), total: all.length };
   }
 
   const session = await getSessionOrg();
-  if (!session) return [];
+  if (!session) return { vendors: [], total: 0 };
 
   const supabase = await createClient();
-  const { data, error } = await supabase
+  let q = supabase
     .from("vendors")
-    .select("id, org_id, name, email, trade, status")
-    .eq("org_id", session.orgId)
-    .order("name");
+    .select("id, org_id, name, email, trade, status", { count: "exact" })
+    .eq("org_id", session.orgId);
+
+  if (query.status) q = q.eq("status", query.status);
+  if (search) {
+    // PostgREST `or` takes a comma-separated filter list; commas and parens in
+    // the needle would break out of it, so strip them before interpolating.
+    const needle = search.replace(/[,()*]/g, " ").trim();
+    if (needle) {
+      q = q.or(
+        `name.ilike.%${needle}%,trade.ilike.%${needle}%,email.ilike.%${needle}%`,
+      );
+    }
+  }
+
+  const { data, error, count } = await q
+    .order("name")
+    .range(offset, offset + limit - 1);
 
   if (error) {
-    console.error("listVendors", error);
-    return [];
+    console.error("queryVendors", error);
+    return { vendors: [], total: 0 };
   }
-  return (data ?? []).map(mapVendor);
+  return { vendors: (data ?? []).map(mapVendor), total: count ?? 0 };
+}
+
+/** Per-status vendor counts for the whole org (head-only count queries). */
+export async function vendorStatusCounts(): Promise<
+  Record<VendorStatus, number> & { total: number }
+> {
+  const empty = {
+    compliant: 0,
+    expiring: 0,
+    non_compliant: 0,
+    missing_docs: 0,
+    in_review: 0,
+    total: 0,
+  };
+
+  if (!isSupabaseConfigured()) {
+    const counts = { ...empty };
+    for (const v of DEMO_VENDORS) {
+      counts[v.status] += 1;
+      counts.total += 1;
+    }
+    return counts;
+  }
+
+  const session = await getSessionOrg();
+  if (!session) return empty;
+
+  const supabase = await createClient();
+  const statuses: VendorStatus[] = [
+    "compliant",
+    "expiring",
+    "non_compliant",
+    "missing_docs",
+    "in_review",
+  ];
+
+  // `head: true` returns the count without transferring a single row, so this
+  // stays O(1) payload no matter how large the roster gets.
+  const results = await Promise.all(
+    statuses.map((status) =>
+      supabase
+        .from("vendors")
+        .select("id", { count: "exact", head: true })
+        .eq("org_id", session.orgId)
+        .eq("status", status),
+    ),
+  );
+
+  const counts = { ...empty };
+  statuses.forEach((status, i) => {
+    const n = results[i]?.count ?? 0;
+    counts[status] = n;
+    counts.total += n;
+  });
+  return counts;
 }
 
 export async function listReviewQueue(): Promise<DocumentRow[]> {

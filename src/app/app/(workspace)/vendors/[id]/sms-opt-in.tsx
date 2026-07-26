@@ -12,6 +12,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { formatDateTime } from "@/lib/ui/format";
 import {
   notifyApiError,
   notifyCaughtError,
@@ -101,9 +102,9 @@ export function VendorSmsOptIn({
             </Label>
           </div>
           {smsOptOutAt ? (
-            <Alert className="border-amber-200 bg-amber-50 text-amber-900">
-              <AlertDescription className="text-xs text-amber-900">
-                Opted out via STOP at {new Date(smsOptOutAt).toLocaleString()}.
+            <Alert className="status-surface status-warn">
+              <AlertDescription className="text-xs">
+                Opted out via STOP at {formatDateTime(smsOptOutAt)}.
                 Re-check the box only after fresh consent.
               </AlertDescription>
             </Alert>

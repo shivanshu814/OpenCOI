@@ -33,13 +33,14 @@ export async function POST(_request: Request, ctx: Ctx) {
   }
 
   try {
-    await extractDocumentFromStorage({
+    const result = await extractDocumentFromStorage({
       documentId: id,
       orgId: session.orgId,
     });
     return NextResponse.json({
       ok: true,
-      status: "in_internal_review",
+      alreadyExtracted: result.outcome === "already_extracted",
+      status: result.status,
       reviewPath: `/app/review/${id}`,
     });
   } catch (err) {

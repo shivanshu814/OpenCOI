@@ -7,6 +7,7 @@ import {
   OctagonXIcon,
   TriangleAlertIcon,
 } from "lucide-react"
+import { useTheme } from "next-themes"
 import { useEffect, useState } from "react"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 
@@ -16,6 +17,7 @@ import { Toaster as Sonner, type ToasterProps } from "sonner"
  * Durations are set per-call in `lib/ui/toast.ts` (errors slightly longer).
  */
 const Toaster = ({ ...props }: ToasterProps) => {
+  const { resolvedTheme } = useTheme()
   const [mobile, setMobile] = useState(false)
 
   useEffect(() => {
@@ -28,7 +30,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
 
   return (
     <Sonner
-      theme="light"
+      theme={(resolvedTheme as ToasterProps["theme"]) ?? "light"}
       className="toaster group"
       position={mobile ? "top-center" : "bottom-right"}
       closeButton
@@ -49,11 +51,12 @@ const Toaster = ({ ...props }: ToasterProps) => {
           "--success-bg": "var(--brand-muted)",
           "--success-border": "color-mix(in oklab, var(--brand) 35%, transparent)",
           "--success-text": "var(--foreground)",
-          "--error-bg": "color-mix(in oklab, var(--destructive) 8%, white)",
+          "--error-bg":
+            "color-mix(in oklab, var(--destructive) 10%, var(--popover))",
           "--error-border": "color-mix(in oklab, var(--destructive) 35%, transparent)",
           "--error-text": "var(--foreground)",
-          "--warning-bg": "oklch(0.97 0.03 85)",
-          "--warning-border": "oklch(0.85 0.08 75)",
+          "--warning-bg": "color-mix(in oklab, oklch(0.8 0.13 80) 14%, var(--popover))",
+          "--warning-border": "color-mix(in oklab, oklch(0.8 0.13 80) 45%, transparent)",
           "--warning-text": "var(--foreground)",
         } as React.CSSProperties
       }

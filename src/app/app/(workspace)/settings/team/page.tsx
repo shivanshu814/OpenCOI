@@ -9,18 +9,17 @@ export default function TeamSettingsPage() {
   return (
     <PageFrame>
       <PageHeader
-        title="Team & branding"
-        description="Invite teammates with the right role, and optionally brand chase emails with your logo."
+        title="Workspace settings"
+        description="Your company profile, branding, notification channels, and who on your team can do what."
         audience="Org admins"
-        nextStep="Invite a teammate, or set chase-email branding if vendors should see your logo."
-        help="Roles control who can upload, review, and change billing. White-label branding applies to vendor-facing chase emails — not a guarantee of compliance."
+        nextStep="Confirm your company details, then choose where compliance alerts are sent."
+        help="Your company profile appears on owner reports and vendor-facing emails. Roles control who can upload, review, and change billing. Branding is presentation only — never a guarantee of compliance."
         live
       />
       <TeamSettingsClient />
       <PageSecondary>
-        Required for multi-user orgs. Branding is optional polish for vendor
-        emails. Document review assistance — not legal, insurance, or
-        professional advice.
+        Settings apply to your whole organization. Document review assistance —
+        not legal, insurance, or professional advice.
       </PageSecondary>
     </PageFrame>
   );

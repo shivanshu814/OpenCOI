@@ -1,5 +1,6 @@
 import { DownloadReportButton } from "@/components/download-report-button";
 import { EmptyState } from "@/components/empty-state";
+import { ListLiveCount } from "@/components/list-table";
 import {
   ContentSurface,
   PageFrame,
@@ -9,8 +10,13 @@ import {
 } from "@/components/page-frame";
 import { VendorStatusBadge } from "@/components/status-badges";
 import { Button } from "@/components/ui/button";
-import { listVendors } from "@/lib/data/documents";
-import { dashboardCounts, type VendorStatus } from "@/lib/data/types";
+import { Input } from "@/components/ui/input";
+import {
+  queryVendors,
+  VENDOR_PAGE_SIZE,
+  vendorStatusCounts,
+} from "@/lib/data/documents";
+import type { VendorStatus } from "@/lib/data/types";
 import { cn } from "@/lib/utils";
 import { ChevronRight, Search, Upload, Users } from "lucide-react";
 import Link from "next/link";
@@ -39,37 +45,68 @@ const NEXT_BY_STATUS: Record<VendorStatus, string> = {
 export default async function VendorsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; page?: string }>;
 }) {
-  const [{ q: rawQuery, status: rawStatus }, vendors] = await Promise.all([
-    searchParams,
-    listVendors(),
-  ]);
-  const counts = dashboardCounts(vendors);
-  const hasData = vendors.length > 0;
+  const { q: rawQuery, status: rawStatus, page: rawPage } = await searchParams;
 
   const query = (rawQuery ?? "").trim();
   const statusFilter = STATUS_FILTERS.some((f) => f.value === rawStatus)
     ? (rawStatus as VendorStatus)
     : null;
+  const parsedPage = Number.parseInt(rawPage ?? "1", 10);
+  const requestedPage =
+    Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
 
-  const needle = query.toLowerCase();
-  const filtered = vendors.filter((v) => {
-    if (statusFilter && v.status !== statusFilter) return false;
-    if (!needle) return true;
-    return [v.name, v.trade, v.email]
-      .filter(Boolean)
-      .some((field) => field!.toLowerCase().includes(needle));
-  });
-  const isFiltered = Boolean(statusFilter || needle);
+  // Search, status filter, and paging all resolve in Postgres, so a roster of
+  // any size costs one page of rows — and a match on row 2,000 is still found.
+  const [firstPass, counts] = await Promise.all([
+    queryVendors({
+      search: query,
+      status: statusFilter,
+      limit: VENDOR_PAGE_SIZE,
+      offset: (requestedPage - 1) * VENDOR_PAGE_SIZE,
+    }),
+    vendorStatusCounts(),
+  ]);
 
-  const filterHref = (status: VendorStatus | null) => {
+  // A hand-typed or stale `?page=` past the end would otherwise render an
+  // empty list that reads like "no vendors match" — a dead end with the wrong
+  // explanation. Clamp to the last real page and re-query instead.
+  const lastPage = Math.max(
+    1,
+    Math.ceil(firstPass.total / VENDOR_PAGE_SIZE),
+  );
+  const page = Math.min(requestedPage, lastPage);
+  const { vendors: filtered, total: matching } =
+    page === requestedPage
+      ? firstPass
+      : await queryVendors({
+        search: query,
+        status: statusFilter,
+        limit: VENDOR_PAGE_SIZE,
+        offset: (page - 1) * VENDOR_PAGE_SIZE,
+      });
+
+  const hasData = counts.total > 0;
+  const isFiltered = Boolean(statusFilter || query);
+  const pageCount = Math.max(1, Math.ceil(matching / VENDOR_PAGE_SIZE));
+  const firstOnPage = matching === 0 ? 0 : (page - 1) * VENDOR_PAGE_SIZE + 1;
+  const lastOnPage = Math.min(page * VENDOR_PAGE_SIZE, matching);
+
+  const buildHref = (next: {
+    status?: VendorStatus | null;
+    page?: number;
+  }): string => {
     const params = new URLSearchParams();
     if (query) params.set("q", query);
+    const status = next.status === undefined ? statusFilter : next.status;
     if (status) params.set("status", status);
+    const targetPage = next.page ?? 1;
+    if (targetPage > 1) params.set("page", String(targetPage));
     const qs = params.toString();
     return qs ? `/app/vendors?${qs}` : "/app/vendors";
   };
+  const filterHref = (status: VendorStatus | null) => buildHref({ status });
 
   return (
     <PageFrame>
@@ -102,7 +139,7 @@ export default async function VendorsPage({
           items={[
             {
               label: "Total",
-              value: vendors.length,
+              value: counts.total,
               tone: "brand",
             },
             {
@@ -140,15 +177,11 @@ export default async function VendorsPage({
             <h2 className="text-sm font-semibold tracking-tight">
               All vendors
             </h2>
-            <span className="text-muted-foreground bg-muted inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium tabular-nums">
-              <span className="relative flex size-1.5">
-                <span className="bg-brand absolute inline-flex size-full animate-ping rounded-full opacity-40" />
-                <span className="bg-brand relative inline-flex size-1.5 rounded-full" />
-              </span>
-              {isFiltered
-                ? `${filtered.length} of ${vendors.length}`
-                : vendors.length}
-            </span>
+            {hasData ? (
+              <ListLiveCount>
+                {isFiltered ? `${matching} of ${counts.total}` : counts.total}
+              </ListLiveCount>
+            ) : null}
           </div>
 
           {hasData ? (
@@ -163,13 +196,13 @@ export default async function VendorsPage({
                   className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2"
                   aria-hidden
                 />
-                <input
+                <Input
                   type="search"
                   name="q"
                   defaultValue={query}
                   placeholder="Search name, trade, email"
                   aria-label="Search vendors"
-                  className="border-input bg-background h-8 w-full rounded-md border pr-3 pl-8 text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                  className="h-8 pr-3 pl-8 text-sm"
                 />
                 {statusFilter ? (
                   <input type="hidden" name="status" value={statusFilter} />
@@ -191,7 +224,7 @@ export default async function VendorsPage({
                 >
                   All
                   <span className="tabular-nums opacity-70">
-                    {vendors.length}
+                    {counts.total}
                   </span>
                 </Link>
                 {STATUS_FILTERS.map((f) => {
@@ -222,16 +255,14 @@ export default async function VendorsPage({
         </div>
 
         {!hasData ? (
-          <div className="p-4 sm:p-6">
-            <EmptyState
-              title="No vendors yet"
-              description="Add your first vendor above, then upload their COI — we'll extract limits and expirations and start the review pipeline."
-              actionHref="/app/upload"
-              actionLabel="Go to upload"
-              liveHint="No sample vendors — your list stays empty until you add one."
-              icon={<Users className="size-5" aria-hidden />}
-            />
-          </div>
+          <EmptyState
+            title="No vendors yet"
+            description="Add your first vendor above, then upload their COI — we'll extract limits and expirations and start the review pipeline."
+            actionHref="/app/upload"
+            actionLabel="Go to upload"
+            liveHint="No sample vendors — your list stays empty until you add one."
+            icon={<Users className="size-5" aria-hidden />}
+          />
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
             <p className="text-sm font-medium">No vendors match</p>
@@ -347,6 +378,59 @@ export default async function VendorsPage({
                 </div>
               ))}
             </div>
+
+            {pageCount > 1 ? (
+              <nav
+                aria-label="Vendor pages"
+                className="bg-muted/20 flex flex-col gap-3 border-t px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5"
+              >
+                <p className="text-muted-foreground text-xs tabular-nums">
+                  Showing {firstOnPage}–{lastOnPage} of {matching}
+                  {isFiltered ? " matching vendors" : " vendors"}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page <= 1}
+                    render={
+                      page <= 1 ? (
+                        <span />
+                      ) : (
+                        <Link
+                          href={buildHref({ page: page - 1 })}
+                          rel="prev"
+                          aria-label="Previous page"
+                        />
+                      )
+                    }
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-muted-foreground px-1 text-xs tabular-nums">
+                    Page {page} of {pageCount}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page >= pageCount}
+                    render={
+                      page >= pageCount ? (
+                        <span />
+                      ) : (
+                        <Link
+                          href={buildHref({ page: page + 1 })}
+                          rel="next"
+                          aria-label="Next page"
+                        />
+                      )
+                    }
+                  >
+                    Next
+                  </Button>
+                </div>
+              </nav>
+            ) : null}
           </>
         )}
       </ContentSurface>

@@ -4,6 +4,10 @@ import {
   PROMPT_VERSION,
   type Extraction,
 } from "@/lib/extraction/schema";
+import {
+  scrubTemplatePlaceholders,
+  UNREADABLE_FIELD,
+} from "@/lib/extraction/placeholders";
 import { extractionToolInputSchema } from "@/lib/extraction/tool-schema";
 import Anthropic from "@anthropic-ai/sdk";
 import { ZodError } from "zod";
@@ -45,6 +49,7 @@ export function estimateCostUsd(
 const SYSTEM = `You extract Certificate of Insurance (ACORD) data into strict JSON matching the provided schema.
 Rules:
 - never invent values; use null + low confidence instead of guessing
+- a BLANK/SPECIMEN ACORD form prints its own field labels where data belongs ("NAME OF VENDOR", "NAME OF INSURANCE COMPANY", "POLICY NUMBER", "EFFECTIVE DATE", "CITY, STATE, ZIP CODE"). Those are NOT values: return null with confidence 0, never echo the label as data
 - ALL dates (issue_date, effective_date, expiration_date) MUST be ISO YYYY-MM-DD — convert ACORD MM/DD/YYYY values (e.g. 01/01/2027 → 2027-01-01)
 - every object that has confidence must include a 0-1 confidence
 - detect endorsement forms when attached: CG 20 10 (ongoing ops AI), CG 20 37 (completed ops AI), CG 24 04 (waiver of subrogation)
@@ -197,7 +202,23 @@ export async function extractCoiFromPdfBase64(params: {
   }
 
   const latency_ms = Date.now() - started;
-  const input = toolBlock.input as Record<string, unknown>;
+  const rawInput = toolBlock.input as Record<string, unknown>;
+
+  // A blank ACORD specimen prints its own field labels ("NAME OF VENDOR",
+  // "POLICY NUMBER"), which the model can return as confident values. Scrub
+  // them deterministically so the document lands in review instead of
+  // creating an insured literally named after the form label.
+  const { value: scrubbedInput, scrubbed } =
+    scrubTemplatePlaceholders(rawInput);
+  const input = scrubbedInput as Record<string, unknown>;
+
+  // `insured.name` is a required non-nullable string in Appendix A, so a
+  // scrubbed name cannot be left null — mark it unreadable and let the review
+  // queue own it rather than failing the whole extraction.
+  const insured = input.insured as Record<string, unknown> | undefined;
+  if (insured && insured.name == null) {
+    insured.name = UNREADABLE_FIELD;
+  }
 
   const cost_usd = estimateCostUsd(
     MODEL_VERSION,
@@ -205,20 +226,26 @@ export async function extractCoiFromPdfBase64(params: {
     response.usage?.output_tokens ?? 0,
   );
 
+  const modelPaths =
+    (input.extraction_meta as { low_confidence_paths?: string[] } | undefined)
+      ?.low_confidence_paths ?? [];
+
   const withMeta = {
     ...input,
     extraction_meta: {
       model_version: MODEL_VERSION,
       prompt_version: PROMPT_VERSION,
-      overall_confidence:
-        typeof (input.extraction_meta as { overall_confidence?: number } | undefined)
-          ?.overall_confidence === "number"
+      overall_confidence: scrubbed.length
+        ? // Any placeholder means this was a blank/specimen form; nothing on
+          // the page can be trusted enough to skip review.
+          0
+        : typeof (
+              input.extraction_meta as { overall_confidence?: number } | undefined
+            )?.overall_confidence === "number"
           ? (input.extraction_meta as { overall_confidence: number })
             .overall_confidence
           : 0.5,
-      low_confidence_paths:
-        (input.extraction_meta as { low_confidence_paths?: string[] } | undefined)
-          ?.low_confidence_paths ?? [],
+      low_confidence_paths: [...new Set([...modelPaths, ...scrubbed])],
       cost_usd,
       latency_ms,
     },

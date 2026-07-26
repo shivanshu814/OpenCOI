@@ -1,5 +1,59 @@
-<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="36" height="36" rx="8" fill="#00B884"/>
-  <path d="M18 7.2C18 7.2 11.25 9.45 11.25 9.45V17.7C11.25 22.2 14.55 26.1 18 27.3C21.45 26.1 24.75 22.2 24.75 17.7V9.45C24.75 9.45 18 7.2 18 7.2Z" fill="white"/>
-  <path d="M15.2 17.55L16.95 19.3L20.95 14.7" stroke="#00B884" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+
+  <defs>
+    <!-- Premium emerald gradient -->
+    <linearGradient id="bg" x1="8" y1="6" x2="58" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#19E0A4"/>
+      <stop offset="55%" stop-color="#00C78B"/>
+      <stop offset="100%" stop-color="#009A73"/>
+    </linearGradient>
+
+    <!-- Glass shield -->
+    <linearGradient id="shield" x1="32" y1="14" x2="32" y2="48">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F2FFFA"/>
+    </linearGradient>
+
+    <!-- Soft glow -->
+    <filter id="shadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#00A97B" flood-opacity="0.18"/>
+    </filter>
+
+    <!-- Background shine -->
+    <radialGradient id="shine" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse"
+      gradientTransform="translate(18 14) rotate(45) scale(40)">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity=".45"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="64" height="64" rx="18" fill="url(#bg)"/>
+
+  <!-- Shine -->
+  <rect width="64" height="64" rx="18" fill="url(#shine)"/>
+
+  <!-- Shield -->
+  <path
+    d="M32 13L19.5 17.5V29.5C19.5 39.6 26.1 46.7 32 49.2C37.9 46.7 44.5 39.6 44.5 29.5V17.5L32 13Z"
+    fill="url(#shield)"
+    filter="url(#shadow)"
+  />
+
+  <!-- Inner shield detail -->
+  <path
+    d="M32 18L24.5 20.8V29C24.5 35.6 28.5 40.8 32 42.4C35.5 40.8 39.5 35.6 39.5 29V20.8L32 18Z"
+    fill="#F7FFFC"
+    opacity=".65"
+  />
+
+  <!-- Check -->
+  <path
+    d="M27.2 30.8L30.8 34.4L37.6 26.6"
+    stroke="#00B884"
+    stroke-width="3.3"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
 </svg>

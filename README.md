@@ -79,7 +79,6 @@ Open http://localhost:3000
 ```bash
 npm run ci              # lint + typecheck + tests + build (same as Actions)
 npm run db:push         # apply supabase/migrations to linked project
-npm run samples:generate
 npm run load-test:1k
 ```
 

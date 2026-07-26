@@ -1,4 +1,5 @@
 import { isSupabaseConfigured } from "@/lib/config";
+import { sanitizeHexColor, sanitizeLogoUrl } from "@/lib/portal/tokens";
 import { intakeEmailForToken } from "@/lib/email/intake-address";
 import { createClient } from "@/lib/supabase/server";
 
@@ -13,6 +14,10 @@ export type SessionOrg = {
   onboardingCompletedAt: string | null;
   plan: string | null;
   subscriptionStatus: string | null;
+  /** White-label accent (#rrggbb) — drives the workspace theme when set. */
+  brandColor: string | null;
+  /** White-label logo (https URL) — replaces the CertShield mark in the shell. */
+  logoUrl: string | null;
 };
 
 type OrgRow = {
@@ -22,6 +27,8 @@ type OrgRow = {
   onboarding_completed_at: string | null;
   plan: string | null;
   subscription_status: string | null;
+  brand_primary_color: string | null;
+  logo_url: string | null;
 };
 
 function toSession(
@@ -42,6 +49,8 @@ function toSession(
     onboardingCompletedAt: org.onboarding_completed_at,
     plan: org.plan,
     subscriptionStatus: org.subscription_status,
+    brandColor: sanitizeHexColor(org.brand_primary_color),
+    logoUrl: sanitizeLogoUrl(org.logo_url),
   };
 }
 
@@ -73,7 +82,7 @@ export async function getSessionOrg(): Promise<SessionOrg | null> {
     const { data: org, error: orgErr } = await supabase
       .from("orgs")
       .select(
-        "id, name, intake_token, onboarding_completed_at, plan, subscription_status",
+        "id, name, intake_token, onboarding_completed_at, plan, subscription_status, brand_primary_color, logo_url",
       )
       .eq("id", membership.org_id)
       .maybeSingle();
@@ -106,7 +115,7 @@ export async function getSessionOrg(): Promise<SessionOrg | null> {
     const { data: joinedOrg } = await supabase
       .from("orgs")
       .select(
-        "id, name, intake_token, onboarding_completed_at, plan, subscription_status",
+        "id, name, intake_token, onboarding_completed_at, plan, subscription_status, brand_primary_color, logo_url",
       )
       .eq("id", invitedOrgId as string)
       .maybeSingle();
@@ -149,7 +158,7 @@ export async function getSessionOrg(): Promise<SessionOrg | null> {
       const { data: org } = await supabase
         .from("orgs")
         .select(
-          "id, name, intake_token, onboarding_completed_at, plan, subscription_status",
+          "id, name, intake_token, onboarding_completed_at, plan, subscription_status, brand_primary_color, logo_url",
         )
         .eq("id", retryMem.org_id)
         .maybeSingle();
@@ -168,7 +177,7 @@ export async function getSessionOrg(): Promise<SessionOrg | null> {
   const { data: orgRow } = await supabase
     .from("orgs")
     .select(
-      "id, name, intake_token, onboarding_completed_at, plan, subscription_status",
+      "id, name, intake_token, onboarding_completed_at, plan, subscription_status, brand_primary_color, logo_url",
     )
     .eq("id", orgId)
     .maybeSingle();
@@ -185,6 +194,8 @@ export async function getSessionOrg(): Promise<SessionOrg | null> {
       onboardingCompletedAt: null,
       plan: null,
       subscriptionStatus: null,
+      brandColor: null,
+      logoUrl: null,
     };
   }
 

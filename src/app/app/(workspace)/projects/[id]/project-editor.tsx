@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type { RequirementRule } from "@/lib/requirements/engine";
+import { formatUsd } from "@/lib/ui/format";
 import type { ProjectStatus } from "@/lib/projects/types";
 import {
   notifyApiError,
@@ -102,7 +103,7 @@ export function ProjectEditor({
               ? {
                   ...r,
                   min_amount: min,
-                  label: `GL each-occurrence ≥ $${min.toLocaleString()} (project)`,
+                  label: `GL each-occurrence ≥ ${formatUsd(min)} (project)`,
                 }
               : r,
           )
@@ -113,7 +114,7 @@ export function ProjectEditor({
               limit_name: "each_occurrence",
               min_amount: Number.isFinite(min) ? min : 2_000_000,
               check_expiration: true,
-              label: `GL each-occurrence ≥ $${(Number.isFinite(min) ? min : 2_000_000).toLocaleString()} (project)`,
+              label: `GL each-occurrence ≥ ${formatUsd(Number.isFinite(min) ? min : 2_000_000)} (project)`,
             },
           ];
 

@@ -362,7 +362,7 @@ export function IntegrationsClient() {
             >
               <span
                 className={`size-1.5 shrink-0 rounded-full ${
-                  w.active ? "bg-emerald-500" : "bg-slate-400"
+                  w.active ? "bg-[var(--status-ok)]" : "bg-[var(--status-neutral)]"
                 }`}
               />
               <span className="min-w-0 truncate font-mono text-xs">

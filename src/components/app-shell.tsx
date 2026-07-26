@@ -70,6 +70,13 @@ type NavItem = {
 
 type NavGroup = { label: string | null; items: NavItem[] };
 
+/** Org white-label identity applied to the whole workspace shell. */
+export type Branding = {
+  orgName: string | null;
+  brandColor: string | null;
+  logoUrl: string | null;
+};
+
 const NAV_GROUPS: NavGroup[] = [
   {
     label: null,
@@ -132,8 +139,15 @@ function useBreadcrumb(pathname: string) {
   return { current, isDetail };
 }
 
-function AppSidebar({ live }: { live: boolean }) {
+function AppSidebar({
+  live,
+  branding,
+}: {
+  live: boolean;
+  branding: Branding;
+}) {
   const pathname = usePathname();
+  const workspaceName = branding.orgName?.trim() || "CertShield";
 
   return (
     <Sidebar collapsible="icon" className="border-r">
@@ -143,16 +157,28 @@ function AppSidebar({ live }: { live: boolean }) {
             <SidebarMenuButton
               size="lg"
               render={<Link href="/app" />}
-              tooltip="CertShield"
+              tooltip={workspaceName}
               className="gap-2.5 overflow-hidden group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:p-0!"
             >
-              <CertShieldMark size={22} />
+              {branding.logoUrl ? (
+                // Customer-supplied https URL (sanitized server-side); an
+                // arbitrary remote host cannot go through next/image without
+                // being allow-listed, so render it directly and cap the box.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={branding.logoUrl}
+                  alt={workspaceName}
+                  className="size-[22px] shrink-0 rounded-sm object-contain"
+                />
+              ) : (
+                <CertShieldMark size={22} />
+              )}
               <span className="grid min-w-0 flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="truncate text-sm font-semibold tracking-tight">
-                  CertShield
+                  {workspaceName}
                 </span>
                 <span className="text-muted-foreground truncate text-[11px] font-medium">
-                  COI compliance
+                  {branding.orgName ? "Powered by CertShield" : "COI compliance"}
                 </span>
               </span>
             </SidebarMenuButton>
@@ -356,17 +382,32 @@ function AppHeader({ live }: { live: boolean }) {
 
 export function AppShell({
   live,
+  branding = { orgName: null, brandColor: null, logoUrl: null },
   children,
 }: {
   live: boolean;
+  branding?: Branding;
   children: React.ReactNode;
 }) {
+  // A white-label accent only has to override the brand tokens; every mint
+  // surface in the app is expressed through them, so the whole workspace
+  // (buttons, rails, live dots, focus rings) retints from this one place.
+  // `color-mix` keeps the muted tint in step instead of stranding it on mint.
+  const themeStyle = branding.brandColor
+    ? ({
+        "--brand": branding.brandColor,
+        "--brand-muted": `color-mix(in oklab, ${branding.brandColor} 14%, var(--background))`,
+        "--primary": branding.brandColor,
+        "--ring": branding.brandColor,
+      } as React.CSSProperties)
+    : undefined;
+
   return (
-    <SidebarProvider>
-      <AppSidebar live={live} />
+    <SidebarProvider style={themeStyle}>
+      <AppSidebar live={live} branding={branding} />
       <SidebarInset className="bg-background">
         <AppHeader live={live} />
-        <main className="w-full flex-1 space-y-6 px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
+        <main className="mx-auto w-full max-w-[110rem] flex-1 space-y-6 px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
           {children}
         </main>
         <DisclaimerFooter />

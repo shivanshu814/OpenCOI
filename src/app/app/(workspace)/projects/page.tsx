@@ -33,17 +33,17 @@ const STATUS_META: Record<
 > = {
   active: {
     label: "Active",
-    dot: "bg-emerald-500",
+    dot: "bg-[var(--status-ok)]",
     next: "Assign subs or raise job limits",
   },
   closeout: {
     label: "Closeout",
-    dot: "bg-amber-400",
+    dot: "bg-[var(--status-warn)]",
     next: "Export the closeout pack",
   },
   closed: {
     label: "Closed",
-    dot: "bg-slate-400",
+    dot: "bg-[var(--status-neutral)]",
     next: "Archive — pack available to re-download",
   },
 };

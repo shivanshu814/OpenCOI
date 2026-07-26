@@ -63,9 +63,9 @@ export function StatStrip({
           <div
             className={cn(
               "absolute inset-x-0 top-0 h-0.5",
-              item.tone === "ok" && "bg-emerald-500",
-              item.tone === "warn" && "bg-amber-400",
-              item.tone === "danger" && "bg-red-500",
+              item.tone === "ok" && "bg-[var(--status-ok)]",
+              item.tone === "warn" && "bg-[var(--status-warn)]",
+              item.tone === "danger" && "bg-[var(--status-bad)]",
               item.tone === "brand" && "bg-brand",
               (!item.tone || item.tone === "default") && "bg-border",
             )}

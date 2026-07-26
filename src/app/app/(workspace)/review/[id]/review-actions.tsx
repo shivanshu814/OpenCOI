@@ -420,9 +420,9 @@ export function ReviewActions({
               </div>
             ) : null}
             {reasonCode === "extraction_error_dispute" ? (
-              <Alert className="border-amber-200 bg-amber-50/50 text-amber-950">
-                <TriangleAlert className="size-4 text-amber-600" aria-hidden />
-                <AlertDescription className="text-xs leading-relaxed text-amber-800">
+              <Alert className="status-surface status-warn">
+                <TriangleAlert className="size-4" aria-hidden />
+                <AlertDescription className="text-xs leading-relaxed">
                   Disputes route back to internal review for correction.
                 </AlertDescription>
               </Alert>
@@ -461,14 +461,14 @@ export function ReviewActions({
 
       <CardContent className="space-y-6">
         {needsAttention ? (
-          <Alert className="border-amber-200 bg-amber-50/50 text-amber-950">
-            <TriangleAlert className="size-4 text-amber-600" aria-hidden />
-            <AlertTitle className="text-sm text-amber-950">
+          <Alert className="status-surface status-warn">
+            <TriangleAlert className="size-4" aria-hidden />
+            <AlertTitle className="text-sm">
               {overallVerdict === "FAIL"
                 ? "FAIL remains review-required"
                 : "MISSING fields need verification"}
             </AlertTitle>
-            <AlertDescription className="text-xs leading-relaxed text-amber-800">
+            <AlertDescription className="text-xs leading-relaxed">
               Correct extraction mistakes first when the PDF disagrees. You may
               still publish after verification so the customer can accept or
               override — publishing does not clear FAIL/MISSING or auto-approve.

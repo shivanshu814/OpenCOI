@@ -46,3 +46,8 @@ jobs:
 
       - name: Production build
         run: npm run build
+
+      # Boots the app in demo mode and asserts every route renders with the
+      # expected content — catches request-time failures that compile fine.
+      - name: Smoke test
+        run: npm run smoke

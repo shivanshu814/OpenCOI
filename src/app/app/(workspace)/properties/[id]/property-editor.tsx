@@ -14,6 +14,7 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { RequirementRule } from "@/lib/requirements/engine";
+import { formatUsd } from "@/lib/ui/format";
 import {
   notifyApiError,
   notifyCaughtError,
@@ -94,7 +95,7 @@ export function PropertyEditor({
               ? {
                   ...r,
                   min_amount: min,
-                  label: `GL each-occurrence ≥ $${min.toLocaleString()}`,
+                  label: `GL each-occurrence ≥ ${formatUsd(min)}`,
                 }
               : r,
           )
@@ -105,7 +106,7 @@ export function PropertyEditor({
               limit_name: "each_occurrence",
               min_amount: Number.isFinite(min) ? min : 1_000_000,
               check_expiration: true,
-              label: `GL each-occurrence ≥ $${(Number.isFinite(min) ? min : 1_000_000).toLocaleString()}`,
+              label: `GL each-occurrence ≥ ${formatUsd(Number.isFinite(min) ? min : 1_000_000)}`,
             },
           ];
 

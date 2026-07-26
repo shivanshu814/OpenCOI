@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { copyToClipboard } from "@/lib/ui/clipboard";
 import {
   notifyApiError,
   notifyCaughtError,
@@ -28,15 +29,18 @@ export function IssuePortalLinkButton({ vendorId }: { vendorId: string }) {
       }
       const next = data.url ?? null;
       setUrl(next);
-      if (next && typeof navigator !== "undefined" && navigator.clipboard) {
-        try {
-          await navigator.clipboard.writeText(next);
-          notifySuccess("Portal magic link copied");
-        } catch {
-          notifySuccess("Portal link ready — copy from below");
-        }
-      } else if (next) {
-        notifySuccess("Portal link ready — copy from below");
+      if (next) {
+        // The link is always shown below, so a blocked clipboard is not a
+        // failure — say what actually happened either way.
+        const copied = await copyToClipboard(next, {
+          successMessage: null,
+          errorMessage: null,
+        });
+        notifySuccess(
+          copied
+            ? "Portal magic link copied"
+            : "Portal link ready — copy it from below",
+        );
       }
     } catch (e) {
       notifyCaughtError(e, "Could not issue portal link");

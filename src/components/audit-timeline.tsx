@@ -8,6 +8,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -15,6 +16,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { copyToClipboard } from "@/lib/ui/clipboard";
+import { formatDayHeading } from "@/lib/ui/format";
 import type { AuditEventRow } from "@/lib/audit/list";
 import {
   formatActorLine,
@@ -70,14 +78,24 @@ export function AuditTimeline({
   const [actionFilter, setActionFilter] = useState<string>("all");
   const [actorFilter, setActorFilter] = useState<string>("all");
 
-  const actionOptions = useMemo(() => {
+  // Base UI renders the raw value in the trigger unless `items` maps value →
+  // label, so every option list here doubles as the trigger label source.
+  const actionItems = useMemo(() => {
     const set = new Set(events.map((e) => e.action));
-    return [...set].sort();
+    return [
+      { value: "all", label: "All actions" },
+      ...[...set].sort().map((a) => ({ value: a, label: humanizeAction(a) })),
+    ];
   }, [events]);
 
-  const actorOptions = useMemo(() => {
+  const actorItems = useMemo(() => {
     const set = new Set(events.map((e) => e.actor_type));
-    return [...set].sort();
+    return [
+      { value: "all", label: "All actors" },
+      ...[...set]
+        .sort()
+        .map((a) => ({ value: a, label: humanizeActorType(a) })),
+    ];
   }, [events]);
 
   const filtered = useMemo(() => {
@@ -91,6 +109,7 @@ export function AuditTimeline({
   if (events.length === 0) {
     return (
       <EmptyState
+        bordered
         title="No audit events yet"
         description="Every upload, check, chase, and decision appends here permanently. Nothing can be edited or deleted."
         actionHref={emptyHref}
@@ -102,62 +121,99 @@ export function AuditTimeline({
 
   const groups = groupByDay(filtered);
   const latestId = groups[0]?.events[0]?.id;
+  const hasFilters = actionFilter !== "all" || actorFilter !== "all";
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end gap-3">
+      <div className="bg-muted/30 flex flex-wrap items-end gap-x-3 gap-y-3 rounded-xl border px-3 py-3">
         <div className="space-y-1.5">
-          <label className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+          <Label
+            htmlFor="audit-action-filter"
+            className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase"
+          >
             Action
-          </label>
+          </Label>
           <Select
+            items={actionItems}
             value={actionFilter}
             onValueChange={(v) => setActionFilter(v ?? "all")}
           >
-            <SelectTrigger className="h-9 w-[11.5rem]">
+            <SelectTrigger id="audit-action-filter" className="h-9 w-[13rem]">
               <SelectValue placeholder="All actions" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All actions</SelectItem>
-              {actionOptions.map((a) => (
-                <SelectItem key={a} value={a}>
-                  {humanizeAction(a)}
+              {actionItems.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-1.5">
-          <label className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+          <Label
+            htmlFor="audit-actor-filter"
+            className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase"
+          >
             Actor
-          </label>
+          </Label>
           <Select
+            items={actorItems}
             value={actorFilter}
             onValueChange={(v) => setActorFilter(v ?? "all")}
           >
-            <SelectTrigger className="h-9 w-[10rem]">
+            <SelectTrigger id="audit-actor-filter" className="h-9 w-[11rem]">
               <SelectValue placeholder="All actors" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All actors</SelectItem>
-              {actorOptions.map((a) => (
-                <SelectItem key={a} value={a}>
-                  {humanizeActorType(a)}
+              {actorItems.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-        <p className="text-muted-foreground pb-2 text-xs tabular-nums">
-          {filtered.length} of {events.length}
+        {hasFilters ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-9"
+            onClick={() => {
+              setActionFilter("all");
+              setActorFilter("all");
+            }}
+          >
+            Reset
+          </Button>
+        ) : null}
+        <p className="text-muted-foreground ml-auto pb-2.5 text-xs tabular-nums">
+          {filtered.length} of {events.length} events
           {fullDetail ? " · full detail (Admin)" : " · limited detail"}
         </p>
       </div>
 
       {filtered.length === 0 ? (
-        <p className="text-muted-foreground py-8 text-center text-sm">
-          No events match these filters.
-        </p>
+        <div className="rounded-xl border border-dashed px-6 py-12 text-center">
+          <p className="text-sm font-semibold">No events match these filters</p>
+          <p className="text-muted-foreground mx-auto mt-1.5 max-w-md text-sm leading-relaxed">
+            Nothing was deleted — the log is append-only. Widen the action or
+            actor filter to see the rest of the {events.length} events.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="mt-5"
+            onClick={() => {
+              setActionFilter("all");
+              setActorFilter("all");
+            }}
+          >
+            Clear filters
+          </Button>
+        </div>
       ) : (
         <div className="space-y-8">
           {groups.map((group) => (
@@ -227,11 +283,10 @@ function AuditEventRowView({
       user_agent: e.user_agent,
       created_at: e.created_at,
     };
-    try {
-      await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
-    } catch {
-      // Clipboard may be denied — ignore.
-    }
+    await copyToClipboard(JSON.stringify(payload, null, 2), {
+      successMessage: "Event detail copied",
+      description: "Full audit JSON is on your clipboard.",
+    });
   }
 
   return (
@@ -255,17 +310,25 @@ function AuditEventRowView({
         <div className="min-w-0 rounded-lg px-1 py-0.5 transition-colors hover:bg-muted/40">
           <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1.5">
             <div className="flex min-w-0 items-start gap-2.5">
-              <span
-                className={cn(
-                  "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md",
-                  isLatest
-                    ? "bg-brand-muted text-brand"
-                    : "bg-muted text-muted-foreground",
-                )}
-                title={humanizeEntityType(e.entity_type)}
-              >
-                <Icon className="size-3.5" aria-hidden />
-              </span>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <span
+                      className={cn(
+                        "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md",
+                        isLatest
+                          ? "bg-brand-muted text-brand"
+                          : "bg-muted text-muted-foreground",
+                      )}
+                    />
+                  }
+                >
+                  <Icon className="size-3.5" aria-hidden />
+                </TooltipTrigger>
+                <TooltipContent>
+                  {humanizeEntityType(e.entity_type)}
+                </TooltipContent>
+              </Tooltip>
               <div className="min-w-0 space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="text-sm leading-snug font-semibold tracking-tight text-balance">
@@ -282,12 +345,18 @@ function AuditEventRowView({
                   <span className="text-border" aria-hidden>
                     ·
                   </span>
-                  <span
-                    className="font-mono text-[11px] tracking-tight"
-                    title={`${e.entity_type}/${e.entity_id}`}
-                  >
-                    {formatEntityRef(e.entity_type, e.entity_id)}
-                  </span>
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <span className="cursor-default font-mono text-[11px] tracking-tight" />
+                      }
+                    >
+                      {formatEntityRef(e.entity_type, e.entity_id)}
+                    </TooltipTrigger>
+                    <TooltipContent className="font-mono">
+                      {e.entity_type}/{e.entity_id}
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
                 {why ? (
                   <p className="text-foreground/80 mt-1 text-xs leading-relaxed">
@@ -302,13 +371,21 @@ function AuditEventRowView({
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
-              <time
-                dateTime={e.created_at}
-                title={`${ts.absolute} (${ts.timezone})`}
-                className="text-muted-foreground pt-0.5 text-xs tabular-nums"
-              >
-                {ts.relative}
-              </time>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <time
+                      dateTime={e.created_at}
+                      className="text-muted-foreground cursor-default pt-0.5 text-xs tabular-nums"
+                    />
+                  }
+                >
+                  {ts.relative}
+                </TooltipTrigger>
+                <TooltipContent>
+                  {ts.absolute} ({ts.timezone})
+                </TooltipContent>
+              </Tooltip>
               <CollapsibleTrigger className="text-muted-foreground hover:bg-muted inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs font-medium transition-colors">
                 Details
                 <ChevronDown
@@ -322,7 +399,7 @@ function AuditEventRowView({
           </div>
 
           <CollapsibleContent className="mt-3">
-            <dl className="bg-muted/30 grid gap-2 rounded-lg border px-3 py-3 text-xs sm:grid-cols-2">
+            <dl className="bg-muted/30 grid max-w-5xl gap-x-6 gap-y-2.5 rounded-lg border px-3.5 py-3 text-xs sm:grid-cols-2 lg:grid-cols-3">
               <DetailItem label="When">
                 {ts.absolute}
                 <span className="text-muted-foreground block mt-0.5">
@@ -363,14 +440,14 @@ function AuditEventRowView({
                   Hidden for your role — ask an Admin for IP / device detail.
                 </DetailItem>
               )}
-              <DetailItem label="Before" className="sm:col-span-2">
+              <DetailItem label="Before" className="sm:col-span-2 lg:col-span-3">
                 {beforeSummary ?? "—"}
               </DetailItem>
-              <DetailItem label="After" className="sm:col-span-2">
+              <DetailItem label="After" className="sm:col-span-2 lg:col-span-3">
                 {afterSummary ?? "—"}
               </DetailItem>
               {fullDetail && (e.before_state != null || e.after_state != null) ? (
-                <DetailItem label="Raw JSON" className="sm:col-span-2">
+                <DetailItem label="Raw JSON" className="sm:col-span-2 lg:col-span-3">
                   <pre className="bg-background mt-1 max-h-40 overflow-auto rounded border p-2 font-mono text-[10px] leading-relaxed whitespace-pre-wrap">
                     {JSON.stringify(
                       {
@@ -384,7 +461,7 @@ function AuditEventRowView({
                 </DetailItem>
               ) : null}
               {fullDetail ? (
-                <div className="sm:col-span-2 flex justify-end pt-1">
+                <div className="sm:col-span-2 lg:col-span-3 flex justify-end pt-1">
                   <Button
                     type="button"
                     variant="outline"
@@ -438,7 +515,7 @@ function groupByDay(events: AuditEventRow[]): DayGroup[] {
     if (existing) {
       existing.events.push(e);
     } else {
-      map.set(key, { key, label: dayLabel(d), events: [e] });
+      map.set(key, { key, label: formatDayHeading(d), events: [e] });
     }
   }
   return [...map.values()];
@@ -448,24 +525,3 @@ function dayKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-function dayLabel(d: Date): string {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const target = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const diffDays = Math.round(
-    (today.getTime() - target.getTime()) / (24 * 60 * 60 * 1000),
-  );
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "Yesterday";
-  try {
-    const opts: Intl.DateTimeFormatOptions = {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    };
-    if (d.getFullYear() !== now.getFullYear()) opts.year = "numeric";
-    return d.toLocaleDateString("en-US", opts);
-  } catch {
-    return d.toISOString().slice(0, 10);
-  }
-}

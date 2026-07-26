@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { buttonVariants } from "@/components/ui/button";
-import { notifyError, notifySuccess } from "@/lib/ui/toast";
+import { copyToClipboard } from "@/lib/ui/clipboard";
 import { Check, Copy, Inbox, Upload } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -23,14 +23,12 @@ export function IntakeEmailCard({
 
   async function copy() {
     if (!email) return;
-    try {
-      await navigator.clipboard.writeText(email);
-      setCopied(true);
-      notifySuccess("Intake address copied");
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      notifyError("Could not copy — select the address manually");
-    }
+    const ok = await copyToClipboard(email, {
+      successMessage: "Intake address copied",
+    });
+    if (!ok) return;
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   }
 
   if (!inboundLive || !email) {

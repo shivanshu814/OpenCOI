@@ -8,11 +8,11 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/lib/requirements/engine.test.ts src/lib/requirements/merge.test.ts src/lib/chase/cadence.test.ts src/lib/reports/build.test.ts src/lib/reports/owner-build.test.ts src/lib/projects/types.test.ts src/lib/verdicts/customer-decision.test.ts src/lib/billing/checkout.test.ts src/lib/carriers/ratings.test.ts src/lib/fraud/signals.test.ts src/lib/scores/compute.test.ts src/lib/sms/templates.test.ts src/lib/auth/roles.test.ts src/lib/tax/tin.test.ts src/lib/api/keys.test.ts src/lib/golden/accuracy.test.ts src/lib/email/resend.test.ts src/lib/billing/limits.test.ts src/lib/ai/extract.test.ts src/lib/sms/twilio-signature.test.ts src/lib/sms/phone-match.test.ts",
-    "ci": "npm run lint && npm run typecheck && npm test && npm run build",
+    "test": "tsx --test src/lib/requirements/engine.test.ts src/lib/requirements/merge.test.ts src/lib/chase/cadence.test.ts src/lib/reports/build.test.ts src/lib/reports/owner-build.test.ts src/lib/projects/types.test.ts src/lib/verdicts/customer-decision.test.ts src/lib/billing/checkout.test.ts src/lib/carriers/ratings.test.ts src/lib/fraud/signals.test.ts src/lib/scores/compute.test.ts src/lib/sms/templates.test.ts src/lib/auth/roles.test.ts src/lib/tax/tin.test.ts src/lib/api/keys.test.ts src/lib/golden/accuracy.test.ts src/lib/email/resend.test.ts src/lib/billing/limits.test.ts src/lib/ai/extract.test.ts src/lib/extraction/placeholders.test.ts src/lib/sms/twilio-signature.test.ts src/lib/sms/phone-match.test.ts",
+    "ci": "npm run lint && npm run typecheck && npm test && npm run build && npm run smoke",
     "db:push": "supabase db push --yes",
-    "samples:generate": "tsx scripts/generate-sample-cois.ts",
-    "load-test:1k": "tsx scripts/load-test-1k-vendors.ts"
+    "load-test:1k": "tsx scripts/load-test-1k-vendors.ts",
+    "smoke": "tsx scripts/smoke-test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.113.0",

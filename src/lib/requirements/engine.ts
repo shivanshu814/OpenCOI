@@ -5,6 +5,7 @@ import {
 } from "@/lib/carriers/ratings";
 import { normalizeIsoDate } from "@/lib/extraction/dates";
 import type { Extraction } from "@/lib/extraction/schema";
+import { formatUsd } from "@/lib/ui/format";
 import { nameSimilarity, normalizeVendorName } from "@/lib/vendors/fuzzy-match";
 
 const CONFIDENCE_THRESHOLD = 0.9;
@@ -410,7 +411,7 @@ export function runRequirementsEngine(
           reason = `${rule.label}: limit not found on cert.`;
         } else if (limit.amount < rule.min_amount) {
           verdict = "FAIL";
-          reason = `${rule.line.replaceAll("_", " ")} ${rule.limit_name.replaceAll("_", " ")} is $${limit.amount.toLocaleString()}, you require $${rule.min_amount.toLocaleString()}.`;
+          reason = `${rule.line.replaceAll("_", " ")} ${rule.limit_name.replaceAll("_", " ")} is ${formatUsd(limit.amount)}, you require ${formatUsd(rule.min_amount)}.`;
         }
       }
 

@@ -5,6 +5,35 @@ import { createClient } from "@/lib/supabase/server";
 import { insertAuditEvent } from "@/lib/audit/write";
 import { NextResponse } from "next/server";
 
+const ORG_SETTINGS_COLS = [
+  "name",
+  "legal_name",
+  "address_line",
+  "city",
+  "state",
+  "postal_code",
+  "phone",
+  "website",
+  "timezone",
+  "from_email",
+  "reply_to_email",
+  "brand_primary_color",
+  "logo_url",
+  "chase_notify_email",
+  "digest_email",
+  "digest_enabled",
+  "notify_email_enabled",
+  "notify_sms_enabled",
+].join(", ");
+
+/** Trim to null so an emptied field clears the column instead of storing "". */
+function nullableText(value: unknown, maxLength = 200): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return trimmed.slice(0, maxLength);
+}
+
 export async function GET() {
   if (!isSupabaseConfigured()) {
     return NextResponse.json({
@@ -33,9 +62,7 @@ export async function GET() {
         .order("created_at", { ascending: false }),
       supabase
         .from("orgs")
-        .select(
-          "name, from_email, reply_to_email, brand_primary_color, logo_url, chase_notify_email, digest_email",
-        )
+        .select(ORG_SETTINGS_COLS)
         .eq("id", session.orgId)
         .single(),
     ]);
@@ -43,6 +70,8 @@ export async function GET() {
   return NextResponse.json({
     members: members ?? [],
     invites: invites ?? [],
+    // `branding` is the legacy key the client already reads; it now carries the
+    // full org settings row (profile + branding + notification preferences).
     branding: org ?? {},
     your_role: session.role,
   });
@@ -61,7 +90,12 @@ export async function POST(request: Request) {
   }
 
   const body = (await request.json()) as {
-    action?: "invite" | "update_branding" | "update_member_role";
+    action?:
+      | "invite"
+      | "update_branding"
+      | "update_member_role"
+      | "update_profile"
+      | "update_notifications";
     email?: string;
     role?: "admin" | "member" | "viewer";
     member_id?: string;
@@ -70,6 +104,20 @@ export async function POST(request: Request) {
     brand_primary_color?: string | null;
     logo_url?: string | null;
     chase_notify_email?: string | null;
+    // Organization profile
+    name?: string | null;
+    legal_name?: string | null;
+    address_line?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postal_code?: string | null;
+    phone?: string | null;
+    website?: string | null;
+    timezone?: string | null;
+    // Notification preferences
+    digest_email?: string | null;
+    digest_enabled?: boolean;
+    notify_email_enabled?: boolean;
   };
 
   const supabase = await createClient();
@@ -168,6 +216,84 @@ export async function POST(request: Request) {
       after_state: {
         from_email: body.from_email,
         brand_primary_color: body.brand_primary_color,
+      },
+    });
+    return NextResponse.json({ ok: true });
+  }
+
+  if (body.action === "update_profile") {
+    const name = nullableText(body.name, 120);
+    if (!name) {
+      return NextResponse.json(
+        { error: "Company name is required." },
+        { status: 400 },
+      );
+    }
+    const website = nullableText(body.website, 200);
+    if (website && !/^https?:\/\//i.test(website)) {
+      return NextResponse.json(
+        { error: "Website must start with http:// or https://" },
+        { status: 400 },
+      );
+    }
+    const state = nullableText(body.state, 2);
+
+    const { error } = await supabase
+      .from("orgs")
+      .update({
+        name,
+        legal_name: nullableText(body.legal_name, 160),
+        address_line: nullableText(body.address_line),
+        city: nullableText(body.city, 80),
+        state: state ? state.toUpperCase() : null,
+        postal_code: nullableText(body.postal_code, 12),
+        phone: nullableText(body.phone, 32),
+        website,
+        timezone: nullableText(body.timezone, 64),
+      })
+      .eq("id", session.orgId);
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    await insertAuditEvent(supabase, {
+      org_id: session.orgId,
+      actor_type: "admin",
+      actor_id: session.userId,
+      actor_email: session.email,
+      entity_type: "org",
+      entity_id: session.orgId,
+      action: "org_profile_updated",
+      after_state: { name, city: body.city, state, timezone: body.timezone },
+    });
+    return NextResponse.json({ ok: true });
+  }
+
+  if (body.action === "update_notifications") {
+    // SMS is deliberately absent: it stays off until Twilio A2P is approved,
+    // and the UI shows it as "coming soon" rather than a toggle that lies.
+    const { error } = await supabase
+      .from("orgs")
+      .update({
+        notify_email_enabled: body.notify_email_enabled !== false,
+        chase_notify_email: nullableText(body.chase_notify_email),
+        digest_email: nullableText(body.digest_email),
+        digest_enabled: body.digest_enabled !== false,
+      })
+      .eq("id", session.orgId);
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    await insertAuditEvent(supabase, {
+      org_id: session.orgId,
+      actor_type: "admin",
+      actor_id: session.userId,
+      actor_email: session.email,
+      entity_type: "org",
+      entity_id: session.orgId,
+      action: "notification_settings_updated",
+      after_state: {
+        notify_email_enabled: body.notify_email_enabled !== false,
+        digest_enabled: body.digest_enabled !== false,
       },
     });
     return NextResponse.json({ ok: true });

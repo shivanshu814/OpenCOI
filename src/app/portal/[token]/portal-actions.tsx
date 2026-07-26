@@ -10,9 +10,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { FileDropzone } from "@/components/ui/file-dropzone";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, CircleAlert, FileText, Upload } from "lucide-react";
+import { CheckCircle2, CircleAlert } from "lucide-react";
 import { useState } from "react";
 
 type Props = {
@@ -26,6 +27,9 @@ const copy = {
     uploadTitle: "Upload your COI (PDF)",
     uploadHint: "ACORD 25 preferred. Max 20MB.",
     choose: "Tap to choose a PDF",
+    wrongType: "That file is not a PDF. Please upload the certificate as a PDF.",
+    tooLarge: (mb: number) =>
+      `That file is larger than ${mb} MB. Please upload a smaller scan.`,
     submit: "Upload PDF",
     uploading: "Uploading…",
     success: "Received — your certificate is in review.",
@@ -42,6 +46,9 @@ const copy = {
     uploadTitle: "Suba su COI (PDF)",
     uploadHint: "Se prefiere ACORD 25. Máx. 20MB.",
     choose: "Toque para elegir un PDF",
+    wrongType: "Ese archivo no es un PDF. Suba el certificado en formato PDF.",
+    tooLarge: (mb: number) =>
+      `Ese archivo supera los ${mb} MB. Suba un escaneo más pequeño.`,
     submit: "Subir PDF",
     uploading: "Subiendo…",
     success: "Recibido — su certificado está en revisión.",
@@ -143,39 +150,22 @@ export function PortalActions({ token, locale, agentEmail }: Props) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 py-4">
-            <label
-              htmlFor="coi-file"
-              className="border-input hover:bg-accent/50 flex min-h-20 cursor-pointer items-center justify-center gap-2.5 rounded-lg border border-dashed px-4 py-5 text-center"
-            >
-              {file ? (
-                <>
-                  <FileText
-                    className="size-5 shrink-0 text-emerald-600"
-                    aria-hidden
-                  />
-                  <span className="min-w-0 truncate text-sm font-medium">
-                    {file.name}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Upload
-                    className="text-muted-foreground size-5 shrink-0"
-                    aria-hidden
-                  />
-                  <span className="text-muted-foreground text-sm">
-                    {t.choose}
-                  </span>
-                </>
-              )}
-            </label>
-            <Input
+            <FileDropzone
               id="coi-file"
-              type="file"
+              value={file}
+              onChange={(next) => {
+                setFile(next);
+                setMsg(null);
+              }}
               accept="application/pdf,.pdf"
-              required={!file}
-              className="sr-only"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              maxSizeMb={20}
+              onReject={(message) => setMsg(message)}
+              messages={{
+                wrongType: t.wrongType,
+                tooLarge: (mb) => t.tooLarge(mb),
+              }}
+              label={t.choose}
+              hint={t.uploadHint}
             />
             <SampleCoiPicker
               locale={locale}
