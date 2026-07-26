@@ -1,0 +1,117 @@
+<!--
+  Supabase → Authentication → Emails → Templates → "Confirm sign up"
+  Subject: Confirm your email to open CertShield
+
+  This is the FIRST email a new customer ever receives. Supabase sends it —
+  not "Magic link" — when `signInWithOtp` is called with an address that has
+  no account yet, because the user is being created and must confirm. Anyone
+  who styles only the Magic Link template ships a default-looking email to
+  every brand-new signup and never notices, since their own account already
+  exists by then.
+
+  Kept visually identical to magic-link.html on purpose: the same person sees
+  this once and the other one forever after.
+
+  Email HTML constraints this file respects:
+  - table layout + inline styles (Outlook ignores flex/grid and <a> padding)
+  - the button is a table cell with bgcolor, not a styled <a>
+  - system font stack; Poppins would silently fall back in most clients
+  - 600px max width; single column
+  - the OTP code is included because corporate link scanners frequently
+    consume a one-time link before the human clicks it, which would
+    otherwise lock the user out of their own sign-in
+-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f6f7f9;margin:0;padding:24px 0;">
+  <tr>
+    <td align="center">
+
+      <!-- Preheader: shown in the inbox preview, hidden in the body. -->
+      <div style="display:none;max-height:0;overflow:hidden;opacity:0;">
+        Confirm your email address and your CertShield workspace is ready.
+      </div>
+
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background-color:#ffffff;border-radius:14px;border:1px solid #e2e5ea;overflow:hidden;">
+
+        <!-- Brand rail -->
+        <tr><td style="height:4px;background-color:#00B884;line-height:4px;font-size:0;">&nbsp;</td></tr>
+
+        <tr>
+          <td style="padding:28px 32px 8px 32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+            <div style="font-size:15px;font-weight:700;color:#121b29;letter-spacing:-0.01em;">
+              CertShield
+            </div>
+            <div style="font-size:12px;color:#6a727e;margin-top:2px;">
+              COI compliance
+            </div>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:16px 32px 0 32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+            <h1 style="margin:0;font-size:20px;line-height:1.3;font-weight:600;color:#121b29;letter-spacing:-0.02em;">
+              Confirm your email
+            </h1>
+            <p style="margin:10px 0 0 0;font-size:14px;line-height:1.6;color:#4a5260;">
+              One click and your workspace is ready. No password to create.
+            </p>
+          </td>
+        </tr>
+
+        <!-- Primary action -->
+        <tr>
+          <td style="padding:24px 32px 0 32px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td bgcolor="#00B884" style="border-radius:8px;">
+                  <a href="{{ .ConfirmationURL }}"
+                     style="display:inline-block;padding:13px 26px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:8px;">
+                    Confirm and continue
+                  </a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Code fallback: survives a link scanner burning the URL -->
+        <tr>
+          <td style="padding:24px 32px 0 32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+            <div style="border:1px solid #e2e5ea;border-radius:10px;background-color:#f6f7f9;padding:14px 16px;">
+              <div style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#6a727e;">
+                Or enter this code
+              </div>
+              <div style="font-size:24px;font-weight:700;letter-spacing:0.12em;color:#121b29;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin-top:6px;">
+                {{ .Token }}
+              </div>
+            </div>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:20px 32px 0 32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+            <p style="margin:0;font-size:13px;line-height:1.6;color:#6a727e;">
+              This link and code expire in one hour and can be used once. If
+              you didn&rsquo;t sign up for CertShield, ignore this email and no
+              account will be created.
+            </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:22px 32px 28px 32px;">
+            <div style="height:1px;background-color:#e2e5ea;line-height:1px;font-size:0;">&nbsp;</div>
+            <p style="margin:16px 0 0 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.6;color:#8b929c;">
+              Sent by CertShield because {{ .Email }} was used to start a
+              workspace. This is an account email, not marketing.
+            </p>
+            <p style="margin:8px 0 0 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.6;color:#8b929c;">
+              Button not working? Paste this into your browser:<br />
+              <span style="color:#6a727e;word-break:break-all;">{{ .ConfirmationURL }}</span>
+            </p>
+          </td>
+        </tr>
+      </table>
+
+    </td>
+  </tr>
+</table>
