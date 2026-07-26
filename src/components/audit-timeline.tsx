@@ -101,7 +101,7 @@ export function AuditTimeline({
   }
 
   const groups = groupByDay(filtered);
-  let globalIndex = 0;
+  const latestId = groups[0]?.events[0]?.id;
 
   return (
     <div className="space-y-6">
@@ -174,8 +174,7 @@ export function AuditTimeline({
 
               <ol className="relative ml-3 space-y-0 border-l border-brand/25 pl-6">
                 {group.events.map((e) => {
-                  const isLatest = globalIndex === 0;
-                  globalIndex += 1;
+                  const isLatest = e.id === latestId;
                   return (
                     <AuditEventRowView
                       key={e.id}
