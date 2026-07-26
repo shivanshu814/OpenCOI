@@ -3,34 +3,25 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-type FrameWidth = "narrow" | "default" | "wide" | "full";
-
-const WIDTH: Record<FrameWidth, string> = {
-  narrow: "max-w-3xl",
-  default: "max-w-6xl",
-  wide: "max-w-7xl",
-  full: "max-w-none",
-};
-
 /**
  * Shared CertShield app page frame.
+ * Full bleed within the main pane (shell padding only) — no max-width cap.
  * Title/purpose → optional KPI strip → primary content → secondary/help.
- * Workspace pages default to full bleed within the main pane; opt into a
- * narrower cap only for long-form prose surfaces.
  */
 export function PageFrame({
   children,
-  width = "full",
   className,
+  /** @deprecated Ignored — workspace pages are always full width. */
+  width: _width,
 }: {
   children: React.ReactNode;
-  width?: FrameWidth;
   className?: string;
+  /** @deprecated Ignored — workspace pages are always full width. */
+  width?: "narrow" | "default" | "wide" | "full";
 }) {
+  void _width;
   return (
-    <div className={cn("mx-auto w-full space-y-6", WIDTH[width], className)}>
-      {children}
-    </div>
+    <div className={cn("w-full space-y-6", className)}>{children}</div>
   );
 }
 

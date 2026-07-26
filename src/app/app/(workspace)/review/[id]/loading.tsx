@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function ReviewDetailLoading() {
   return (
     <div
-      className="mx-auto w-full max-w-7xl space-y-6"
+      className="w-full space-y-6"
       role="status"
       aria-busy="true"
       aria-label="Loading review"
