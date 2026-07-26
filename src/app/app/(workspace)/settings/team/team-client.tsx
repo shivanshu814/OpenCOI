@@ -255,11 +255,17 @@ export function TeamSettingsClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const data = (await res.json()) as { error?: string; note?: string };
+      const data = (await res.json()) as {
+        error?: string;
+        note?: string;
+        emailed?: boolean;
+      };
       if (!res.ok) {
         notifyApiError(data, "Could not save");
         return;
       }
+      // `note` only comes back when something fell short of the happy path —
+      // e.g. an invite row saved but its email failed to send.
       if (data.note) notifyWarning(data.note);
       else notifySuccess(successMessage);
       await load();
@@ -771,7 +777,7 @@ export function TeamSettingsClient() {
             onClick={() =>
               void post(
                 { action: "invite", email, role },
-                `Invite sent to ${email.trim()}`,
+                `Invite emailed to ${email.trim()}`,
               )
             }
           >
@@ -869,14 +875,22 @@ function MemberRow({
   busy: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState<Set<string>>(
-    () => new Set(grantedPropertyIds),
-  );
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  // Re-sync when a save round-trips, so the checkboxes reflect what was stored.
-  useEffect(() => {
-    setSelected(new Set(grantedPropertyIds));
-  }, [grantedPropertyIds]);
+  /**
+   * Seed the checkboxes from the stored grants at the moment the panel opens,
+   * rather than syncing them from props in an effect.
+   *
+   * Beyond avoiding a cascading render, this is the behaviour we want: a
+   * background refresh (another admin saving, or our own reload after a save)
+   * must not silently rewrite boxes someone is in the middle of ticking.
+   */
+  function togglePanel() {
+    setOpen((wasOpen) => {
+      if (!wasOpen) setSelected(new Set(grantedPropertyIds));
+      return !wasOpen;
+    });
+  }
 
   const isAdmin = member.role === "owner" || member.role === "admin";
   const scoped = grantedPropertyIds.length > 0;
@@ -913,7 +927,7 @@ function MemberRow({
                 variant="ghost"
                 size="sm"
                 className="h-7 text-xs"
-                onClick={() => setOpen((v) => !v)}
+                onClick={togglePanel}
               >
                 {open ? "Cancel" : "Change"}
               </Button>

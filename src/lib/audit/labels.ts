@@ -24,7 +24,11 @@ const ACTION_LABELS: Record<string, string> = {
   audit_pack_exported: "Audit pack exported",
   litigation_pack_exported: "Litigation pack exported",
   closeout_pack_exported: "Closeout pack exported",
-  team_invite_created: "Team invite sent",
+  team_invite_created: "Team invite created",
+  team_invite_sent: "Team invite emailed",
+  // Distinct label so a delivery failure is visible in the trail rather than
+  // reading like a successful invite.
+  team_invite_created_not_emailed: "Team invite created — email not sent",
   white_label_updated: "White-label branding updated",
   api_key_created: "API key created",
   license_added: "License added",

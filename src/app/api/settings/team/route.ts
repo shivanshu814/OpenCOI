@@ -1,7 +1,10 @@
 import { canAdminSensitive } from "@/lib/auth/roles";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
+import { sendOutboundEmail } from "@/lib/email/resend";
+import { renderTeamInviteEmail } from "@/lib/email/team-invite";
 import { createClient } from "@/lib/supabase/server";
+import { appBaseUrl } from "@/lib/app-url";
 import { insertAuditEvent } from "@/lib/audit/write";
 import { NextResponse } from "next/server";
 
@@ -140,20 +143,58 @@ export async function POST(request: Request) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+    // The invite row is what actually grants access (via
+    // `claim_pending_invites` on the teammate's first verified sign-in). The
+    // email only tells them to go and sign in — so a failed send must never
+    // fail the request or roll back the invite. It must, however, be reported
+    // honestly: the UI previously said "Invite sent" when nothing was sent.
+    const signInUrl = `${appBaseUrl()}/login?next=${encodeURIComponent("/app")}`;
+    const invited = data.email as string;
+    const email = renderTeamInviteEmail({
+      orgName: session.orgName,
+      invitedByEmail: session.email,
+      invitedEmail: invited,
+      role: data.role as string,
+      signInUrl,
+    });
+
+    const send = await sendOutboundEmail({
+      to: invited,
+      subject: email.subject,
+      text: email.text,
+      html: email.html,
+      replyTo: session.email ?? undefined,
+    });
+
     await insertAuditEvent(supabase, {
       org_id: session.orgId,
       actor_type: "admin",
       actor_id: session.userId,
-    actor_email: session.email,
+      actor_email: session.email,
       entity_type: "org",
       entity_id: session.orgId,
-      action: "team_invite_created",
-      after_state: { email: data.email, role: data.role },
+      // Records what happened, not what was attempted — a delivered invite and
+      // a failed one must be distinguishable in the audit trail.
+      action: send.ok ? "team_invite_sent" : "team_invite_created_not_emailed",
+      after_state: {
+        email: invited,
+        role: data.role,
+        emailed: send.ok,
+        transport: send.ok ? send.transport : null,
+        email_error: send.ok ? null : send.error,
+      },
     });
+
     return NextResponse.json({
       ok: true,
       invite: data,
-      note: "Invite sent. When the teammate signs in with this email, they auto-join this org with the assigned role.",
+      emailed: send.ok,
+      // `note` renders as a warning toast in the client, which is what a
+      // created-but-not-emailed invite deserves.
+      note: send.ok
+        ? undefined
+        : `Invite saved, but the email could not be sent (${send.error}). Tell ${invited} to sign in at ${signInUrl} — they will join automatically.`,
+      signInUrl,
     });
   }
 
