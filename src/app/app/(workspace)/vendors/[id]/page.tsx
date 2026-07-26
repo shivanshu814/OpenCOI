@@ -12,6 +12,10 @@ import {
   VendorStatusBadge,
   VerdictBadge,
 } from "@/components/status-badges";
+import {
+  SupportChatTranscript,
+  type TranscriptRow,
+} from "@/components/support-chat-transcript";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -60,10 +64,19 @@ export default async function VendorDetailPage({
 
   if (!vendor) notFound();
 
-  const [events, documents] = await Promise.all([
+  const [events, documents, chat] = await Promise.all([
     listVendorAuditTrail(id),
     listVendorDocuments(id),
+    // RLS-scoped read: org members see only their own vendors' transcripts.
+    supabase
+      .from("support_chat_messages")
+      .select("role, content, created_at")
+      .eq("org_id", session.orgId)
+      .eq("vendor_id", id)
+      .order("created_at", { ascending: true })
+      .limit(50),
   ]);
+  const chatRows = (chat.data ?? []) as TranscriptRow[];
   const fullDetail = canViewFullAudit(session.role);
   const meta = [vendor.trade, vendor.email, vendor.agent_email].filter(Boolean);
 
@@ -244,6 +257,8 @@ export default async function VendorDetailPage({
               <IssuePortalLinkButton vendorId={vendor.id} />
             </CardContent>
           </Card>
+
+          <SupportChatTranscript rows={chatRows} />
 
           <VendorSmsOptIn
             vendorId={vendor.id}

@@ -12,9 +12,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { isSupabaseConfigured } from "@/lib/config";
+import { PortalSupportChat } from "@/components/portal-support-chat";
+import { suggestedQuestions } from "@/lib/ai/support-chat";
+import { isClaudeConfigured, isSupabaseConfigured } from "@/lib/config";
+import {
+  buildSupportContext,
+  loadTranscript,
+} from "@/lib/portal/support-context";
 import { resolvePortalToken } from "@/lib/portal/tokens";
-import type { Verdict } from "@/lib/requirements/engine";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CheckCircle2, CircleAlert } from "lucide-react";
 import { PortalActions } from "./portal-actions";
@@ -65,7 +70,12 @@ export default async function PortalPage({
   }
 
   const locale = ctx.preferredLocale;
-  const gaps = await loadGaps(ctx.orgId, ctx.vendorId);
+  const admin = createAdminClient();
+  const [supportCtx, transcript] = await Promise.all([
+    buildSupportContext(ctx, admin),
+    loadTranscript(admin, ctx.orgId, ctx.vendorId),
+  ]);
+  const gaps = supportCtx.gaps.map((g) => `${g.label}: ${g.reason}`);
 
   const title =
     locale === "es"
@@ -155,6 +165,15 @@ export default async function PortalPage({
         </Alert>
       )}
 
+      {/* F4 — explain the findings before asking the vendor to act on them. */}
+      <PortalSupportChat
+        token={token}
+        locale={locale}
+        initialTurns={transcript}
+        suggestions={suggestedQuestions(supportCtx)}
+        enabled={isClaudeConfigured()}
+      />
+
       <PortalActions
         token={token}
         locale={locale}
@@ -162,23 +181,4 @@ export default async function PortalPage({
       />
     </div>
   );
-}
-
-async function loadGaps(orgId: string, vendorId: string): Promise<string[]> {
-  const admin = createAdminClient();
-  const { data: check } = await admin
-    .from("compliance_checks")
-    .select("lines, overall_verdict, published_at")
-    .eq("org_id", orgId)
-    .eq("vendor_id", vendorId)
-    .not("published_at", "is", null)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (!check?.lines || !Array.isArray(check.lines)) return [];
-
-  return (check.lines as { label: string; verdict: Verdict; reason: string }[])
-    .filter((l) => l.verdict !== "PASS")
-    .map((l) => `${l.label}: ${l.reason}`);
 }
