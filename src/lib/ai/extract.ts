@@ -5,8 +5,8 @@ import {
   type Extraction,
 } from "@/lib/extraction/schema";
 import {
+  repairRequiredStrings,
   scrubTemplatePlaceholders,
-  UNREADABLE_FIELD,
 } from "@/lib/extraction/placeholders";
 import { extractionToolInputSchema } from "@/lib/extraction/tool-schema";
 import Anthropic from "@anthropic-ai/sdk";
@@ -210,15 +210,17 @@ export async function extractCoiFromPdfBase64(params: {
   // creating an insured literally named after the form label.
   const { value: scrubbedInput, scrubbed } =
     scrubTemplatePlaceholders(rawInput);
-  const input = scrubbedInput as Record<string, unknown>;
 
-  // `insured.name` is a required non-nullable string in Appendix A, so a
-  // scrubbed name cannot be left null — mark it unreadable and let the review
-  // queue own it rather than failing the whole extraction.
-  const insured = input.insured as Record<string, unknown> | undefined;
-  if (insured && insured.name == null) {
-    insured.name = UNREADABLE_FIELD;
-  }
+  // Appendix A has required non-nullable strings (`insured.name`,
+  // `insurers[].name`). Scrubbing those to null would fail validation and be
+  // reported as "the AI returned malformed extraction data" — our own doing,
+  // blamed on the model. Repair them from the schema's own complaints so the
+  // document reaches review instead of erroring.
+  const { value: repairedInput } = repairRequiredStrings(
+    extractionSchema,
+    scrubbedInput,
+  );
+  const input = repairedInput as Record<string, unknown>;
 
   const cost_usd = estimateCostUsd(
     MODEL_VERSION,

@@ -1,10 +1,26 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
+import { z } from "zod";
+
 import {
   isTemplatePlaceholder,
+  repairRequiredStrings,
   scrubTemplatePlaceholders,
+  UNREADABLE_FIELD,
 } from "./placeholders";
+
+/** Mirrors the Appendix A shape that matters here: required, non-nullable. */
+const requiredStringSchema = z.object({
+  insured: z.object({ name: z.string(), confidence: z.number() }),
+  insurers: z.array(
+    z.object({
+      letter: z.string(),
+      name: z.string(),
+      confidence: z.number(),
+    }),
+  ),
+});
 
 describe("blank ACORD specimen defence", () => {
   it("recognizes the labels printed on an unfilled ACORD 25", () => {
@@ -165,5 +181,51 @@ describe("blank ACORD specimen defence", () => {
       policies: [{ policy_number: "CPP-882134", confidence: 0.96 }],
     });
     assert.deepEqual(scrubbed, []);
+  });
+});
+
+describe("required-string repair (regression: scrubbing broke validation)", () => {
+  it("replaces scrubbed required strings instead of failing validation", () => {
+    // Reproduces the shipped bug: the DASNY specimen fills every insurer with
+    // "Your Insurance Company". Scrubbing nulled `insurers[].name`, which is
+    // required non-nullable in Appendix A, so zod threw and the user saw
+    // "The AI returned malformed extraction data".
+    const { value: scrubbed } = scrubTemplatePlaceholders({
+      insured: { name: "Your Name", confidence: 0.95 },
+      insurers: [
+        { letter: "A", name: "Your Insurance Company", confidence: 0.94 },
+        { letter: "B", name: "Hartford Casualty", confidence: 0.92 },
+      ],
+    });
+
+    const { value, repaired } = repairRequiredStrings(
+      requiredStringSchema,
+      scrubbed,
+    );
+
+    const out = value as {
+      insured: { name: string };
+      insurers: { name: string }[];
+    };
+    assert.equal(out.insured.name, UNREADABLE_FIELD);
+    assert.equal(out.insurers[0].name, UNREADABLE_FIELD);
+    assert.equal(out.insurers[1].name, "Hartford Casualty");
+    assert.deepEqual(repaired.sort(), ["insured.name", "insurers.0.name"]);
+
+    // The whole point: it validates now.
+    assert.equal(requiredStringSchema.safeParse(value).success, true);
+  });
+
+  it("leaves a valid payload untouched", () => {
+    const input = {
+      insured: { name: "Bay Plumbing Co", confidence: 0.98 },
+      insurers: [{ letter: "A", name: "Travelers", confidence: 0.97 }],
+    };
+    const { value, repaired } = repairRequiredStrings(
+      requiredStringSchema,
+      structuredClone(input),
+    );
+    assert.deepEqual(repaired, []);
+    assert.deepEqual(value, input);
   });
 });

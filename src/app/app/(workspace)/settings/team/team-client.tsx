@@ -28,6 +28,12 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
+import { UsAddressFields } from "@/components/ui/us-address-fields";
+import {
+  detectTimezone,
+  usTimezoneOptions,
+  zoneCityName,
+} from "@/lib/geo/timezones";
 import { productRoleLabel, toProductRole } from "@/lib/auth/roles";
 import {
   notifyApiError,
@@ -37,7 +43,7 @@ import {
 } from "@/lib/ui/toast";
 import { cn } from "@/lib/utils";
 import { Building2, Mail, MessageSquare, Palette } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 const ROLE_ITEMS: ReadonlyArray<{
   label: string;
@@ -46,17 +52,6 @@ const ROLE_ITEMS: ReadonlyArray<{
   { label: "Admin", value: "admin" },
   { label: "Manager", value: "member" },
   { label: "Read-only", value: "viewer" },
-];
-
-/** US zones only — CertShield stores and reports in US regions (spec §0). */
-const TIMEZONE_ITEMS: ReadonlyArray<{ label: string; value: string }> = [
-  { label: "Eastern (New York)", value: "America/New_York" },
-  { label: "Central (Chicago)", value: "America/Chicago" },
-  { label: "Mountain (Denver)", value: "America/Denver" },
-  { label: "Arizona (Phoenix)", value: "America/Phoenix" },
-  { label: "Pacific (Los Angeles)", value: "America/Los_Angeles" },
-  { label: "Alaska (Anchorage)", value: "America/Anchorage" },
-  { label: "Hawaii (Honolulu)", value: "Pacific/Honolulu" },
 ];
 
 const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
@@ -145,38 +140,50 @@ export function TeamSettingsClient() {
   );
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/settings/team");
-    const data = (await res.json()) as {
-      members?: { id: string; user_id: string; role: string }[];
-      invites?: { id: string; email: string; role: string }[];
-      branding?: Partial<Record<keyof OrgSettings, unknown>>;
-      error?: string;
-    };
-    if (data.error) {
-      setLoadError(data.error);
-      notifyError(data.error);
-      setLoading(false);
-      return;
-    }
-    setLoadError(null);
-    setMembers(data.members ?? []);
-    setInvites(data.invites ?? []);
+    // Every exit path must clear `loading`. Without the finally, a network
+    // blip or a non-JSON response left the page stuck on skeletons forever —
+    // indistinguishable from "settings are gone".
+    try {
+      const res = await fetch("/api/settings/team");
+      const data = (await res.json()) as {
+        members?: { id: string; user_id: string; role: string }[];
+        invites?: { id: string; email: string; role: string }[];
+        branding?: Partial<Record<keyof OrgSettings, unknown>>;
+        error?: string;
+      };
+      if (data.error) {
+        setLoadError(data.error);
+        notifyError(data.error);
+        return;
+      }
+      setLoadError(null);
+      setMembers(data.members ?? []);
+      setInvites(data.invites ?? []);
 
-    const org = data.branding ?? {};
-    setSettings({
-      ...EMPTY_SETTINGS,
-      ...Object.fromEntries(
-        Object.keys(EMPTY_SETTINGS).map((key) => {
-          const k = key as keyof OrgSettings;
-          const value = org[k];
-          if (typeof EMPTY_SETTINGS[k] === "boolean") {
-            return [k, value === undefined ? EMPTY_SETTINGS[k] : Boolean(value)];
-          }
-          return [k, typeof value === "string" ? value : ""];
-        }),
-      ),
-    } as OrgSettings);
-    setLoading(false);
+      const org = data.branding ?? {};
+      setSettings({
+        ...EMPTY_SETTINGS,
+        ...Object.fromEntries(
+          Object.keys(EMPTY_SETTINGS).map((key) => {
+            const k = key as keyof OrgSettings;
+            const value = org[k];
+            if (typeof EMPTY_SETTINGS[k] === "boolean") {
+              return [
+                k,
+                value === undefined ? EMPTY_SETTINGS[k] : Boolean(value),
+              ];
+            }
+            return [k, typeof value === "string" ? value : ""];
+          }),
+        ),
+      } as OrgSettings);
+    } catch {
+      setLoadError(
+        "Could not load workspace settings. Check your connection and reload.",
+      );
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -203,6 +210,15 @@ export function TeamSettingsClient() {
       setBusy(false);
     }
   }
+
+  // Built from the runtime's own IANA database, so abbreviations and offsets
+  // are current (EST vs EDT) instead of a list that rots. Recomputed only when
+  // the stored zone changes — the labels are stable within a session.
+  const timezoneItems = useMemo(
+    () => usTimezoneOptions(settings.timezone || null),
+    [settings.timezone],
+  );
+  const detectedZone = useMemo(() => detectTimezone(), []);
 
   const colorValid =
     !settings.brand_primary_color || HEX_RE.test(settings.brand_primary_color);
@@ -265,47 +281,19 @@ export function TeamSettingsClient() {
                 entity exactly.
               </p>
             </div>
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label htmlFor="org-address">Street address</Label>
-              <Input
-                id="org-address"
-                value={settings.address_line}
-                onChange={(e) => set("address_line", e.target.value)}
-                placeholder="1200 Market St, Suite 400"
+            <div className="sm:col-span-2">
+              <UsAddressFields
+                idPrefix="org"
+                value={{
+                  address_line: settings.address_line,
+                  city: settings.city,
+                  state: settings.state,
+                  postal_code: settings.postal_code,
+                }}
+                onChange={(addr) =>
+                  setSettings((prev) => ({ ...prev, ...addr }))
+                }
               />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="org-city">City</Label>
-              <Input
-                id="org-city"
-                value={settings.city}
-                onChange={(e) => set("city", e.target.value)}
-                placeholder="Philadelphia"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="org-state">State</Label>
-                <Input
-                  id="org-state"
-                  maxLength={2}
-                  value={settings.state}
-                  onChange={(e) =>
-                    set("state", e.target.value.toUpperCase().slice(0, 2))
-                  }
-                  placeholder="PA"
-                  className="uppercase"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="org-zip">ZIP</Label>
-                <Input
-                  id="org-zip"
-                  value={settings.postal_code}
-                  onChange={(e) => set("postal_code", e.target.value)}
-                  placeholder="19107"
-                />
-              </div>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="org-phone">Phone</Label>
@@ -329,7 +317,7 @@ export function TeamSettingsClient() {
             <div className="space-y-1.5">
               <Label htmlFor="org-tz">Time zone</Label>
               <Select
-                items={TIMEZONE_ITEMS}
+                items={timezoneItems}
                 value={settings.timezone || null}
                 onValueChange={(value) => set("timezone", value ?? "")}
               >
@@ -337,7 +325,7 @@ export function TeamSettingsClient() {
                   <SelectValue placeholder="Select a time zone" />
                 </SelectTrigger>
                 <SelectContent>
-                  {TIMEZONE_ITEMS.map((tz) => (
+                  {timezoneItems.map((tz) => (
                     <SelectItem key={tz.value} value={tz.value}>
                       {tz.label}
                     </SelectItem>
@@ -347,6 +335,18 @@ export function TeamSettingsClient() {
               <p className="text-muted-foreground text-xs">
                 Sets when the daily digest arrives and how dates read on
                 reports.
+                {detectedZone && detectedZone !== settings.timezone ? (
+                  <>
+                    {" "}
+                    <button
+                      type="button"
+                      onClick={() => set("timezone", detectedZone)}
+                      className="text-brand font-medium underline-offset-2 hover:underline"
+                    >
+                      Use this device&apos;s zone ({zoneCityName(detectedZone)})
+                    </button>
+                  </>
+                ) : null}
               </p>
             </div>
           </div>

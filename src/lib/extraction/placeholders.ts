@@ -102,11 +102,12 @@ export function isTemplatePlaceholder(value: unknown): boolean {
  * Null out placeholder strings anywhere in an extraction payload and zero the
  * confidence of every object that contained one.
  *
- * Operates on the raw tool-call JSON *before* zod parsing, because
- * `insured.name` is a required non-nullable string in Appendix A: replacing it
- * with null there would fail validation, so the caller (see `runExtraction`)
- * substitutes an explicit "unreadable" marker instead and lets the review
- * queue own it.
+ * Runs on the raw tool-call JSON *before* zod parsing. Appendix A marks a few
+ * fields as required non-nullable strings (`insured.name`, `insurers[].name`),
+ * so nulling those would fail validation and surface as "the AI returned
+ * malformed extraction data" — blaming the model for our own scrubbing. Call
+ * `repairRequiredStrings` on the result to convert those specific nulls into
+ * an explicit unreadable marker.
  */
 export function scrubTemplatePlaceholders(input: unknown): {
   value: unknown;
@@ -148,4 +149,81 @@ export function scrubTemplatePlaceholders(input: unknown): {
   }
 
   return { value: walk(input, ""), scrubbed };
+}
+
+/**
+ * Turn "required string was scrubbed to null" into an explicit unreadable
+ * marker, driven by the schema rather than a hand-maintained path list.
+ *
+ * Zod is asked to validate; every complaint of the form "expected string,
+ * received null" is patched with {@link UNREADABLE_FIELD} and validation is
+ * retried. Doing it from the reported issue paths means a future Appendix A
+ * change that adds another required string is handled automatically, instead
+ * of failing extraction until someone remembers to update a constant.
+ */
+export function repairRequiredStrings<T>(
+  schema: { safeParse: (input: unknown) => SafeParseLike<T> },
+  input: unknown,
+  maxPasses = 3,
+): { value: unknown; repaired: string[] } {
+  // Patched in place by `setAtPath`, so the binding itself never changes.
+  const value = input;
+  const repaired: string[] = [];
+
+  for (let pass = 0; pass < maxPasses; pass += 1) {
+    const result = schema.safeParse(value);
+    if (result.success) break;
+
+    const nullStringIssues = (result.error?.issues ?? []).filter(
+      (issue) =>
+        issue.code === "invalid_type" &&
+        issue.expected === "string" &&
+        issue.path.length > 0 &&
+        getAtPath(value, issue.path) === null,
+    );
+    if (nullStringIssues.length === 0) break;
+
+    for (const issue of nullStringIssues) {
+      setAtPath(value, issue.path, UNREADABLE_FIELD);
+      repaired.push(issue.path.join("."));
+    }
+  }
+
+  return { value, repaired };
+}
+
+type SafeParseLike<T> = {
+  success: boolean;
+  data?: T;
+  error?: { issues: ReadonlyArray<ZodIssueLike> };
+};
+
+type ZodIssueLike = {
+  code: string;
+  expected?: string;
+  path: ReadonlyArray<PropertyKey>;
+};
+
+function getAtPath(root: unknown, path: ReadonlyArray<PropertyKey>): unknown {
+  let node: unknown = root;
+  for (const key of path) {
+    if (node == null || typeof node !== "object") return undefined;
+    node = (node as Record<PropertyKey, unknown>)[key];
+  }
+  return node;
+}
+
+function setAtPath(
+  root: unknown,
+  path: ReadonlyArray<PropertyKey>,
+  value: unknown,
+): void {
+  if (path.length === 0) return;
+  let node: unknown = root;
+  for (const key of path.slice(0, -1)) {
+    if (node == null || typeof node !== "object") return;
+    node = (node as Record<PropertyKey, unknown>)[key];
+  }
+  if (node == null || typeof node !== "object") return;
+  (node as Record<PropertyKey, unknown>)[path[path.length - 1]!] = value;
 }

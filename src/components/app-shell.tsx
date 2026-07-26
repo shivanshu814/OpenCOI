@@ -53,6 +53,7 @@ import {
   LogOut,
   ScrollText,
   ShieldCheck,
+  SlidersHorizontal,
   Upload,
   UserRound,
   Users,
@@ -109,7 +110,9 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Settings",
     items: [
-      { href: "/app/settings/team", label: "Team", icon: Users },
+      // Page covers company profile, branding, notifications, and team — the
+      // old "Team" label sent people looking elsewhere for settings.
+      { href: "/app/settings/team", label: "Workspace", icon: SlidersHorizontal },
       {
         href: "/app/settings/integrations",
         label: "API & integrations",
@@ -353,7 +356,7 @@ function AppHeader({ live }: { live: boolean }) {
                 {live ? "Workspace connected" : "Demo mode"}
               </DropdownMenuLabel>
               <DropdownMenuItem render={<Link href="/app/settings/team" />}>
-                <Users /> Team
+                <SlidersHorizontal /> Workspace settings
               </DropdownMenuItem>
               <DropdownMenuItem render={<Link href="/app/settings/billing" />}>
                 <CreditCard /> Billing

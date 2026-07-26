@@ -50,8 +50,11 @@ export function StatStrip({
     <dl
       className={cn(
         "grid gap-3 sm:grid-cols-2 lg:grid-cols-4",
-        items.length === 2 && "lg:grid-cols-2",
-        items.length === 3 && "lg:grid-cols-3",
+        // Two or three tiles stretched across an ultra-wide pane read as
+        // mostly empty boxes, so cap the strip rather than letting a pair of
+        // cards span 1,700px.
+        items.length === 2 && "lg:max-w-3xl lg:grid-cols-2",
+        items.length === 3 && "lg:max-w-5xl lg:grid-cols-3",
         className,
       )}
     >

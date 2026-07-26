@@ -125,7 +125,9 @@ export function AuditTimeline({
 
   return (
     <div className="space-y-6">
-      <div className="bg-muted/30 flex flex-wrap items-end gap-x-3 gap-y-3 rounded-xl border px-3 py-3">
+      {/* Sits inside the Event history card, so no second frame — a rule and
+          the page's own background are enough separation. */}
+      <div className="flex flex-wrap items-end gap-x-3 gap-y-3 border-b pb-4">
         <div className="space-y-1.5">
           <Label
             htmlFor="audit-action-filter"
@@ -188,7 +190,9 @@ export function AuditTimeline({
             Reset
           </Button>
         ) : null}
-        <p className="text-muted-foreground ml-auto pb-2.5 text-xs tabular-nums">
+        {/* Kept beside the controls it describes — `ml-auto` stranded it a
+            screen-width away on a wide monitor. */}
+        <p className="text-muted-foreground pb-2.5 text-xs tabular-nums">
           {filtered.length} of {events.length} events
           {fullDetail ? " · full detail (Admin)" : " · limited detail"}
         </p>
@@ -228,7 +232,9 @@ export function AuditTimeline({
                 </span>
               </div>
 
-              <ol className="relative ml-3 space-y-0 border-l border-brand/25 pl-6">
+              {/* Capped so an event's title and its timestamp stay in the
+                  same visual line of sight on a wide monitor. */}
+              <ol className="relative ml-3 max-w-6xl space-y-0 border-l border-brand/25 pl-6">
                 {group.events.map((e) => {
                   const isLatest = e.id === latestId;
                   return (
@@ -265,6 +271,14 @@ function AuditEventRowView({
   const beforeSummary = summarizeState(e.before_state, { forAdmin: fullDetail });
   const afterSummary = summarizeState(e.after_state, { forAdmin: fullDetail });
   const actorDisplay = formatActorDisplay(e);
+
+  // Background work (extraction, chase sends, webhooks) has no HTTP request
+  // behind it, so IP/user-agent are genuinely absent rather than missing. A
+  // bare em dash read as "the audit trail is broken" — say which it is.
+  const isSystemActor = e.actor_type === "system" || e.actor_type === "job";
+  const noRequestContext = isSystemActor
+    ? "Not applicable — background job, no browser request"
+    : "Not captured for this event";
 
   async function copyDetail() {
     const payload = {
@@ -413,11 +427,17 @@ function AuditEventRowView({
                 {e.actor_id ? (
                   <span className="font-mono">{truncateId(e.actor_id, 12)}</span>
                 ) : (
-                  "—"
+                  <Unset>Not recorded for this event type</Unset>
                 )}
               </DetailItem>
               <DetailItem label="Actor email">
-                {e.actor_email ?? "—"}
+                {e.actor_email ?? (
+                  <Unset>
+                    {isSystemActor
+                      ? "System process — no signed-in user"
+                      : "No email on the acting account"}
+                  </Unset>
+                )}
               </DetailItem>
               <DetailItem label="Entity">
                 {humanizeEntityType(e.entity_type)} ·{" "}
@@ -429,22 +449,33 @@ function AuditEventRowView({
               {fullDetail ? (
                 <>
                   <DetailItem label="IP address">
-                    {e.ip_address ?? "—"}
+                    {e.ip_address ?? <Unset>{noRequestContext}</Unset>}
                   </DetailItem>
                   <DetailItem label="User-Agent">
-                    {shortUserAgent(e.user_agent) ?? "—"}
+                    {shortUserAgent(e.user_agent) ?? (
+                      <Unset>{noRequestContext}</Unset>
+                    )}
                   </DetailItem>
                 </>
               ) : (
                 <DetailItem label="Network">
-                  Hidden for your role — ask an Admin for IP / device detail.
+                  <Unset>
+                    Hidden for your role — ask an Admin for IP / device detail.
+                  </Unset>
                 </DetailItem>
               )}
               <DetailItem label="Before" className="sm:col-span-2 lg:col-span-3">
-                {beforeSummary ?? "—"}
+                {beforeSummary ?? (
+                  <Unset>
+                    Nothing — this is the first recorded state for the{" "}
+                    {humanizeEntityType(e.entity_type).toLowerCase()}
+                  </Unset>
+                )}
               </DetailItem>
               <DetailItem label="After" className="sm:col-span-2 lg:col-span-3">
-                {afterSummary ?? "—"}
+                {afterSummary ?? (
+                  <Unset>No state change was recorded for this action</Unset>
+                )}
               </DetailItem>
               {fullDetail && (e.before_state != null || e.after_state != null) ? (
                 <DetailItem label="Raw JSON" className="sm:col-span-2 lg:col-span-3">
@@ -479,6 +510,13 @@ function AuditEventRowView({
         </div>
       </Collapsible>
     </li>
+  );
+}
+
+/** Explains *why* a field is empty instead of showing a bare em dash. */
+function Unset({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="text-muted-foreground/80 italic">{children}</span>
   );
 }
 

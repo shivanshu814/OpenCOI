@@ -13,8 +13,12 @@
  * link. Demo mode exercises the same components and data-shaping code with
  * fixture data.
  *
- * Run: npm run smoke        (boots its own server on :3399)
- *      SMOKE_BASE_URL=… npm run smoke   (test an already-running server)
+ * Run: npm run smoke
+ *        boots its own demo-mode server on :3399 and runs every check.
+ *      SMOKE_BASE_URL=https://getcertshield.vercel.app npm run smoke
+ *        checks a live deployment — public pages, sample PDFs, and headers.
+ *        Workspace/API checks are skipped there: those routes require a
+ *        signed-in session, so failing them would only mean "not logged in".
  */
 
 import { spawn, type ChildProcess } from "node:child_process";
@@ -25,6 +29,16 @@ const EXTERNAL_BASE = process.env.SMOKE_BASE_URL;
 const BASE = EXTERNAL_BASE ?? `http://localhost:${PORT}`;
 const BOOT_TIMEOUT_MS = 120_000;
 
+/**
+ * A live deployment has Supabase configured, so `/app/*` redirects to
+ * `/login` and authenticated APIs answer 401. Those checks are meaningful
+ * only against the demo-mode server this script boots itself — running them
+ * against prod would report a dozen failures that are really just "you are
+ * not signed in". Checks are tagged so the external mode skips them and says
+ * so, instead of reporting a red run for a healthy deploy.
+ */
+type Scope = "any" | "demo-only";
+
 type Check = {
   path: string;
   /** Substrings that must appear in the rendered HTML. */
@@ -32,6 +46,7 @@ type Check = {
   /** Substrings that must NOT appear (regression guards). */
   absent?: string[];
   expectStatus?: number;
+  scope?: Scope;
 };
 
 /**
@@ -56,12 +71,13 @@ const PAGE_CHECKS: Check[] = [
   { path: "/subprocessors" },
 
   // ── Workspace (demo mode) ───────────────────────────────────────────
-  { path: "/app", contains: ["Dashboard"] },
+  { path: "/app", contains: ["Dashboard"], scope: "demo-only" },
   {
     path: "/app/vendors",
     contains: ["Vendors", "All vendors", "Search name, trade, email"],
+    scope: "demo-only",
   },
-  { path: "/app/review", contains: ["Review queue"] },
+  { path: "/app/review", contains: ["Review queue"], scope: "demo-only" },
   {
     path: "/app/upload",
     contains: [
@@ -72,33 +88,49 @@ const PAGE_CHECKS: Check[] = [
       "ACORD 25",
     ],
     absent: ["sample-acord-25-gl-roofer"],
+    scope: "demo-only",
   },
-  { path: "/app/audit", contains: ["Audit trail"] },
-  { path: "/app/reports", contains: ["Owner reports"] },
-  { path: "/app/properties", contains: ["Properties"] },
-  { path: "/app/projects", contains: ["Projects"] },
-  { path: "/app/settings/team", contains: ["Workspace settings"] },
-  { path: "/app/settings/billing", contains: ["Billing"] },
+  { path: "/app/audit", contains: ["Audit trail"], scope: "demo-only" },
+  { path: "/app/reports", contains: ["Owner reports"], scope: "demo-only" },
+  { path: "/app/properties", contains: ["Properties"], scope: "demo-only" },
+  { path: "/app/projects", contains: ["Projects"], scope: "demo-only" },
+  {
+    path: "/app/settings/team",
+    contains: ["Workspace settings"],
+    scope: "demo-only",
+  },
+  { path: "/app/settings/billing", contains: ["Billing"], scope: "demo-only" },
   // Ampersand arrives HTML-escaped in the markup.
-  { path: "/app/settings/integrations", contains: ["API &amp; integrations"] },
-  { path: "/app/admin", contains: ["Ops dashboard"] },
+  {
+    path: "/app/settings/integrations",
+    contains: ["API &amp; integrations"],
+    scope: "demo-only",
+  },
+  { path: "/app/admin", contains: ["Ops dashboard"], scope: "demo-only" },
 
   // ── Vendors: server-side search / filter / paging ───────────────────
-  { path: "/app/vendors?q=roof", contains: ["Sunshine Roofing"] },
+  {
+    path: "/app/vendors?q=roof",
+    contains: ["Sunshine Roofing"],
+    scope: "demo-only",
+  },
   {
     path: "/app/vendors?q=zzzznotfound",
     contains: ["No vendors match"],
     absent: ["Sunshine Roofing"],
+    scope: "demo-only",
   },
   {
     path: "/app/vendors?status=in_review",
     contains: ["All vendors"],
+    scope: "demo-only",
   },
   {
     // An out-of-range page must clamp to the last real page, never render a
     // misleading "no vendors match" dead end.
     path: "/app/vendors?page=99",
     absent: ["No vendors match"],
+    scope: "demo-only",
   },
 ];
 
@@ -117,13 +149,35 @@ type ApiCheck = {
   expectStatus?: number;
   /** Keys that must exist on the JSON body. */
   keys?: string[];
+  scope?: Scope;
 };
 
 const API_CHECKS: ApiCheck[] = [
-  { path: "/api/settings/team", keys: ["members", "invites", "branding"] },
+  // Address + timezone data must be real lookups, not stubs. These run
+  // against any target — they need no session.
+  { path: "/api/geo/states", keys: ["source", "states"] },
+  { path: "/api/geo/zip?zip=19107", keys: ["found", "city", "state"] },
+  { path: "/api/geo/zip?zip=abc", keys: ["error"], expectStatus: 400 },
+  { path: "/api/geo/cities?state=PA", keys: ["state", "cities"] },
+  {
+    path: "/api/settings/team",
+    keys: ["members", "invites", "branding"],
+    scope: "demo-only",
+  },
 ];
 
 let failures = 0;
+let skipped = 0;
+
+/** Demo-only checks cannot pass against an authenticated deployment. */
+function shouldRun(scope: Scope | undefined): boolean {
+  return !EXTERNAL_BASE || scope !== "demo-only";
+}
+
+function skip(label: string, why: string) {
+  skipped += 1;
+  console.log(`  – ${label}  (skipped: ${why})`);
+}
 
 function fail(label: string, detail: string) {
   failures += 1;
@@ -262,13 +316,19 @@ async function main(): Promise<void> {
     await waitForServer();
 
     console.log("\nPages");
-    for (const check of PAGE_CHECKS) await checkPage(check);
+    for (const check of PAGE_CHECKS) {
+      if (shouldRun(check.scope)) await checkPage(check);
+      else skip(check.path, "needs demo mode; this target requires sign-in");
+    }
 
     console.log("\nSample COI library");
     for (const name of SAMPLE_PDFS) await checkSamplePdf(name);
 
     console.log("\nAPIs");
-    for (const check of API_CHECKS) await checkApi(check);
+    for (const check of API_CHECKS) {
+      if (shouldRun(check.scope)) await checkApi(check);
+      else skip(`API ${check.path}`, "needs demo mode; this target requires sign-in");
+    }
   } finally {
     if (server) {
       server.kill("SIGTERM");
@@ -280,8 +340,10 @@ async function main(): Promise<void> {
 
   const total =
     PAGE_CHECKS.length + SAMPLE_PDFS.length + API_CHECKS.length;
+  const ran = total - skipped;
   console.log(
-    `\n${total - failures}/${total} smoke checks passed` +
+    `\n${ran - failures}/${ran} smoke checks passed` +
+    (skipped ? ` (${skipped} skipped — authenticated target)` : "") +
     (failures ? ` — ${failures} FAILED` : ""),
   );
   process.exit(failures ? 1 : 0);
