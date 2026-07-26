@@ -6,6 +6,7 @@ import {
   downloadPdfBase64FromStorage,
   markExtractionFailed,
 } from "@/lib/documents/ingest";
+import { analyzePdfLayout } from "@/lib/fraud/layout";
 import {
   analyzePdfMetadata,
   insuredNameMismatchSignal,
@@ -192,7 +193,13 @@ async function collectFraudSignals(input: {
 }): Promise<FraudSignal[]> {
   const supabase = createAdminClient();
   const bytes = Buffer.from(input.pdfBase64, "base64");
-  const signals = await analyzePdfMetadata(bytes);
+  // Metadata (producer/editor hints) and structure (fonts, layout) are
+  // independent reads of the same file; both are advisory only.
+  const [metadataSignals, layout] = await Promise.all([
+    analyzePdfMetadata(bytes),
+    analyzePdfLayout(bytes),
+  ]);
+  const signals = [...metadataSignals, ...layout.signals];
 
   const { data: doc } = await supabase
     .from("documents")

@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { UsAddressFields } from "@/components/ui/us-address-fields";
 import {
@@ -55,6 +56,10 @@ const ROLE_ITEMS: ReadonlyArray<{
 ];
 
 const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+
+type PropertyOption = { id: string; name: string };
+
+type Member = { id: string; user_id: string; role: string };
 
 type OrgSettings = {
   name: string;
@@ -119,15 +124,15 @@ function SectionTitle({
 }
 
 export function TeamSettingsClient() {
-  const [members, setMembers] = useState<
-    { id: string; user_id: string; role: string }[]
-  >([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [invites, setInvites] = useState<
     { id: string; email: string; role: string }[]
   >([]);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"admin" | "member" | "viewer">("member");
   const [settings, setSettings] = useState<OrgSettings>(EMPTY_SETTINGS);
+  const [properties, setProperties] = useState<PropertyOption[]>([]);
+  const [grantsByUser, setGrantsByUser] = useState<Record<string, string[]>>({});
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -146,7 +151,7 @@ export function TeamSettingsClient() {
     try {
       const res = await fetch("/api/settings/team");
       const data = (await res.json()) as {
-        members?: { id: string; user_id: string; role: string }[];
+        members?: Member[];
         invites?: { id: string; email: string; role: string }[];
         branding?: Partial<Record<keyof OrgSettings, unknown>>;
         error?: string;
@@ -186,9 +191,61 @@ export function TeamSettingsClient() {
     }
   }, []);
 
+  /**
+   * G1 grants live behind an admin-only route, so a Manager viewing this page
+   * simply gets no scope data and the column stays quiet — no error, since the
+   * feature is not theirs to manage.
+   */
+  const loadScopes = useCallback(async () => {
+    try {
+      const res = await fetch("/api/settings/property-access");
+      if (!res.ok) return;
+      const data = (await res.json()) as {
+        grants?: { user_id: string; property_id: string }[];
+        properties?: PropertyOption[];
+      };
+      setProperties(data.properties ?? []);
+      const byUser: Record<string, string[]> = {};
+      for (const g of data.grants ?? []) {
+        (byUser[g.user_id] ??= []).push(g.property_id);
+      }
+      setGrantsByUser(byUser);
+    } catch {
+      // Optional enhancement — leave the column empty.
+    }
+  }, []);
+
+  const saveScope = useCallback(
+    async (userId: string, propertyIds: string[]) => {
+      setBusy(true);
+      try {
+        const res = await fetch("/api/settings/property-access", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: userId, property_ids: propertyIds }),
+        });
+        const data = (await res.json()) as { error?: string; scoped?: boolean };
+        if (!res.ok) {
+          notifyApiError(data, "Could not update property access");
+          return;
+        }
+        notifySuccess(
+          data.scoped
+            ? `Limited to ${propertyIds.length} propert${propertyIds.length === 1 ? "y" : "ies"}`
+            : "Restored full access to every property",
+        );
+        await loadScopes();
+      } finally {
+        setBusy(false);
+      }
+    },
+    [loadScopes],
+  );
+
   useEffect(() => {
     void load();
-  }, [load]);
+    void loadScopes();
+  }, [load, loadScopes]);
 
   async function post(body: Record<string, unknown>, successMessage: string) {
     setBusy(true);
@@ -648,26 +705,23 @@ export function TeamSettingsClient() {
         <ul className="divide-y">
           {members.length > 0 ? (
             <li
-              className="text-muted-foreground bg-muted/40 hidden items-center gap-x-3 border-b px-4 py-2 text-[11px] font-medium tracking-wide uppercase sm:grid sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] sm:px-5"
+              className="text-muted-foreground bg-muted/40 hidden items-center gap-x-3 border-b px-4 py-2 text-[11px] font-medium tracking-wide uppercase sm:grid sm:grid-cols-[minmax(0,1.1fr)_minmax(0,0.8fr)_minmax(0,1.1fr)] sm:px-5"
               aria-hidden
             >
               <span>User</span>
               <span>Role</span>
+              <span>Property access</span>
             </li>
           ) : null}
           {members.map((m) => (
-            <li
+            <MemberRow
               key={m.id}
-              className="hover:bg-muted/40 grid items-center gap-x-3 gap-y-1 px-4 py-2.5 transition-colors sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] sm:px-5"
-            >
-              <span className="font-mono text-xs">{m.user_id.slice(0, 8)}…</span>
-              <span className="text-sm">
-                {productRoleLabel(toProductRole(m.role))}{" "}
-                <span className="text-muted-foreground text-xs">
-                  ({m.role})
-                </span>
-              </span>
-            </li>
+              member={m}
+              properties={properties}
+              grantedPropertyIds={grantsByUser[m.user_id] ?? []}
+              onSaveScope={saveScope}
+              busy={busy}
+            />
           ))}
           {members.length === 0 ? (
             <li className="text-muted-foreground px-4 py-8 text-center text-sm">
@@ -789,5 +843,127 @@ function ChannelRow({
       </div>
       <div className="shrink-0 pt-0.5">{control}</div>
     </div>
+  );
+}
+
+
+/**
+ * One teammate, with their per-property scope (G1).
+ *
+ * The control reads as an opt-in *restriction*, matching the data model:
+ * nothing selected means org-wide access, which is also the default for every
+ * existing member. Owners and admins show as unrestricted and cannot be
+ * scoped — someone has to stay able to repair a bad configuration.
+ */
+function MemberRow({
+  member,
+  properties,
+  grantedPropertyIds,
+  onSaveScope,
+  busy,
+}: {
+  member: Member;
+  properties: PropertyOption[];
+  grantedPropertyIds: string[];
+  onSaveScope: (userId: string, propertyIds: string[]) => Promise<void>;
+  busy: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(
+    () => new Set(grantedPropertyIds),
+  );
+
+  // Re-sync when a save round-trips, so the checkboxes reflect what was stored.
+  useEffect(() => {
+    setSelected(new Set(grantedPropertyIds));
+  }, [grantedPropertyIds]);
+
+  const isAdmin = member.role === "owner" || member.role === "admin";
+  const scoped = grantedPropertyIds.length > 0;
+
+  return (
+    <li className="hover:bg-muted/40 grid items-start gap-x-3 gap-y-2 px-4 py-2.5 transition-colors sm:grid-cols-[minmax(0,1.1fr)_minmax(0,0.8fr)_minmax(0,1.1fr)] sm:px-5">
+      <span className="font-mono text-xs sm:pt-1">
+        {member.user_id.slice(0, 8)}…
+      </span>
+      <span className="text-sm sm:pt-0.5">
+        {productRoleLabel(toProductRole(member.role))}{" "}
+        <span className="text-muted-foreground text-xs">({member.role})</span>
+      </span>
+
+      <div className="min-w-0 space-y-2">
+        {isAdmin ? (
+          <p className="text-muted-foreground text-xs leading-relaxed">
+            Every property — admins are never restricted.
+          </p>
+        ) : properties.length === 0 ? (
+          <p className="text-muted-foreground text-xs leading-relaxed">
+            No properties yet.
+          </p>
+        ) : (
+          <>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant={scoped ? "default" : "secondary"}>
+                {scoped
+                  ? `${grantedPropertyIds.length} of ${properties.length}`
+                  : "All properties"}
+              </Badge>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => setOpen((v) => !v)}
+              >
+                {open ? "Cancel" : "Change"}
+              </Button>
+            </div>
+
+            {open ? (
+              <div className="bg-muted/30 space-y-2 rounded-lg border p-3">
+                <p className="text-muted-foreground text-xs leading-relaxed">
+                  Select none to give access to every property.
+                </p>
+                <div className="max-h-48 space-y-1.5 overflow-y-auto">
+                  {properties.map((p) => (
+                    <label
+                      key={p.id}
+                      className="flex cursor-pointer items-center gap-2 text-xs"
+                    >
+                      <Checkbox
+                        checked={selected.has(p.id)}
+                        onCheckedChange={(checked) =>
+                          setSelected((prev) => {
+                            const next = new Set(prev);
+                            if (checked) next.add(p.id);
+                            else next.delete(p.id);
+                            return next;
+                          })
+                        }
+                      />
+                      <span className="truncate">{p.name}</span>
+                    </label>
+                  ))}
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-7 text-xs"
+                  disabled={busy}
+                  onClick={async () => {
+                    await onSaveScope(member.user_id, [...selected]);
+                    setOpen(false);
+                  }}
+                >
+                  {selected.size === 0
+                    ? "Give access to all"
+                    : `Limit to ${selected.size}`}
+                </Button>
+              </div>
+            ) : null}
+          </>
+        )}
+      </div>
+    </li>
   );
 }

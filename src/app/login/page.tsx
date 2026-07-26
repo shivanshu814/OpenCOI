@@ -27,6 +27,30 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 
+/** Google's brand mark — inlined so the button needs no external request. */
+function GoogleMark() {
+  return (
+    <svg viewBox="0 0 18 18" aria-hidden className="size-4 shrink-0">
+      <path
+        fill="#4285F4"
+        d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.71-1.57 2.68-3.89 2.68-6.62Z"
+      />
+      <path
+        fill="#34A853"
+        d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.81.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.34A9 9 0 0 0 9 18Z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M3.97 10.72A5.4 5.4 0 0 1 3.68 9c0-.6.1-1.18.29-1.72V4.94H.96A9 9 0 0 0 0 9c0 1.45.35 2.82.96 4.06l3.01-2.34Z"
+      />
+      <path
+        fill="#EA4335"
+        d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.59C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.94l3.01 2.34C4.68 5.16 6.66 3.58 9 3.58Z"
+      />
+    </svg>
+  );
+}
+
 function LoginForm() {
   const search = useSearchParams();
   const next = search.get("next") ?? "/app";
@@ -34,6 +58,55 @@ function LoginForm() {
   const [msg, setMsg] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
+
+  /** Both sign-in paths land on the same callback, so they share this. */
+  function callbackUrl() {
+    const appUrl = (
+      process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+      (typeof window !== "undefined" &&
+      window.location.hostname !== "localhost" &&
+      window.location.hostname !== "127.0.0.1"
+        ? window.location.origin
+        : "https://getcertshield.vercel.app")
+    ).replace(/\/$/, "");
+
+    // The callback reads this to send the user back where they were headed.
+    document.cookie = `cs_auth_next=${encodeURIComponent(next)}; path=/; max-age=600; samesite=lax`;
+    return `${appUrl}/auth/callback`;
+  }
+
+  /**
+   * G3 — Google sign-in (spec: "Google OAuth at launch").
+   *
+   * Additive: magic link stays the primary, password-free path and keeps
+   * working for anyone without a Google account. If the provider is not
+   * enabled in the Supabase dashboard, Supabase returns a plain error and the
+   * user simply uses the email form — nothing breaks and no button lies about
+   * being ready.
+   */
+  async function onGoogle() {
+    setGoogleBusy(true);
+    setMsg(null);
+    setOk(false);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: callbackUrl() },
+      });
+      if (error) {
+        setMsg(
+          `Google sign-in is not available yet (${error.message}). Use the email link below.`,
+        );
+        setGoogleBusy(false);
+      }
+      // Success navigates away; leave the button busy so it cannot double-fire.
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : "Google sign-in failed");
+      setGoogleBusy(false);
+    }
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -42,17 +115,7 @@ function LoginForm() {
     setOk(false);
     try {
       const supabase = createClient();
-      const appUrl = (
-        process.env.NEXT_PUBLIC_APP_URL?.trim() ||
-        (typeof window !== "undefined" &&
-        window.location.hostname !== "localhost" &&
-        window.location.hostname !== "127.0.0.1"
-          ? window.location.origin
-          : "https://getcertshield.vercel.app")
-      ).replace(/\/$/, "");
-
-      const redirectTo = `${appUrl}/auth/callback`;
-      document.cookie = `cs_auth_next=${encodeURIComponent(next)}; path=/; max-age=600; samesite=lax`;
+      const redirectTo = callbackUrl();
 
       const { error } = await supabase.auth.signInWithOtp({
         email,
@@ -87,6 +150,26 @@ function LoginForm() {
       </CardHeader>
 
       <CardContent className="px-6 pt-6 pb-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          onClick={() => void onGoogle()}
+          disabled={busy || googleBusy}
+          className="h-11 w-full rounded-lg text-sm font-medium"
+        >
+          <GoogleMark />
+          {googleBusy ? "Redirecting to Google…" : "Continue with Google"}
+        </Button>
+
+        <div className="my-5 flex items-center gap-3">
+          <span className="bg-border h-px flex-1" aria-hidden />
+          <span className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+            or
+          </span>
+          <span className="bg-border h-px flex-1" aria-hidden />
+        </div>
+
         <form onSubmit={onSubmit} className="space-y-5">
           <FieldGroup className="gap-4">
             <Field>
