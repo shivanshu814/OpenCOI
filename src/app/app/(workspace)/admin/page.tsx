@@ -13,6 +13,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { canAdminSensitive } from "@/lib/auth/roles";
+import { carrierDatasetInfo } from "@/lib/carriers/ratings";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import {
@@ -22,6 +23,7 @@ import {
   scoreGoldenSet,
   type GoldenSetCorrectionRow,
 } from "@/lib/golden/accuracy";
+import { formatDate } from "@/lib/ui/format";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -29,10 +31,13 @@ import {
   CheckCircle2,
   ChevronRight,
   ClipboardCheck,
+  Clock,
   Cpu,
+  FileText,
   FlaskConical,
   Gauge,
   Send,
+  ShieldCheck,
   Target,
   Users,
 } from "lucide-react";
@@ -199,6 +204,8 @@ export default async function AdminMetricsPage() {
 
       {/* Month 3 accuracy gate — the centerpiece, honest */}
       <GateCard corrections={corrections} correctionCount={corrections.length} />
+
+      <CarrierDatasetCard />
 
       {/* What the AI is doing — cost / speed / confidence */}
       <section className="space-y-2.5">
@@ -503,5 +510,68 @@ function EngineeringSelfCheck() {
         </CollapsibleContent>
       </Card>
     </Collapsible>
+  );
+}
+
+/**
+ * B6 provenance — how many carriers we can rate, from what, and how fresh.
+ *
+ * Surfaced because an unknown or stale carrier silently changes a verdict
+ * into a review hand-off. Ops needs to see that happening rather than wonder
+ * why carrier checks stopped concluding.
+ */
+function CarrierDatasetCard() {
+  const info = carrierDatasetInfo();
+
+  return (
+    <section className="space-y-2.5">
+      <div className="flex items-center gap-2">
+        <h2 className="text-sm font-semibold">Carrier ratings data (B6)</h2>
+        <LiveBadge
+          label={info.stale ? "Refresh due" : "Fresh"}
+          tone={info.stale ? "warn" : "ok"}
+        />
+        <span className="text-muted-foreground text-xs">
+          An unrated carrier is always a review signal — never an automatic
+          fail.
+        </span>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatCard
+          icon={<ShieldCheck className="size-4" strokeWidth={2} />}
+          tone="brand"
+          label="Carriers we can rate"
+          value={info.carrierCount}
+          hint="Everything else routes to human review"
+        />
+        <StatCard
+          icon={<Clock className="size-4" strokeWidth={2} />}
+          tone={info.stale ? "warn" : "ok"}
+          label="Snapshot age"
+          value={`${info.ageDays}d`}
+          hint={`Taken ${formatDate(info.asOf)}`}
+        />
+        <StatCard
+          icon={<FileText className="size-4" strokeWidth={2} />}
+          tone={info.stale ? "warn" : "ok"}
+          label="Verdict authority"
+          value={info.stale ? "Review only" : "Active"}
+          hint={
+            info.stale
+              ? "Too old to fail a carrier — all route to review"
+              : "Ratings can conclude a carrier check"
+          }
+        />
+      </div>
+
+      <p className="text-muted-foreground max-w-3xl text-xs leading-relaxed">
+        Source: {info.source}. Refresh by replacing{" "}
+        <code className="font-mono">src/lib/carriers/am-best-ratings.json</code>{" "}
+        with a licensed AM Best export — never hand-write a rating, since an
+        invented value produces a wrong FAIL against a real vendor&apos;s real
+        carrier.
+      </p>
+    </section>
   );
 }

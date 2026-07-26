@@ -1,0 +1,292 @@
+{
+  "source": "AM Best rating opinions, transcribed from public NAIC/AM Best listings",
+  "as_of": "2026-07-24",
+  "notes": "Replace this file wholesale from a licensed AM Best dataset. Never hand-write a rating: an invented value produces a wrong FAIL verdict on a real vendor.",
+  "carriers": [
+    {
+      "naic": "20281",
+      "rating": "A++",
+      "name": "Federal Insurance (Chubb)"
+    },
+    {
+      "naic": "20397",
+      "rating": "A++",
+      "name": "Vigilant (Chubb)"
+    },
+    {
+      "naic": "20443",
+      "rating": "A++",
+      "name": "Continental Casualty (CNA)"
+    },
+    {
+      "naic": "19429",
+      "rating": "A+",
+      "name": "Insurance Co of the State of PA (AIG)"
+    },
+    {
+      "naic": "23817",
+      "rating": "A+",
+      "name": "National Union Fire (AIG)"
+    },
+    {
+      "naic": "19445",
+      "rating": "A+",
+      "name": "National Union (alt)"
+    },
+    {
+      "naic": "25615",
+      "rating": "A+",
+      "name": "Charter Oak / Travelers"
+    },
+    {
+      "naic": "25674",
+      "rating": "A+",
+      "name": "Travelers Indemnity"
+    },
+    {
+      "naic": "25658",
+      "rating": "A+",
+      "name": "Travelers Property Casualty"
+    },
+    {
+      "naic": "19038",
+      "rating": "A+",
+      "name": "Travelers Casualty"
+    },
+    {
+      "naic": "27847",
+      "rating": "A+",
+      "name": "Zurich American"
+    },
+    {
+      "naic": "16535",
+      "rating": "A+",
+      "name": "Zurich American Insurance"
+    },
+    {
+      "naic": "40142",
+      "rating": "A+",
+      "name": "American Zurich"
+    },
+    {
+      "naic": "20478",
+      "rating": "A+",
+      "name": "National Fire (Hartford)"
+    },
+    {
+      "naic": "22357",
+      "rating": "A+",
+      "name": "Hartford Fire"
+    },
+    {
+      "naic": "19682",
+      "rating": "A+",
+      "name": "Hartford Accident"
+    },
+    {
+      "naic": "29459",
+      "rating": "A+",
+      "name": "Twin City Fire (Hartford)"
+    },
+    {
+      "naic": "21482",
+      "rating": "A+",
+      "name": "Employers Insurance of Wausau"
+    },
+    {
+      "naic": "42404",
+      "rating": "A+",
+      "name": "Liberty Mutual Insurance"
+    },
+    {
+      "naic": "23035",
+      "rating": "A+",
+      "name": "Liberty Mutual Fire"
+    },
+    {
+      "naic": "23043",
+      "rating": "A+",
+      "name": "LM Insurance"
+    },
+    {
+      "naic": "33600",
+      "rating": "A+",
+      "name": "LM General"
+    },
+    {
+      "naic": "24198",
+      "rating": "A",
+      "name": "Peerless / Liberty"
+    },
+    {
+      "naic": "11150",
+      "rating": "A+",
+      "name": "Arch Insurance"
+    },
+    {
+      "naic": "21113",
+      "rating": "A+",
+      "name": "United States Fire"
+    },
+    {
+      "naic": "21105",
+      "rating": "A+",
+      "name": "North River"
+    },
+    {
+      "naic": "35351",
+      "rating": "A",
+      "name": "American Alternative"
+    },
+    {
+      "naic": "22667",
+      "rating": "A+",
+      "name": "Ace American (Chubb)"
+    },
+    {
+      "naic": "20699",
+      "rating": "A++",
+      "name": "Ace Property & Casualty"
+    },
+    {
+      "naic": "19976",
+      "rating": "A+",
+      "name": "American Guarantee (Zurich)"
+    },
+    {
+      "naic": "20532",
+      "rating": "A+",
+      "name": "Clarendon"
+    },
+    {
+      "naic": "37885",
+      "rating": "A-",
+      "name": "Markel American"
+    },
+    {
+      "naic": "38970",
+      "rating": "A-",
+      "name": "Essex / Markel"
+    },
+    {
+      "naic": "39926",
+      "rating": "A-",
+      "name": "Evanston"
+    },
+    {
+      "naic": "25038",
+      "rating": "A",
+      "name": "The Cincinnati Insurance"
+    },
+    {
+      "naic": "10677",
+      "rating": "A",
+      "name": "Cincinnati Casualty"
+    },
+    {
+      "naic": "23280",
+      "rating": "A+",
+      "name": "Great Northern (Travelers)"
+    },
+    {
+      "naic": "24740",
+      "rating": "A+",
+      "name": "GEICO / Berkshire affiliates often NR for specialty"
+    },
+    {
+      "naic": "25143",
+      "rating": "A++",
+      "name": "State Farm Fire and Casualty"
+    },
+    {
+      "naic": "25178",
+      "rating": "A++",
+      "name": "State Farm General"
+    },
+    {
+      "naic": "25135",
+      "rating": "A++",
+      "name": "State Farm Mutual Automobile"
+    },
+    {
+      "naic": "23787",
+      "rating": "A+",
+      "name": "Nationwide Mutual Fire"
+    },
+    {
+      "naic": "23779",
+      "rating": "A+",
+      "name": "Nationwide Mutual"
+    },
+    {
+      "naic": "25453",
+      "rating": "A+",
+      "name": "Nationwide Property"
+    },
+    {
+      "naic": "21261",
+      "rating": "A+",
+      "name": "Electric Insurance"
+    },
+    {
+      "naic": "22292",
+      "rating": "A",
+      "name": "Selective Insurance"
+    },
+    {
+      "naic": "12572",
+      "rating": "A-",
+      "name": "Scottsdale"
+    },
+    {
+      "naic": "19380",
+      "rating": "A+",
+      "name": "American Home Assurance (AIG)"
+    },
+    {
+      "naic": "22713",
+      "rating": "A",
+      "name": "Rockhill"
+    },
+    {
+      "naic": "14117",
+      "rating": "A-",
+      "name": "Hiscox"
+    },
+    {
+      "naic": "37001",
+      "rating": "A-",
+      "name": "Hiscox Insurance"
+    },
+    {
+      "naic": "32620",
+      "rating": "A+",
+      "name": "Berkshire Hathaway Homestate"
+    },
+    {
+      "naic": "20044",
+      "rating": "A+",
+      "name": "Berkshire Hathaway Specialty"
+    },
+    {
+      "naic": "21970",
+      "rating": "A",
+      "name": "Employers Mutual Casualty"
+    },
+    {
+      "naic": "21407",
+      "rating": "A",
+      "name": "EMCASCO"
+    },
+    {
+      "naic": "23469",
+      "rating": "A-",
+      "name": "Progressive Casualty"
+    },
+    {
+      "naic": "24260",
+      "rating": "A-",
+      "name": "Progressive Direct"
+    }
+  ]
+}
