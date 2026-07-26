@@ -274,7 +274,7 @@ export default function LoginPage() {
       {/* Left — CertShield brand panel */}
       <aside className="relative hidden min-h-svh w-full overflow-hidden md:flex md:w-[46%] lg:w-[44%] xl:w-[42%]">
         <div
-          className="absolute inset-0 bg-[oklch(0.22_0.03_260)]"
+          className="absolute inset-0 bg-[oklch(0.28_0.056_248)]"
           aria-hidden
         />
         <div

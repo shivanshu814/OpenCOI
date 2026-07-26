@@ -41,12 +41,12 @@ export const PLANS: Plan[] = [
       "Priority document review queue",
       "Per-property requirements",
       "Vendor magic-link portal",
-      "SMS chasing (TCPA opt-in)",
       "Agent confirmations + fraud risk signals",
       "Carrier AM Best checks + compliance scores",
       "Weekly digest email",
       "Owner reports (PDF + monthly email)",
     ],
+    comingSoon: ["SMS chasing (TCPA opt-in)"],
   },
   {
     id: "business",

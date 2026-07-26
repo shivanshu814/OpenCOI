@@ -130,7 +130,7 @@ export default async function VendorsPage({
             </>
           )
         }
-        help="Statuses are traffic-light signals from reviewed COIs — you remain the final approver. Chase reminders go out by email (and SMS when Twilio is configured)."
+        help="Statuses are traffic-light signals from reviewed COIs — you remain the final approver. Chase reminders go out by email today; SMS chasing is coming soon."
         live
       />
 

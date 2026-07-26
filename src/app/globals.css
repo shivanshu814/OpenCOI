@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
-  --font-heading: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
   --color-brand-muted: var(--brand-muted);
@@ -54,6 +54,12 @@
 }
 
 :root {
+  /* Motion easing — exponential deceleration only. Never bounce or elastic:
+     this product sells liability protection, and jittery motion reads as unserious. */
+  --cs-ease-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --cs-ease-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --cs-ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
   /* Kryptos-style cool neutrals + CertShield mint brand */
   --background: oklch(0.995 0.002 264);
   --foreground: oklch(0.23 0.021 264);
@@ -77,7 +83,7 @@
   --brand: #00b884;
   --brand-foreground: #ffffff;
   --brand-muted: oklch(0.95 0.03 163);
-  --ink: oklch(0.22 0.03 260);
+  --ink: oklch(0.28 0.056 248);
   --ink-foreground: oklch(0.97 0.01 250);
   --chart-1: oklch(0.68 0.14 163);
   --chart-2: oklch(0.72 0.15 75);
@@ -143,6 +149,13 @@
     @apply font-sans antialiased;
     scrollbar-width: thin;
     scrollbar-color: oklch(0.8 0.01 264) transparent;
+    /* Smooth in-page anchor jumps (nav "Product" -> #product). */
+    scroll-behavior: smooth;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
   }
   body {
     @apply bg-background text-foreground text-sm;
@@ -201,6 +214,260 @@
     background-position: 200% 0;
   }
 }
+/* Traffic-light bar segments growing in — CSS-only so no render state is needed. */
+@keyframes cs-grow-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+/* Typing caret for the "system is reading right now" effect. */
+@keyframes cs-caret {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+/* Scroll-reveal: transform + opacity only, so it stays on the compositor. */
+@keyframes cs-reveal-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+/* Per-word heading reveal — shorter travel than the block reveal. */
+@keyframes cs-word-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0.4em, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+/* Masked word reveal: the word rises out from behind an overflow-hidden box,
+   so headings read as being typeset into the page, not faded onto it.
+   Travel > 100% ensures it starts fully clipped. */
+@keyframes cs-mask-up {
+  from {
+    transform: translate3d(0, 115%, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+/* Endless belt for the checks marquee. Track holds TWO copies of the content,
+   so -50% lands exactly on the seam and the loop is invisible. */
+@keyframes cs-marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+/* Hero load choreography. Transform-only variant keeps the H1 LCP-safe:
+   the text paints at full opacity immediately and only slides into place. */
+@keyframes cs-rise-in {
+  from {
+    transform: translate3d(0, 18px, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+@keyframes cs-fade-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+/* A hairline that draws itself in next to each section eyebrow. */
+@keyframes cs-rule-draw {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+/* Same motion under a different name, so the animation RESTARTS when the
+   eyebrow's parent scrolls into view. See `.cs-reveal-in .cs-rule` below —
+   a CSS animation only re-runs if `animation-name` actually changes. */
+@keyframes cs-rule-redraw {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+/* Section label reveal: rises and sharpens, like a lens pulling focus.
+   Used only on short eyebrow text — `filter` isn't compositor-cheap, so it
+   never goes on a heading or a body paragraph. */
+@keyframes cs-focus-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+    filter: blur(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    filter: blur(0);
+  }
+}
+/* Row reveal for items in a vertical stack — travel comes from the leading
+   edge so a list reads as filling in, not as separate cards landing. */
+@keyframes cs-row-in {
+  from {
+    opacity: 0;
+    transform: translate3d(-10px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+/* Directional pair reveal — the two halves of a comparison come in from their
+   own sides, so the "before vs after" relationship is carried by the motion. */
+@keyframes cs-in-from-left {
+  from {
+    opacity: 0;
+    transform: translate3d(-22px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+@keyframes cs-in-from-right {
+  from {
+    opacity: 0;
+    transform: translate3d(22px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+/* Icon-chip / checkmark entrance. Settles at 1 with no overshoot — deliberately
+   not a bounce (see the easing note at the top of this file). */
+@keyframes cs-pop-in {
+  from {
+    opacity: 0;
+    transform: scale3d(0.76, 0.76, 1);
+  }
+  to {
+    opacity: 1;
+    transform: scale3d(1, 1, 1);
+  }
+}
+/* Aurora blobs behind the dark sections — larger travel than cs-drift, so the
+   light visibly wanders. Two blobs on different periods drift in and out of
+   phase, which is what makes the colour feel weather-like instead of looped.
+   Transform-only; the blur itself is static. */
+@keyframes cs-aurora-a {
+  0%,
+  100% {
+    transform: translate3d(-6%, -4%, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(7%, 5%, 0) scale(1.18);
+  }
+  66% {
+    transform: translate3d(-2%, 8%, 0) scale(0.94);
+  }
+}
+@keyframes cs-aurora-b {
+  0%,
+  100% {
+    transform: translate3d(5%, 6%, 0) scale(1.1);
+  }
+  50% {
+    transform: translate3d(-7%, -5%, 0) scale(0.9);
+  }
+}
+/* Embers: tiny brand motes that rise through the dark sections and dissolve.
+   Each spans the section's full height (bottom -> top) over a long period, so
+   at any moment a few are mid-flight — the surface is never still. */
+@keyframes cs-ember {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+  12% {
+    opacity: var(--cs-ember-peak, 0.5);
+  }
+  85% {
+    opacity: var(--cs-ember-peak, 0.5);
+  }
+  100% {
+    transform: translate3d(var(--cs-ember-sway, 12px), -108vh, 0);
+    opacity: 0;
+  }
+}
+/* Ambient drift for the decorative glows on the dark sections. Very slow and
+   very small: it should register as "this surface is alive", never as movement
+   you can follow. Transform-only, so it stays on the compositor. */
+@keyframes cs-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(1.5%, -2%, 0) scale(1.07);
+  }
+}
+@keyframes cs-drift-alt {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.05);
+  }
+  50% {
+    transform: translate3d(-2%, 1.5%, 0) scale(1);
+  }
+}
+/* Idle float for the two hero-weight cards. Long and shallow — it should read
+   as the card resting on air, not as bobbing. */
+@keyframes cs-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -7px, 0);
+  }
+}
+/* Rotating highlight around the "Most popular" plan. `--cs-angle` has to be a
+   registered property or it can't be interpolated — browsers without
+   `@property` compute the conic-gradient as invalid and simply draw nothing,
+   which is the right fallback for a decorative border. */
+@property --cs-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes cs-border-spin {
+  to {
+    --cs-angle: 360deg;
+  }
+}
 
 .cs-toast-in {
   animation: cs-toast-in 0.35s ease-out both;
@@ -221,13 +488,515 @@
   background-size: 200% 100%;
   animation: cs-shimmer 1.6s linear infinite;
 }
+.cs-grow-x {
+  transform-origin: left;
+  animation: cs-grow-x 0.9s var(--cs-ease-quint) both;
+}
+.cs-caret {
+  animation: cs-caret 1.1s steps(1, end) infinite;
+}
+/* Applied by <Reveal> once the element scrolls into view. */
+.cs-reveal {
+  opacity: 0;
+}
+.cs-reveal-in {
+  animation: cs-reveal-up 0.62s var(--cs-ease-quart) both;
+}
+.cs-word-in {
+  animation: cs-word-up 0.52s var(--cs-ease-quart) both;
+}
+/* Applied by <WordReveal> once the heading scrolls into view. */
+.cs-mask-hidden {
+  transform: translate3d(0, 115%, 0);
+}
+.cs-mask-in {
+  animation: cs-mask-up 0.6s var(--cs-ease-expo) both;
+}
+/* The checks marquee. Pauses on hover so the codes can actually be read —
+   a ticker you can't stop is decoration; one you can stop is content. */
+.cs-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: cs-marquee 36s linear infinite;
+}
+.cs-marquee:hover .cs-marquee-track,
+.cs-marquee:focus-within .cs-marquee-track {
+  animation-play-state: paused;
+}
+/* Hero choreography — runs on load, no observer. */
+.cs-rise-in {
+  animation: cs-rise-in 0.72s var(--cs-ease-expo) both;
+}
+.cs-fade-rise {
+  animation: cs-fade-rise 0.68s var(--cs-ease-quart) both;
+}
+.cs-rule {
+  transform-origin: left;
+  animation: cs-rule-draw 0.7s var(--cs-ease-quint) both;
+}
+/* An eyebrow's hairline draws itself when its <Reveal> parent enters the
+   viewport, not at page load — otherwise every rule below the fold has already
+   finished animating by the time it is first seen. The keyframe name differs
+   from `.cs-rule`'s so the animation genuinely restarts here. */
+.cs-reveal-in .cs-rule,
+.cs-focus-in .cs-rule {
+  animation-name: cs-rule-redraw;
+  animation-delay: 200ms;
+}
+
+/* Applied by <Stagger> to each child as the group scrolls in. */
+.cs-focus-in {
+  animation: cs-focus-in 0.72s var(--cs-ease-quart) both;
+}
+.cs-row-in {
+  animation: cs-row-in 0.52s var(--cs-ease-quart) both;
+}
+.cs-in-left {
+  animation: cs-in-from-left 0.66s var(--cs-ease-quart) both;
+}
+.cs-in-right {
+  animation: cs-in-from-right 0.66s var(--cs-ease-quart) both;
+}
+.cs-pop-in {
+  animation: cs-pop-in 0.48s var(--cs-ease-quint) both;
+}
+/* Draws in from the left. Shares `cs-rule-redraw`'s keyframes — a hairline
+   growing horizontally is the same motion whether it's an eyebrow or a
+   connector between steps. */
+.cs-draw-x {
+  transform-origin: left;
+  animation: cs-rule-redraw 0.85s var(--cs-ease-quint) both;
+}
+.cs-drift {
+  animation: cs-drift 28s ease-in-out infinite;
+}
+.cs-drift-alt {
+  animation: cs-drift-alt 36s ease-in-out infinite;
+}
+/* ── Walkthrough theatre ─────────────────────────────────────────────────
+ * The demo cursor that "uses" each walkthrough scene, and the supporting
+ * touches (typing dots, one-shot scan). All pure theatre: aria-hidden at the
+ * call sites and removed outright under reduced motion.
+ */
+/* Glide in from an offset (set via --cs-cur-x/y) to the target position. */
+@keyframes cs-cursor-glide {
+  0% {
+    transform: translate3d(var(--cs-cur-x, 90px), var(--cs-cur-y, 110px), 0);
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+.cs-cursor-glide {
+  animation: cs-cursor-glide 1.1s var(--cs-ease-quart) both;
+}
+/* The click: a quick dip of the pointer… */
+@keyframes cs-cursor-dip {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.82);
+  }
+}
+.cs-cursor-dip {
+  animation: cs-cursor-dip 0.28s var(--cs-ease-quart) both;
+}
+/* …and the ripple it leaves behind. */
+@keyframes cs-cursor-tap {
+  from {
+    transform: scale(0.3);
+    opacity: 0.45;
+  }
+  to {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+.cs-cursor-tap {
+  /* `forwards`, not `both`: with a delay, backwards-fill would show the ripple's
+     first frame (visible dot) while it waits. Base opacity-0 hides it instead. */
+  animation: cs-cursor-tap 0.55s ease-out forwards;
+}
+/* Chat "typing" dots — small opacity/lift pulse, staggered per dot. */
+@keyframes cs-typing {
+  0%,
+  60%,
+  100% {
+    opacity: 0.25;
+    transform: translate3d(0, 0, 0);
+  }
+  30% {
+    opacity: 1;
+    transform: translate3d(0, -2px, 0);
+  }
+}
+.cs-typing {
+  animation: cs-typing 1.1s ease-in-out infinite;
+}
+
+/* Primary-CTA heartbeat: the button's own drop shadow is repeated in every
+   frame so the pulse ring rides ON TOP of it instead of replacing it (an
+   animated box-shadow overrides the static utility for its duration). Stops on
+   hover/focus so it never fights the hover lift, and while pressed. */
+@keyframes cs-cta-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 8px 24px -10px rgba(0, 184, 132, 0.8),
+      0 0 0 0 rgba(0, 184, 132, 0.4);
+  }
+  55% {
+    box-shadow:
+      0 8px 24px -10px rgba(0, 184, 132, 0.8),
+      0 0 0 9px rgba(0, 184, 132, 0);
+  }
+}
+.cs-cta-pulse {
+  animation: cs-cta-pulse 2.8s ease-in-out infinite;
+}
+.cs-cta-pulse:hover,
+.cs-cta-pulse:focus-visible,
+.cs-cta-pulse:active {
+  animation: none;
+}
+
+/* A diagonal band of light that crosses a dark section every ~14s — the same
+   gesture as the mockup's scan line, scaled to the whole surface: the system
+   passing over the page. The sweep occupies only the first fifth of the cycle;
+   the long dwell between passes is what keeps it ambient instead of busy. */
+@keyframes cs-light-pass {
+  0% {
+    background-position: -120% 0;
+  }
+  18% {
+    background-position: 220% 0;
+  }
+  100% {
+    background-position: 220% 0;
+  }
+}
+.cs-light-pass {
+  background-image: linear-gradient(
+    105deg,
+    transparent 42%,
+    oklch(1 0 0 / 0.045) 50%,
+    transparent 58%
+  );
+  background-size: 220% 100%;
+  background-repeat: no-repeat;
+  animation: cs-light-pass 14s linear infinite;
+}
+
+/* Header compresses once the page is scrolled — see MarketingHeader, which
+   stamps data-scrolled. Height is the one property worth the layout cost here:
+   it animates exactly once per direction change, not per frame. */
+.cs-header-row {
+  transition:
+    height 0.35s var(--cs-ease-quart),
+    padding 0.35s var(--cs-ease-quart);
+}
+
+.cs-aurora-a {
+  animation: cs-aurora-a 26s ease-in-out infinite;
+}
+.cs-aurora-b {
+  animation: cs-aurora-b 34s ease-in-out infinite;
+}
+.cs-ember {
+  animation: cs-ember var(--cs-ember-dur, 16s) linear infinite;
+  animation-delay: var(--cs-ember-delay, 0s);
+}
+.cs-float {
+  animation: cs-float 7.5s ease-in-out infinite;
+}
+/* Second instance runs off-phase, so two floating cards never bob in lockstep. */
+.cs-float-offset {
+  animation-delay: -3.2s;
+}
+
+/* Icon chips that pop when their <Reveal>/<Stagger> parent enters the viewport.
+   Deliberately inert on its own — declaring the animation here would fire it at
+   page load, and leave it mid-animation for anyone without JS. */
+.cs-reveal-in .cs-icon-pop,
+.cs-in-left .cs-icon-pop,
+.cs-in-right .cs-icon-pop,
+.cs-row-in .cs-icon-pop {
+  animation: cs-pop-in 0.5s var(--cs-ease-quint) 160ms both;
+}
+
+/* Rotating brand highlight on the featured plan. Masked to the border only:
+   the gradient fills the box, then the content-box is punched out of it. */
+.cs-live-border::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--cs-angle),
+    transparent 0deg,
+    oklch(0.78 0.16 163 / 0.9) 35deg,
+    transparent 110deg,
+    transparent 360deg
+  );
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  animation: cs-border-spin 7s linear infinite;
+  pointer-events: none;
+}
+
+/* Cursor-following glow on the dark sections — see <PointerGlow>, which writes
+   --cs-gx/--cs-gy. Fades in only once the pointer is actually over the section,
+   so it never sits there glowing at a stale position. */
+.cs-pointer-glow {
+  background: radial-gradient(
+    26rem 26rem at var(--cs-gx, 50%) var(--cs-gy, 50%),
+    oklch(0.68 0.14 163 / 0.16),
+    transparent 65%
+  );
+  opacity: 0;
+  transition: opacity 0.5s var(--cs-ease-quart);
+}
+.cs-pointer-glow[data-active="true"] {
+  opacity: 1;
+}
+
+/* Pointer tilt / magnetic pull. The transform itself is written inline by the
+   component; this is only the spring back to rest when the pointer leaves. */
+.cs-tilt {
+  transition: transform 0.5s var(--cs-ease-quart);
+  transform-style: preserve-3d;
+}
+.cs-tilt[data-tilting="true"] {
+  transition: transform 0.12s linear;
+}
+.cs-magnetic {
+  transition: transform 0.45s var(--cs-ease-quart);
+}
+.cs-magnetic[data-pulling="true"] {
+  transition: transform 0.12s linear;
+}
+
+/* Sheen: a single band of light crossing a primary CTA on hover. Implemented as
+   a transition rather than an animation so re-hovering mid-sweep reverses
+   smoothly instead of snapping back to the start. Host needs
+   `relative overflow-hidden`. */
+.cs-sheen::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inline-size: 40%;
+  inset-inline-start: 0;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    rgb(255 255 255 / 0.3),
+    transparent
+  );
+  transform: translate3d(-180%, 0, 0) skewX(-14deg);
+  transition: transform 0.8s var(--cs-ease-quart);
+  pointer-events: none;
+}
+.cs-sheen:hover::after,
+.cs-sheen:focus-visible::after {
+  transform: translate3d(330%, 0, 0) skewX(-14deg);
+}
+
+/* Pointer spotlight for the pricing cards — <SpotlightCard> writes --cs-mx/--cs-my.
+   It is feedback, not decoration: on a row of near-identical cards it confirms
+   which one the pointer is actually addressing. */
+.cs-spotlight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    16rem 16rem at var(--cs-mx, 50%) var(--cs-my, 0%),
+    oklch(0.68 0.14 163 / 0.13),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.35s var(--cs-ease-quart);
+  pointer-events: none;
+}
+.cs-spotlight:hover::before,
+.cs-spotlight:focus-within::before {
+  opacity: 1;
+}
+
+/* ── Scroll-linked depth ──────────────────────────────────────────────────
+ * Parallax on decorative layers only, driven entirely by CSS scroll-driven
+ * animations: no scroll listener, no rAF, nothing on the main thread. Browsers
+ * without `animation-timeline` simply render the layer static, which is the
+ * correct fallback for something purely atmospheric.
+ *
+ * Deliberately NOT used on content: parallaxing text fights the reader.
+ */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes cs-parallax-shift {
+      from {
+        transform: translate3d(0, var(--cs-parallax-from, 6%), 0);
+      }
+      to {
+        transform: translate3d(0, var(--cs-parallax-to, -6%), 0);
+      }
+    }
+    .cs-parallax {
+      animation: cs-parallax-shift linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 100%;
+      will-change: transform;
+    }
+    /* Half-speed layer — pairing the two on one surface is what reads as depth. */
+    .cs-parallax-slow {
+      --cs-parallax-from: 3%;
+      --cs-parallax-to: -3%;
+    }
+
+    /* Scroll-exit: as the hero leaves the viewport its content recedes — small
+       lift, slight shrink, dimming — so scrolling feels like moving PAST the
+       page's surfaces rather than sliding a flat sheet. Driven by `view()` over
+       the element's exit range only: while the hero is fully on screen nothing
+       moves, so LCP and the load choreography are untouched. */
+    @keyframes cs-recede {
+      to {
+        transform: translate3d(0, -3.5rem, 0) scale(0.97);
+        opacity: 0.35;
+      }
+    }
+    .cs-scroll-recede {
+      animation: cs-recede linear both;
+      animation-timeline: view();
+      animation-range: exit 0% exit 90%;
+    }
+
+    /* Scroll-entry rise: the mirror of cs-recede. Each section's content is a
+       touch low and dim while its top edge is still near the fold, and settles
+       as it climbs — so sections continuously *arrive* rather than being
+       stacked. Tuned well under the one-shot <Reveal>/<Stagger> children (18px,
+       no scale) so the two motions compose instead of compete. The range ends
+       at entry 55%: everything is at rest well before it reaches eye level. */
+    @keyframes cs-arrive {
+      from {
+        transform: translate3d(0, 18px, 0);
+        opacity: 0.55;
+      }
+      to {
+        transform: translate3d(0, 0, 0);
+        opacity: 1;
+      }
+    }
+    .cs-scroll-rise {
+      animation: cs-arrive linear both;
+      animation-timeline: view();
+      animation-range: entry 5% entry 55%;
+    }
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .cs-toast-in,
   .cs-scan-sweep,
   .cs-glow-pulse,
-  .cs-shimmer {
+  .cs-shimmer,
+  .cs-grow-x,
+  .cs-caret,
+  .cs-reveal-in,
+  .cs-word-in,
+  .cs-rise-in,
+  .cs-fade-rise,
+  .cs-rule,
+  .cs-reveal-in .cs-rule,
+  .cs-focus-in,
+  .cs-row-in,
+  .cs-in-left,
+  .cs-in-right,
+  .cs-pop-in,
+  .cs-draw-x,
+  .cs-cta-pulse,
+  .cs-cursor-glide,
+  .cs-cursor-dip,
+  .cs-cursor-tap,
+  .cs-typing,
+  .cs-light-pass,
+  .cs-scroll-rise,
+  .cs-aurora-a,
+  .cs-aurora-b,
+  .cs-ember,
+  .cs-mask-in,
+  .cs-marquee-track,
+  .cs-scroll-recede,
+  .cs-float,
+  .cs-live-border::after,
+  .cs-reveal-in .cs-icon-pop,
+  .cs-in-left .cs-icon-pop,
+  .cs-in-right .cs-icon-pop,
+  .cs-row-in .cs-icon-pop,
+  .cs-drift,
+  .cs-drift-alt,
+  .cs-parallax {
     animation: none !important;
+  }
+  /* Never leave revealed content invisible when motion is off. */
+  .cs-reveal,
+  .cs-reveal-in,
+  .cs-word-in,
+  .cs-rise-in,
+  .cs-fade-rise,
+  .cs-rule,
+  .cs-focus-in,
+  .cs-row-in,
+  .cs-in-left,
+  .cs-in-right,
+  .cs-pop-in,
+  .cs-mask-hidden,
+  .cs-mask-in,
+  .cs-scroll-recede,
+  .cs-scroll-rise,
+  .cs-draw-x {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+  /* Pointer-tracked and sweeping effects have no static equivalent worth
+     keeping — remove them outright rather than freezing them mid-state. */
+  .cs-sheen::after,
+  .cs-spotlight::before,
+  .cs-live-border::after,
+  .cs-pointer-glow,
+  .cs-ember,
+  .cs-demo-cursor {
+    display: none;
+  }
+  /* Tilt and magnetic pull: the component skips writing transforms entirely
+     under reduced motion, but make sure nothing is left leaning. */
+  .cs-tilt,
+  .cs-magnetic {
+    transition: none !important;
+    transform: none !important;
+  }
+  .cs-reveal-in .cs-icon-pop,
+  .cs-in-left .cs-icon-pop,
+  .cs-in-right .cs-icon-pop,
+  .cs-row-in .cs-icon-pop {
+    opacity: 1 !important;
+    transform: none !important;
   }
 }
 

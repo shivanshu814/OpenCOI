@@ -200,7 +200,7 @@ export default async function DashboardPage() {
               "Portfolio looks clear — upload the next COI when it arrives."
             )
           }
-          help="Chase runs by email (and SMS when Twilio is live). You approve every verdict — CertShield never auto-approves. Document review assistance — not legal, insurance, or professional advice."
+          help="Chase runs by email today (EN/ES); SMS chasing is coming soon. You approve every verdict — CertShield never auto-approves. Document review assistance — not legal, insurance, or professional advice."
           live
           actions={
             <Button render={<Link href="/app/upload" />}>Upload COI</Button>

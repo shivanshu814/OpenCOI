@@ -65,12 +65,20 @@ function AccordionContent({
   return (
     <AccordionPrimitive.Panel
       data-slot="accordion-content"
-      className="h-(--accordion-panel-height) overflow-hidden text-sm transition-[height] duration-200 ease-out data-ending-style:h-0 data-starting-style:h-0"
+      className="h-(--accordion-panel-height) overflow-hidden text-sm transition-[height] duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] data-ending-style:h-0 data-starting-style:h-0"
       {...props}
     >
+      {/* The panel's height and the answer's own fade/rise are staged: the text
+          settles a beat after the box finishes opening, so a long answer reads
+          as arriving rather than as being dumped in. */}
       <div
         className={cn(
           "text-muted-foreground pb-5 text-sm leading-relaxed",
+          // Base UI puts data-starting-style / data-ending-style on the Panel,
+          // so these are parent-conditioned variants, not variants on this div.
+          "translate-y-0 opacity-100 transition-[opacity,transform] delay-100 duration-300 ease-[cubic-bezier(0.25,1,0.5,1)]",
+          "[[data-starting-style]_&]:-translate-y-1 [[data-starting-style]_&]:opacity-0",
+          "[[data-ending-style]_&]:opacity-0 [[data-ending-style]_&]:delay-0 [[data-ending-style]_&]:duration-150",
           className,
         )}
       >

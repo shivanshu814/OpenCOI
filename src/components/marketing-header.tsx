@@ -2,6 +2,7 @@
 
 import { BrandMark } from "@/components/certshield-logo";
 import { LiveOpsTicker } from "@/components/live-activity";
+import { ScrollProgress } from "@/components/scroll-progress";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -14,12 +15,14 @@ import { cn } from "@/lib/utils";
 import { Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
+/** Exactly four items — see docs/02-BRANDING_SEO.md. Help lives in the footer. */
 const nav = [
+  { href: "/#product", label: "Product" },
   { href: "/pricing", label: "Pricing" },
   { href: "/security", label: "Security" },
-  { href: "/help", label: "Help" },
+  { href: "/login", label: "Free Audit" },
 ];
 
 function NavLink({
@@ -39,7 +42,7 @@ function NavLink({
       href={href}
       onClick={onNavigate}
       className={cn(
-        "rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+        "rounded-full px-3 py-1.5 text-sm font-medium transition-[color,background-color] duration-200",
         active
           ? "bg-white/10 text-white shadow-xs"
           : "text-white/60 hover:bg-white/[0.06] hover:text-white",
@@ -52,15 +55,48 @@ function NavLink({
 
 export function MarketingHeader() {
   const [open, setOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+
+  // Compress the chrome once the page is scrolled. Written to a data attribute
+  // on the DOM node (not state): it flips at most once per direction change and
+  // must never re-render the header mid-scroll.
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    let raf = 0;
+    let scrolled: boolean | null = null;
+    const update = () => {
+      raf = 0;
+      const next = window.scrollY > 12;
+      if (next !== scrolled) {
+        scrolled = next;
+        el.dataset.scrolled = String(next);
+      }
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
 
   return (
-    <header className="sticky top-0 z-40 overflow-visible border-b border-white/10 bg-[oklch(0.22_0.03_260)]/90 backdrop-blur-xl">
+    <header
+      ref={headerRef}
+      data-scrolled="false"
+      className="group/header sticky top-0 z-40 overflow-visible border-b border-white/10 bg-[oklch(0.28_0.056_248)]/90 backdrop-blur-xl transition-[background-color,box-shadow] duration-300 data-[scrolled=true]:bg-[oklch(0.28_0.056_248)]/97 data-[scrolled=true]:shadow-[0_10px_30px_-18px_rgba(0,0,0,0.6)]"
+    >
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-brand/50 to-transparent"
       />
+      <ScrollProgress />
 
-      <div className="relative mx-auto flex h-[4.25rem] w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:justify-normal">
+      <div className="cs-header-row relative mx-auto flex h-[4.25rem] w-full max-w-6xl items-center justify-between gap-3 px-4 group-data-[scrolled=true]/header:h-[3.4rem] sm:px-6 md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:justify-normal">
         <div className="flex min-w-0 items-center justify-start md:min-w-0">
           <Link
             href="/"
@@ -92,7 +128,7 @@ export function MarketingHeader() {
 
           <Button
             size="sm"
-            className="bg-brand text-brand-foreground hover:bg-brand/90 h-9 shrink-0 rounded-lg px-3 text-sm font-semibold shadow-[0_0_0_1px_rgba(0,184,132,0.35),0_8px_24px_-8px_rgba(0,184,132,0.65)] md:px-3.5"
+            className="bg-brand text-brand-foreground hover:bg-brand/90 h-9 shrink-0 rounded-lg px-3 text-sm font-semibold shadow-[0_0_0_1px_rgba(0,184,132,0.35),0_8px_24px_-8px_rgba(0,184,132,0.65)] transition-[transform,box-shadow,background-color] duration-200 ease-[cubic-bezier(0.25,1,0.5,1)] hover:-translate-y-px hover:shadow-[0_0_0_1px_rgba(0,184,132,0.5),0_14px_32px_-8px_rgba(0,184,132,0.8)] active:translate-y-0 active:scale-[0.985] md:px-3.5"
             render={<Link href="/pricing" />}
           >
             <span className="md:hidden">Start</span>
@@ -114,7 +150,7 @@ export function MarketingHeader() {
             </SheetTrigger>
             <SheetContent
               side="right"
-              className="border-white/10 bg-[oklch(0.22_0.03_260)] text-white sm:max-w-xs"
+              className="border-white/10 bg-[oklch(0.28_0.056_248)] text-white sm:max-w-xs"
             >
               <SheetHeader>
                 <SheetTitle className="text-left text-white">

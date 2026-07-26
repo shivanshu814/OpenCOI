@@ -7,8 +7,9 @@ import { Check } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
+// Verbatim from docs/02-BRANDING_SEO.md §3; `absolute` bypasses the title template.
 export const metadata: Metadata = {
-  title: "CertShield Pricing — COI Tracking from $99/month",
+  title: { absolute: "CertShield Pricing — COI Tracking from $99/month" },
   description:
     "Simple pricing for vendor insurance tracking: Starter $99, Pro $249, Business $499. No annual contract. 2-minute setup, free COI audit included.",
 };

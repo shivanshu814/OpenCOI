@@ -69,10 +69,11 @@ export function VendorSmsOptIn({
   return (
     <Card className="gap-0 py-0">
       <CardHeader className="border-b py-4">
-        <CardTitle>SMS chasing (TCPA)</CardTitle>
+        <CardTitle>SMS chasing (TCPA) — coming soon</CardTitle>
         <CardDescription className="text-xs leading-relaxed">
-          Texts are sent only with explicit opt-in. Reply STOP opts out
-          instantly. Without opt-in, email-only chasing applies.
+          SMS is not sending yet — carrier registration (A2P 10DLC) is pending,
+          so chasing runs by email today. You can record consent now: texts are
+          sent only with explicit opt-in, and replying STOP opts out instantly.
         </CardDescription>
       </CardHeader>
       <form onSubmit={onSave}>

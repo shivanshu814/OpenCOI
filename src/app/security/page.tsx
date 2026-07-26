@@ -1,11 +1,13 @@
 import { INK_BG, InkAtmosphere, SURFACE_BG } from "@/components/ink-atmosphere";
 import { LiveOpsTicker } from "@/components/live-activity";
 import { MarketingShell } from "@/components/marketing-shell";
+import type { Metadata } from "next";
 
-export const metadata = {
-  title: "Security — CertShield",
+// Verbatim from docs/02-BRANDING_SEO.md §3; `absolute` bypasses the title template.
+export const metadata: Metadata = {
+  title: { absolute: "Security & Data Protection — CertShield" },
   description:
-    "Where CertShield stores data, who can see it, AI subprocessors, and deletion policy.",
+    "US-hosted, encrypted at rest and in transit, strict data isolation. How CertShield protects your vendor and insurance data.",
 };
 
 const QUESTIONS: { q: string; a: string }[] = [

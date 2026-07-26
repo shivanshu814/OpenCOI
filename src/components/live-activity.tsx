@@ -139,7 +139,7 @@ const FEEDS: Record<string, FeedItem[]> = {
     { text: "Vendor statuses live", tone: "ok" },
     { text: "Chase EN/ES ready", tone: "brand" },
     { text: "Portal links · no password", tone: "info" },
-    { text: "SMS only after TCPA opt-in", tone: "warn" },
+    { text: "SMS chasing coming soon", tone: "warn" },
   ],
   "/app/properties": [
     { text: "Property requirements active", tone: "ok" },

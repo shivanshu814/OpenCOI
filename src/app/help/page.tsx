@@ -19,7 +19,7 @@ const SECTIONS = [
   },
   {
     title: "Chase renewals",
-    body: "Email chase sequences run EN/ES. SMS only after TCPA opt-in on the vendor. Portal magic links need no password.",
+    body: "Email chase sequences run EN/ES and are live today. SMS chasing is coming soon — when it ships it only sends after TCPA opt-in on the vendor. Portal magic links need no password.",
   },
   {
     title: "Agent confirmation",

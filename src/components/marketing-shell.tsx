@@ -1,12 +1,17 @@
 import { BrandMark } from "@/components/certshield-logo";
+import { CursorGlint } from "@/components/cursor-glint";
 import { DisclaimerFooter } from "@/components/disclaimer-footer";
 import { MarketingHeader } from "@/components/marketing-header";
+import { SmoothScroll } from "@/components/smooth-scroll";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
+/** Footer carries the header's four items plus Help, which the header drops. */
 const nav = [
+  { href: "/#product", label: "Product" },
   { href: "/pricing", label: "Pricing" },
   { href: "/security", label: "Security" },
+  { href: "/login", label: "Free Audit" },
   { href: "/help", label: "Help" },
 ];
 
@@ -15,11 +20,15 @@ export { BrandMark } from "@/components/certshield-logo";
 export function MarketingShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="bg-background flex min-h-full flex-col">
+      {/* Inertia scrolling for marketing surfaces only — the app keeps native. */}
+      <SmoothScroll />
+      {/* Trailing cursor ring — companion to the native cursor, never a replacement. */}
+      <CursorGlint />
       <MarketingHeader />
 
       <div className="flex-1">{children}</div>
 
-      <footer className="relative overflow-hidden border-t border-white/10 bg-[oklch(0.22_0.03_260)]">
+      <footer className="relative overflow-hidden border-t border-white/10 bg-[oklch(0.28_0.056_248)]">
         <div
           className="pointer-events-none absolute inset-0 opacity-30"
           style={{
@@ -40,7 +49,7 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
               <Link
                 key={item.href}
                 href={item.href}
-                className="transition-colors hover:text-white"
+                className="from-brand to-brand bg-gradient-to-r bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat transition-[background-size,color] duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] hover:bg-[length:100%_1px] hover:text-white"
               >
                 {item.label}
               </Link>
@@ -50,10 +59,14 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
             </Link>
             <Link
               href="/pricing"
-              className="inline-flex items-center gap-1 font-medium text-white transition-colors hover:text-brand"
+              className="group inline-flex items-center gap-1 font-medium text-white transition-colors hover:text-brand"
             >
               See pricing
-              <ArrowRight className="size-3.5" strokeWidth={2.25} aria-hidden />
+              <ArrowRight
+                className="size-3.5 transition-transform duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:translate-x-1"
+                strokeWidth={2.25}
+                aria-hidden
+              />
             </Link>
           </div>
         </div>

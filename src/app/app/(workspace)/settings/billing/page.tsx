@@ -133,7 +133,7 @@ export default async function BillingSettingsPage() {
                 using CertShield on a founding or manual-invoice arrangement, or
                 upgrade below when you&apos;re ready. Most property managers land
                 on <span className="text-foreground font-medium">Pro</span>{" "}
-                (~100 vendors, portal, SMS chase, owner reports).
+                (~100 vendors, portal, agent confirmations, owner reports).
               </p>
             </div>
           )}
