@@ -41,13 +41,29 @@ export default async function Page() {
 
       <Suspense
         fallback={
-          <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-            <Skeleton className="h-72 rounded-xl" />
+          <div
+            className="grid items-start gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-8"
+            role="status"
+            aria-busy="true"
+            aria-label="Loading upload form"
+          >
+            <div className="bg-card relative overflow-hidden rounded-xl border shadow-xs">
+              <div
+                className="from-brand via-brand/70 to-brand/20 h-1 w-full bg-gradient-to-r"
+                aria-hidden
+              />
+              <div className="space-y-4 p-4 sm:p-6">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-10 w-full rounded-md" />
+                <Skeleton className="h-36 w-full rounded-lg sm:h-44" />
+                <Skeleton className="h-9 w-32 rounded-md" />
+              </div>
+            </div>
             <div className="space-y-3">
               <Skeleton className="h-4 w-40" />
-              <Skeleton className="h-16" />
-              <Skeleton className="h-16" />
-              <Skeleton className="h-16" />
+              <Skeleton className="h-16 w-full rounded-xl" />
+              <Skeleton className="h-16 w-full rounded-xl" />
+              <Skeleton className="h-16 w-full rounded-xl" />
             </div>
           </div>
         }
