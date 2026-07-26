@@ -2,6 +2,7 @@ import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import { issuePortalToken } from "@/lib/portal/tokens";
 import { createClient } from "@/lib/supabase/server";
+import { insertAuditEvent } from "@/lib/audit/write";
 import { NextResponse } from "next/server";
 
 export async function POST(
@@ -42,10 +43,11 @@ export async function POST(
       vendorId,
     });
 
-    await supabase.from("audit_events").insert({
+    await insertAuditEvent(supabase, {
       org_id: session.orgId,
       actor_type: "admin",
       actor_id: session.userId,
+      actor_email: session.email,
       entity_type: "vendor",
       entity_id: vendorId,
       action: "portal_link_issued",

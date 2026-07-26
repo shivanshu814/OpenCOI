@@ -40,6 +40,11 @@ export function canAdminSensitive(dbRole: string): boolean {
   return dbRole === "owner" || dbRole === "admin";
 }
 
+/** Full audit forensics (IP, UA, raw JSON) — Admin / founder only. */
+export function canViewFullAudit(dbRole: string): boolean {
+  return canAdminSensitive(dbRole);
+}
+
 export function canPublishVerdicts(dbRole: string): boolean {
   return dbRole === "owner" || dbRole === "admin";
 }

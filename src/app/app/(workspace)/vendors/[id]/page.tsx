@@ -1,6 +1,11 @@
 import { AuditTimeline } from "@/components/audit-timeline";
 import { DownloadReportButton } from "@/components/download-report-button";
 import { CardLiveAccent, LiveBadge } from "@/components/live-activity";
+import {
+  DetailHeader,
+  PageFrame,
+  PageSecondary,
+} from "@/components/page-frame";
 import { SendChaseButton } from "@/components/send-chase-button";
 import { VendorStatusBadge } from "@/components/status-badges";
 import { Button } from "@/components/ui/button";
@@ -15,47 +20,11 @@ import { listVendorAuditTrail } from "@/lib/audit/list";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
-import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { IssuePortalLinkButton } from "./issue-portal-link";
 import { VendorOnboardingPanel } from "./onboarding-panel";
 import { VendorSmsOptIn } from "./sms-opt-in";
-
-function BackLink() {
-  return (
-    <Link
-      href="/app/vendors"
-      className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm"
-    >
-      <ArrowLeft className="size-3.5" aria-hidden />
-      Vendors
-    </Link>
-  );
-}
-
-function VendorHeading({
-  name,
-  meta,
-  status,
-}: {
-  name: string;
-  meta?: string;
-  status?: string;
-}) {
-  return (
-    <div className="min-w-0">
-      <div className="flex flex-wrap items-center gap-2.5">
-        <h1 className="text-lg font-semibold tracking-tight">{name}</h1>
-        <LiveBadge label="Live" />
-        {status ? <VendorStatusBadge status={status as never} /> : null}
-      </div>
-      {meta ? (
-        <p className="text-muted-foreground mt-1 text-sm">{meta}</p>
-      ) : null}
-    </div>
-  );
-}
 
 export default async function VendorDetailPage({
   params,
@@ -64,38 +33,8 @@ export default async function VendorDetailPage({
 }) {
   const { id } = await params;
 
-  if (!isSupabaseConfigured()) {
-    const events = await listVendorAuditTrail(id);
-    return (
-      <div className="space-y-6">
-        <div className="space-y-4">
-          <BackLink />
-          <VendorHeading name="Demo Roofing LLC" meta="Demo vendor detail" />
-        </div>
-
-        <Card className="gap-0 overflow-hidden py-0">
-          <CardLiveAccent />
-          <CardHeader className="border-b py-4">
-            <CardTitle className="flex items-center gap-2">
-              Vendor portal (no login)
-              <LiveBadge label="Ready" tone="ok" />
-            </CardTitle>
-            <CardDescription className="text-xs">
-              Magic link for upload + status. Also embedded in chase emails.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="py-4">
-            <IssuePortalLinkButton vendorId={id} />
-          </CardContent>
-        </Card>
-
-        <section className="space-y-3">
-          <h2 className="text-sm font-semibold">Audit trail</h2>
-          <AuditTimeline events={events} />
-        </section>
-      </div>
-    );
-  }
+  // No invented demo vendors — require live org data.
+  if (!isSupabaseConfigured()) notFound();
 
   const session = await getSessionOrg();
   if (!session) notFound();
@@ -116,17 +55,20 @@ export default async function VendorDetailPage({
   const meta = [vendor.trade, vendor.email, vendor.agent_email].filter(Boolean);
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <BackLink />
-
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <VendorHeading
-            name={vendor.name}
-            meta={meta.join(" · ")}
-            status={vendor.status}
-          />
-          <div className="flex flex-wrap items-center gap-2">
+    <PageFrame width="wide">
+      <DetailHeader
+        backHref="/app/vendors"
+        backLabel="Vendors"
+        title={vendor.name}
+        meta={meta.join(" · ") || "No contact details yet"}
+        badge={
+          <>
+            <LiveBadge label="Live" />
+            <VendorStatusBadge status={vendor.status as never} />
+          </>
+        }
+        actions={
+          <>
             <DownloadReportButton vendorId={vendor.id} label="Report" />
             <Button
               variant="outline"
@@ -148,9 +90,9 @@ export default async function VendorDetailPage({
             >
               Upload
             </Button>
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,3fr)]">
         <div className="min-w-0 space-y-6">
@@ -165,7 +107,7 @@ export default async function VendorDetailPage({
           </section>
         </div>
 
-        <div className="min-w-0 space-y-6">
+        <aside className="min-w-0 space-y-6">
           <Card className="gap-0 overflow-hidden py-0">
             <CardLiveAccent />
             <CardHeader className="border-b py-4">
@@ -188,8 +130,13 @@ export default async function VendorDetailPage({
             smsOptInAt={vendor.sms_opt_in_at}
             smsOptOutAt={vendor.sms_opt_out_at}
           />
-        </div>
+        </aside>
       </div>
-    </div>
+
+      <PageSecondary>
+        You remain the final approver. Document review assistance — not legal,
+        insurance, or professional advice.
+      </PageSecondary>
+    </PageFrame>
   );
 }

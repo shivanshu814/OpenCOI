@@ -1,7 +1,13 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Check } from "lucide-react";
+import {
+  apiErrorMessage,
+  notifyApiError,
+  notifyInfo,
+  notifyNotSent,
+  notifySuccess,
+} from "@/lib/ui/toast";
 import { useState } from "react";
 
 export function SendChaseButton({
@@ -12,13 +18,9 @@ export function SendChaseButton({
   vendorName: string;
 }) {
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
-  const [sent, setSent] = useState(false);
 
   async function send(locale: "en" | "es") {
     setBusy(true);
-    setMsg(null);
-    setSent(false);
     try {
       const res = await fetch("/api/chase/send", {
         method: "POST",
@@ -30,69 +32,61 @@ export function SendChaseButton({
         skipped?: boolean;
         reason?: string;
         demo?: boolean;
+        note?: string;
         rendered?: { subject: string };
         error?: string;
+        message?: string;
       };
+
       if (!res.ok || data.ok === false) {
-        setMsg(data.reason ?? data.error ?? "Send failed");
+        notifyApiError(data, "Chase send failed");
+        return;
+      }
+      // Demo / no-transport preview: never claim the email was delivered.
+      if (data.demo) {
+        notifyNotSent(
+          apiErrorMessage(
+            data,
+            "Chase not sent — configure SMTP or Resend to email vendors.",
+          ),
+        );
         return;
       }
       if (data.skipped) {
-        setMsg(data.reason ?? "Nothing due");
+        notifyInfo(data.reason ?? "Nothing due for this vendor yet.");
         return;
       }
-      const subject = data.rendered?.subject ?? "Chase sent";
-      setSent(!data.demo);
-      setMsg(
-        data.demo ? `Demo: ${subject}` : `Sent to ${vendorName}: ${subject}`,
+
+      notifySuccess(
+        `Chase email sent to ${vendorName} (${locale.toUpperCase()})`,
       );
     } catch {
-      setMsg("Network error");
+      notifyApiError(null, "Network error — chase not sent");
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <div className="flex flex-col items-end gap-1">
-      <div className="flex gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={busy}
-          onClick={() => send("en")}
-        >
-          Chase EN
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={busy}
-          onClick={() => send("es")}
-        >
-          Chase ES
-        </Button>
-      </div>
-      {msg ? (
-        <p
-          className={
-            sent
-              ? "flex max-w-xs items-center justify-end gap-1 text-right text-xs text-emerald-700"
-              : "text-muted-foreground max-w-xs text-right text-xs"
-          }
-        >
-          {sent ? (
-            <Check
-              className="size-3.5 shrink-0"
-              strokeWidth={2.5}
-              aria-hidden
-            />
-          ) : null}
-          {msg}
-        </p>
-      ) : null}
+    <div className="flex gap-2">
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        disabled={busy}
+        onClick={() => send("en")}
+      >
+        Chase EN
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        disabled={busy}
+        onClick={() => send("es")}
+      >
+        Chase ES
+      </Button>
     </div>
   );
 }

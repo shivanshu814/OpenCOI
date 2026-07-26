@@ -64,11 +64,18 @@ export async function POST(request: Request) {
       locale: (locale ?? "en") as ChaseLocale,
       vendorName: vendor.name,
     });
-    return NextResponse.json({
-      ...result,
-      demo: true,
-      note: "Demo mode — set RESEND_API_KEY + Supabase to send live.",
-    });
+    // Honest: nothing was emailed. Client must not toast "Sent".
+    return NextResponse.json(
+      {
+        ok: false,
+        demo: true,
+        rendered: result.rendered,
+        error:
+          "Chase not sent — connect Supabase and configure SMTP or Resend.",
+        note: "Demo mode — set SMTP_* or RESEND_API_KEY + Supabase to send live.",
+      },
+      { status: 503 },
+    );
   }
 
   const session = await getSessionOrg();

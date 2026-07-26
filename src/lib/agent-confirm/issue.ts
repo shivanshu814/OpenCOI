@@ -1,6 +1,7 @@
 import { appBaseUrl } from "@/lib/app-url";
 import { sendOutboundEmail } from "@/lib/email/resend";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { insertAuditEvent } from "@/lib/audit/write";
 import { createHash, randomBytes } from "crypto";
 
 const TOKEN_TTL_DAYS = 14;
@@ -156,7 +157,7 @@ export async function issueAgentConfirmation(input: {
     return { ok: false, reason: send.error };
   }
 
-  await admin.from("audit_events").insert({
+  await insertAuditEvent(admin, {
     org_id: input.orgId,
     actor_type: input.actorId ? "admin" : "system",
     actor_id: input.actorId ?? "agent-confirm:issue",
@@ -260,7 +261,7 @@ export async function resolveAgentConfirmation(input: {
 
   if (error) return { ok: false, reason: error.message };
 
-  await admin.from("audit_events").insert({
+  await insertAuditEvent(admin, {
     org_id: row.org_id,
     actor_type: "vendor",
     actor_id: row.producer_email,

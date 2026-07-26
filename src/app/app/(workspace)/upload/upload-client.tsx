@@ -5,6 +5,13 @@ import { SampleCoiPicker } from "@/components/sample-coi-picker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { Vendor } from "@/lib/data/types";
 import { FileText, FileUp, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -42,7 +49,10 @@ export default function UploadPage({ vendors }: { vendors: Vendor[] }) {
   const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const vendorOptions = useMemo(() => vendors, [vendors]);
+  const vendorItems = useMemo(
+    () => vendors.map((v) => ({ label: v.name, value: v.id })),
+    [vendors],
+  );
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -107,22 +117,24 @@ export default function UploadPage({ vendors }: { vendors: Vendor[] }) {
           <CardContent className="space-y-5 py-5">
             <div className="space-y-1.5">
               <Label htmlFor="vendor">Vendor</Label>
-              <select
-                id="vendor"
-                className="border-input bg-background h-9 w-full rounded-lg border px-2.5 text-sm"
-                value={vendorId}
-                onChange={(e) => setVendorId(e.target.value)}
-                required
+              <Select
+                items={vendorItems}
+                value={vendorId || null}
+                onValueChange={(value: string | null) =>
+                  setVendorId(value ?? "")
+                }
               >
-                <option value="" disabled>
-                  Select vendor
-                </option>
-                {vendorOptions.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="vendor" className="w-full">
+                  <SelectValue placeholder="Select vendor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {vendorItems.map((v) => (
+                    <SelectItem key={v.value} value={v.value}>
+                      {v.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-1.5">

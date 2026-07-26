@@ -1,6 +1,11 @@
-import { PageHeader } from "@/components/page-header";
+import {
+  PageFrame,
+  PageHeader,
+  PageSecondary,
+} from "@/components/page-frame";
 import { Skeleton } from "@/components/ui/skeleton";
 import { listVendors } from "@/lib/data/documents";
+import Link from "next/link";
 import { Suspense } from "react";
 import UploadPage from "./upload-client";
 
@@ -8,10 +13,28 @@ export default async function Page() {
   const vendors = await listVendors();
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6">
+    <PageFrame width="default">
       <PageHeader
         title="Upload COI"
-        description="Pick a vendor, drop the certificate PDF, and queue extraction."
+        description="Drop a vendor's certificate PDF so CertShield can extract coverage and queue a verdict for review."
+        audience="Anyone who receives COIs"
+        nextStep={
+          vendors.length === 0 ? (
+            <>
+              Add a vendor on{" "}
+              <Link
+                href="/app/vendors"
+                className="text-foreground underline-offset-2 hover:underline"
+              >
+                Vendors
+              </Link>{" "}
+              first, then come back here.
+            </>
+          ) : (
+            "Pick a vendor, upload the ACORD PDF, and wait for the review queue."
+          )
+        }
+        help="AI extraction is assistance only — low-confidence fields and FAIL verdicts always go to human review. You remain the final approver."
         live
         liveLabel="Ready"
       />
@@ -31,6 +54,11 @@ export default async function Page() {
       >
         <UploadPage vendors={vendors} />
       </Suspense>
-    </div>
+
+      <PageSecondary>
+        Document review assistance — not legal, insurance, or professional
+        advice. Nothing auto-publishes.
+      </PageSecondary>
+    </PageFrame>
   );
 }

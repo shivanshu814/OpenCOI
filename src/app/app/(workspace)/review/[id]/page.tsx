@@ -1,6 +1,12 @@
 import { DocumentPipelineTracker } from "@/components/document-pipeline-tracker";
 import { DownloadReportButton } from "@/components/download-report-button";
 import { CardLiveAccent, LiveBadge } from "@/components/live-activity";
+import {
+  DetailHeader,
+  PageFrame,
+  PageSecondary,
+  StatStrip,
+} from "@/components/page-frame";
 import { VerdictBadge } from "@/components/status-badges";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
@@ -23,8 +29,7 @@ import { isSupabaseConfigured } from "@/lib/config";
 import { getDocument, listVendors } from "@/lib/data/documents";
 import type { Verdict } from "@/lib/requirements/engine";
 import { createClient } from "@/lib/supabase/server";
-import { ArrowLeft, Check, Clock, Minus, TriangleAlert, X } from "lucide-react";
-import Link from "next/link";
+import { Check, Clock, Minus, TriangleAlert, X } from "lucide-react";
 import { notFound } from "next/navigation";
 import { RequestAgentConfirmButton } from "./request-agent-confirm";
 import { ReviewActions } from "./review-actions";
@@ -50,23 +55,14 @@ export default async function ReviewDocumentPage({
   // Uploaded but extraction hasn't landed yet — show why, don't 404.
   if (!doc.extraction) {
     return (
-      <div className="mx-auto w-full max-w-5xl space-y-6">
-        <div className="space-y-2">
-          <Link
-            href="/app/review"
-            className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm"
-          >
-            <ArrowLeft className="size-4" /> Review queue
-          </Link>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Preparing your COI review
-            </h1>
-            <p className="text-muted-foreground mt-1 text-sm">
-              {doc.file_name}
-            </p>
-          </div>
-        </div>
+      <PageFrame width="wide">
+        <DetailHeader
+          backHref="/app/review"
+          backLabel="Review queue"
+          title="Preparing your COI review"
+          meta={doc.file_name}
+          badge={<LiveBadge label="Waiting" tone="warn" />}
+        />
 
         <DocumentPipelineTracker status={doc.status} />
 
@@ -118,7 +114,12 @@ export default async function ReviewDocumentPage({
             </div>
           </CardContent>
         </Card>
-      </div>
+
+        <PageSecondary>
+          Nothing auto-publishes. Document review assistance — not legal,
+          insurance, or professional advice.
+        </PageSecondary>
+      </PageFrame>
     );
   }
 
@@ -135,49 +136,63 @@ export default async function ReviewDocumentPage({
           ? "Internal review"
           : doc.status;
 
-  const failCount = doc.check_lines.filter((l) => l.verdict === "FAIL").length;
-  const passCount = doc.check_lines.filter((l) => l.verdict === "PASS").length;
+  const verdictCount = (v: Verdict) =>
+    doc.check_lines.filter((l) => l.verdict === v).length;
+  const passCount = verdictCount("PASS");
+  const failCount = verdictCount("FAIL");
+  const missingCount = verdictCount("MISSING");
+  const expiringCount = verdictCount("EXPIRING");
 
   const glEachOccurrence = ex.policies[0]?.limits.find(
     (l) => l.name === "each_occurrence",
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <Link
-            href="/app/review"
-            className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs"
-          >
-            <ArrowLeft className="size-3" aria-hidden />
-            Review queue
-          </Link>
-          <h1 className="mt-1 flex flex-wrap items-center gap-2 text-lg font-semibold tracking-tight">
-            {vendor?.name ?? "Vendor"}
-            <LiveBadge label="In review" tone="info" />
-          </h1>
-          <p className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-2 text-sm">
-            <span className="truncate">{doc.file_name}</span>
-            <span className="text-muted-foreground/60" aria-hidden>
-              ·
-            </span>
-            <span className="text-xs">{phaseLabel}</span>
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {doc.overall_verdict ? (
-            <VerdictBadge verdict={doc.overall_verdict} />
-          ) : null}
-          <DownloadReportButton
-            vendorId={doc.vendor_id}
-            documentId={doc.id}
-            label="Compliance report PDF"
-          />
-        </div>
-      </div>
+    <PageFrame width="wide">
+      <DetailHeader
+        backHref="/app/review"
+        backLabel="Review queue"
+        title={vendor?.name ?? "Vendor"}
+        meta={`${doc.file_name} · ${phaseLabel}`}
+        badge={<LiveBadge label="In review" tone="info" />}
+        actions={
+          <>
+            {doc.overall_verdict ? (
+              <VerdictBadge verdict={doc.overall_verdict} />
+            ) : null}
+            <DownloadReportButton
+              vendorId={doc.vendor_id}
+              documentId={doc.id}
+              label="Compliance report PDF"
+            />
+          </>
+        }
+      />
 
       <DocumentPipelineTracker status={doc.status} />
+
+      {doc.check_lines.length > 0 ? (
+        <StatStrip
+          items={[
+            { label: "Pass", value: passCount, tone: "ok" },
+            {
+              label: "Fail",
+              value: failCount,
+              tone: failCount > 0 ? "danger" : "ok",
+            },
+            {
+              label: "Missing",
+              value: missingCount,
+              tone: missingCount > 0 ? "warn" : "default",
+            },
+            {
+              label: "Expiring",
+              value: expiringCount,
+              tone: expiringCount > 0 ? "warn" : "default",
+            },
+          ]}
+        />
+      ) : null}
 
       <div className="grid items-start gap-4 lg:grid-cols-2">
         <Card className="bg-muted/40 min-h-[420px] items-center justify-center py-0 lg:sticky lg:top-6">
@@ -269,6 +284,16 @@ export default async function ReviewDocumentPage({
                       {failCount} fail
                     </span>
                   ) : null}
+                  {missingCount > 0 ? (
+                    <span className="ml-2 font-medium text-slate-600">
+                      {missingCount} missing
+                    </span>
+                  ) : null}
+                  {expiringCount > 0 ? (
+                    <span className="ml-2 font-medium text-amber-700">
+                      {expiringCount} expiring
+                    </span>
+                  ) : null}
                 </p>
               </CardAction>
             </CardHeader>
@@ -345,12 +370,18 @@ export default async function ReviewDocumentPage({
           <ReviewActions
             documentId={doc.id}
             status={doc.status}
+            overallVerdict={doc.overall_verdict}
             customerDecision={doc.customer_decision}
             customerDecisionReason={doc.customer_decision_reason}
           />
         </section>
       </div>
-    </div>
+
+      <PageSecondary>
+        You remain the final approver. Document review assistance — not legal,
+        insurance, or professional advice.
+      </PageSecondary>
+    </PageFrame>
   );
 }
 

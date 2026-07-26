@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
@@ -158,20 +159,20 @@ export function ProjectEditor({
           </Field>
           <Field>
             <FieldLabel htmlFor="start">Start date</FieldLabel>
-            <Input
+            <DatePicker
               id="start"
-              type="date"
+              placeholder="Start date"
               value={form.start_date}
-              onChange={(e) => setForm({ ...form, start_date: e.target.value })}
+              onChange={(iso) => setForm({ ...form, start_date: iso })}
             />
           </Field>
           <Field>
             <FieldLabel htmlFor="end">End date</FieldLabel>
-            <Input
+            <DatePicker
               id="end"
-              type="date"
+              placeholder="End date"
               value={form.end_date}
-              onChange={(e) => setForm({ ...form, end_date: e.target.value })}
+              onChange={(iso) => setForm({ ...form, end_date: iso })}
             />
           </Field>
           <Field>

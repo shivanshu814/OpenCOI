@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import type { DocumentPipelineStatus } from "@/lib/data/types";
 import type { VendorStatus } from "@/lib/demo/store";
 import type { Verdict } from "@/lib/requirements/engine";
 import { cn } from "@/lib/utils";

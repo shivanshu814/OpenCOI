@@ -1,3 +1,4 @@
+import { isIsoDate, normalizeIsoDate } from "@/lib/extraction/dates";
 import type { ChaseTemplateKey } from "./types";
 
 /** Default cadence: 30/14/7/1 days before expiry + weekly after (docs/01 C2). */
@@ -102,9 +103,11 @@ export function earliestExpirationFromPolicies(
   policies: { expiration_date: string | null }[] | null | undefined,
 ): string | null {
   if (!policies?.length) return null;
+  // Normalize before sorting — stored payloads may hold US-format dates,
+  // which would sort lexicographically wrong and break the cadence math.
   const dates = policies
-    .map((p) => p.expiration_date?.slice(0, 10) ?? null)
-    .filter((d): d is string => Boolean(d))
+    .map((p) => normalizeIsoDate(p.expiration_date))
+    .filter((d): d is string => isIsoDate(d))
     .sort();
   return dates[0] ?? null;
 }

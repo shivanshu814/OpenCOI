@@ -3,6 +3,7 @@ import {
   parseAmBestRating,
   type AmBestRating,
 } from "@/lib/carriers/ratings";
+import { normalizeIsoDate } from "@/lib/extraction/dates";
 import type { Extraction } from "@/lib/extraction/schema";
 import { nameSimilarity, normalizeVendorName } from "@/lib/vendors/fuzzy-match";
 
@@ -73,8 +74,12 @@ function worst(a: Verdict, b: Verdict): Verdict {
 }
 
 function daysUntil(iso: string | null): number | null {
-  if (!iso) return null;
-  const end = new Date(`${iso}T00:00:00Z`);
+  // Stored extractions may pre-date the schema-boundary date normalization
+  // (e.g. "01/01/2027" echoed from an ACORD form) — normalize here too so a
+  // real, readable date is never misreported as missing.
+  const normalized = normalizeIsoDate(iso);
+  if (!normalized) return null;
+  const end = new Date(`${normalized}T00:00:00Z`);
   if (Number.isNaN(end.getTime())) return null;
   const now = new Date();
   const diff =
@@ -152,6 +157,52 @@ function evaluateEndorsement(
     low_confidence:
       endo.confidence < CONFIDENCE_THRESHOLD ||
       endo.named_insured_match === null,
+  };
+}
+
+/** Expiration as its own check line (never mixed into a limit rule's row). */
+function evaluateExpiration(
+  rule: RequirementRule,
+  policy: Extraction["policies"][number],
+): CheckLine {
+  const lineName = rule.line.replaceAll("_", " ");
+  const label = `${lineName.charAt(0).toUpperCase()}${lineName.slice(1)} policy not expired`;
+  const rule_id = `${rule.id}_expiration`;
+  const days = daysUntil(policy.expiration_date);
+
+  if (days == null) {
+    return {
+      rule_id,
+      label,
+      verdict: "MISSING",
+      reason: "Expiration date missing or unreadable — needs review.",
+      low_confidence: true,
+    };
+  }
+  if (days < 0) {
+    return {
+      rule_id,
+      label,
+      verdict: "FAIL",
+      reason: `Policy expired ${Math.abs(days)} day(s) ago.`,
+      low_confidence: policy.confidence < CONFIDENCE_THRESHOLD,
+    };
+  }
+  if (days <= 30) {
+    return {
+      rule_id,
+      label,
+      verdict: "EXPIRING",
+      reason: `Expires in ${days} day(s).`,
+      low_confidence: policy.confidence < CONFIDENCE_THRESHOLD,
+    };
+  }
+  return {
+    rule_id,
+    label,
+    verdict: "PASS",
+    reason: `Policy in force — expires in ${days} day(s).`,
+    low_confidence: policy.confidence < CONFIDENCE_THRESHOLD,
   };
 }
 
@@ -385,21 +436,6 @@ export function runRequirementsEngine(
           low_confidence = true;
         }
       }
-
-      if (verdict === "PASS" && rule.check_expiration) {
-        const days = daysUntil(policy.expiration_date);
-        if (days == null) {
-          verdict = "MISSING";
-          reason = "Expiration date missing or unreadable.";
-          low_confidence = true;
-        } else if (days < 0) {
-          verdict = "FAIL";
-          reason = `Policy expired ${Math.abs(days)} day(s) ago.`;
-        } else if (days <= 30) {
-          verdict = "EXPIRING";
-          reason = `Expires in ${days} day(s).`;
-        }
-      }
     }
 
     lines.push({
@@ -409,6 +445,13 @@ export function runRequirementsEngine(
       reason,
       low_confidence,
     });
+
+    // Expiration is its own check line — it must never overwrite the limit
+    // rule's verdict/reason (a $1M limit row saying "expiration missing" is
+    // wrong on both counts).
+    if (policy && rule.check_expiration) {
+      lines.push(evaluateExpiration(rule, policy));
+    }
   }
 
   if (propertyValidation) {

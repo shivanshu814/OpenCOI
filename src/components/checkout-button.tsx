@@ -4,6 +4,7 @@ import { LiveDot } from "@/components/live-activity";
 import { Button } from "@/components/ui/button";
 import type { PlanId } from "@/lib/billing/plans";
 import { initializePaddle, type Paddle } from "@paddle/paddle-js";
+import { cn } from "@/lib/utils";
 import { ArrowRight, LoaderCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -111,12 +112,12 @@ export function CheckoutButton({
   }
 
   return (
-    <div className="space-y-2">
+    <div className={cn("space-y-2", className)}>
       <Button
         type="button"
         variant={variant}
         size={size}
-        className={className}
+        className={cn(className?.includes("w-full") && "w-full")}
         disabled={busy}
         onClick={onClick}
       >

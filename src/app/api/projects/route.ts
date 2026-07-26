@@ -3,6 +3,7 @@ import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import { DEFAULT_GLOBAL_RULES } from "@/lib/requirements/engine";
 import { createClient } from "@/lib/supabase/server";
+import { insertAuditEvent } from "@/lib/audit/write";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -123,10 +124,11 @@ export async function POST(request: Request) {
     rules: DEFAULT_GLOBAL_RULES,
   });
 
-  await supabase.from("audit_events").insert({
+  await insertAuditEvent(supabase, {
     org_id: session.orgId,
     actor_type: "admin",
     actor_id: session.userId,
+      actor_email: session.email,
     entity_type: "project",
     entity_id: project.id,
     action: "created",

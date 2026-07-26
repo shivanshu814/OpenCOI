@@ -1,9 +1,15 @@
 import { DownloadReportButton } from "@/components/download-report-button";
-import { PageHeader } from "@/components/page-header";
+import { EmptyState } from "@/components/empty-state";
+import {
+  ContentSurface,
+  PageFrame,
+  PageHeader,
+  PageSecondary,
+  StatStrip,
+} from "@/components/page-frame";
 import { VendorStatusBadge } from "@/components/status-badges";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
   CardAction,
   CardContent,
   CardHeader,
@@ -19,49 +25,81 @@ import {
 } from "@/components/ui/table";
 import { listVendors } from "@/lib/data/documents";
 import { dashboardCounts } from "@/lib/data/types";
+import { Users } from "lucide-react";
 import Link from "next/link";
 import { AddVendorForm } from "./add-vendor-form";
-
-const STATUS_LEGEND = [
-  { key: "compliant", label: "Compliant", dot: "bg-emerald-500" },
-  { key: "expiring", label: "Expiring", dot: "bg-amber-400" },
-  { key: "non_compliant", label: "Non-compliant", dot: "bg-red-500" },
-  { key: "missing_docs", label: "Missing docs", dot: "bg-slate-400" },
-  { key: "in_review", label: "In review", dot: "bg-sky-500" },
-] as const;
 
 export default async function VendorsPage() {
   const vendors = await listVendors();
   const counts = dashboardCounts(vendors);
+  const hasData = vendors.length > 0;
 
   return (
-    <div className="space-y-6">
+    <PageFrame>
       <PageHeader
         title="Vendors"
-        description="Track insurance status, W-9s, licenses, and chase renewals."
-        live
-        actions={
-          vendors.length > 0 ? (
-            <dl className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
-              {STATUS_LEGEND.filter((s) => counts[s.key] > 0).map((s) => (
-                <div key={s.key} className="flex items-center gap-1.5 text-xs">
-                  <span className={`size-2 rounded-full ${s.dot}`} />
-                  <dt className="text-muted-foreground">{s.label}</dt>
-                  <dd className="font-medium tabular-nums">{counts[s.key]}</dd>
-                </div>
-              ))}
-            </dl>
-          ) : null
+        description="Your contractor roster — insurance status, docs, and renewal chase in one place."
+        audience="Property managers tracking vendor compliance"
+        nextStep={
+          !hasData ? (
+            "Add your first vendor below, then upload their COI."
+          ) : (
+            <>
+              Open a vendor to chase renewals, or{" "}
+              <Link
+                href="/app/upload"
+                className="text-foreground underline-offset-2 hover:underline"
+              >
+                upload a COI
+              </Link>
+              .
+            </>
+          )
         }
+        help="Statuses are traffic-light signals from reviewed COIs — you remain the final approver. Chase reminders go out by email (and SMS when Twilio is configured)."
+        live
       />
 
+      {hasData ? (
+        <StatStrip
+          items={[
+            {
+              label: "Total",
+              value: vendors.length,
+              tone: "brand",
+            },
+            {
+              label: "Compliant",
+              value: counts.compliant,
+              tone: "ok",
+            },
+            {
+              label: "Expiring / gaps",
+              value:
+                counts.expiring +
+                counts.non_compliant +
+                counts.missing_docs,
+              tone:
+                counts.expiring +
+                  counts.non_compliant +
+                  counts.missing_docs >
+                0
+                  ? "warn"
+                  : "ok",
+            },
+            {
+              label: "In review",
+              value: counts.in_review,
+              tone: counts.in_review > 0 ? "default" : "ok",
+            },
+          ]}
+        />
+      ) : null}
+
+      {/* Add first when empty; keep form accessible when populated */}
       <AddVendorForm />
 
-      <Card className="min-w-0 gap-0 overflow-hidden py-0">
-        <div
-          className="from-brand via-brand/70 to-brand/20 h-1 w-full bg-gradient-to-r"
-          aria-hidden
-        />
+      <ContentSurface className="gap-0 py-0">
         <CardHeader className="border-b py-4">
           <CardTitle>All vendors</CardTitle>
           <CardAction className="self-center">
@@ -75,21 +113,16 @@ export default async function VendorsPage() {
           </CardAction>
         </CardHeader>
 
-        {vendors.length === 0 ? (
-          <CardContent className="px-6 py-14 text-center">
-            <p className="text-sm font-medium">No vendors yet</p>
-            <p className="text-muted-foreground mx-auto mt-2 max-w-md text-sm leading-relaxed">
-              Add your first vendor above, then upload their COI — we&rsquo;ll
-              extract limits and expirations and start the review pipeline.
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-4"
-              render={<Link href="/app/upload" />}
-            >
-              Go to upload
-            </Button>
+        {!hasData ? (
+          <CardContent className="p-4 sm:p-6">
+            <EmptyState
+              title="No vendors yet"
+              description="Add your first vendor above, then upload their COI — we'll extract limits and expirations and start the review pipeline."
+              actionHref="/app/upload"
+              actionLabel="Go to upload"
+              liveHint="No sample vendors — your list stays empty until you add one."
+              icon={<Users className="size-5" aria-hidden />}
+            />
           </CardContent>
         ) : (
           <Table>
@@ -152,7 +185,12 @@ export default async function VendorsPage() {
             </TableBody>
           </Table>
         )}
-      </Card>
-    </div>
+      </ContentSurface>
+
+      <PageSecondary>
+        Document review assistance — not legal, insurance, or professional
+        advice. You remain the final approver.
+      </PageSecondary>
+    </PageFrame>
   );
 }

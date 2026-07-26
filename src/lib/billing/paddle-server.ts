@@ -3,6 +3,7 @@ import {
   type PlanId,
 } from "@/lib/billing/plans";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { insertAuditEvent } from "@/lib/audit/write";
 import { Environment, Paddle, type EventEntity } from "@paddle/paddle-node-sdk";
 
 export function isPaddleServerConfigured(): boolean {
@@ -159,7 +160,7 @@ export async function syncSubscriptionFromPaddle(
     })
     .eq("id", orgId);
 
-  await supabase.from("audit_events").insert({
+  await insertAuditEvent(supabase, {
     org_id: orgId,
     actor_type: "system",
     actor_id: "paddle:webhook",
@@ -167,7 +168,7 @@ export async function syncSubscriptionFromPaddle(
     entity_id: orgId,
     action: `subscription_${sub.status}`,
     after_state: row,
-  });
+  }, { captureRequest: false });
 
   return { ok: true, orgId };
 }

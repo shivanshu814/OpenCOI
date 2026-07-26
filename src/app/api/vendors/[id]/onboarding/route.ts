@@ -7,6 +7,7 @@ import { isSupabaseConfigured } from "@/lib/config";
 import { boardLookupUrl } from "@/lib/licenses/boards";
 import { createClient } from "@/lib/supabase/server";
 import { encryptTin, maskTin } from "@/lib/tax/tin";
+import { insertAuditEvent } from "@/lib/audit/write";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -148,10 +149,11 @@ export async function POST(
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    await supabase.from("audit_events").insert({
+    await insertAuditEvent(supabase, {
       org_id: session.orgId,
       actor_type: "admin",
       actor_id: session.userId,
+      actor_email: session.email,
       entity_type: "vendor",
       entity_id: vendorId,
       action: "w9_tax_profile_upserted",
@@ -185,10 +187,11 @@ export async function POST(
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    await supabase.from("audit_events").insert({
+    await insertAuditEvent(supabase, {
       org_id: session.orgId,
       actor_type: "admin",
       actor_id: session.userId,
+      actor_email: session.email,
       entity_type: "vendor",
       entity_id: vendorId,
       action: "license_added",
@@ -232,10 +235,11 @@ export async function POST(
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    await supabase.from("audit_events").insert({
+    await insertAuditEvent(supabase, {
       org_id: session.orgId,
       actor_type: "admin",
       actor_id: session.userId,
+      actor_email: session.email,
       entity_type: "vendor",
       entity_id: vendorId,
       action: "agreement_esign_sent",

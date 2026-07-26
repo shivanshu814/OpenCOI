@@ -7,6 +7,7 @@ import {
   type PostmarkInboundPayload,
 } from "@/lib/email/postmark-inbound";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { insertAuditEvent } from "@/lib/audit/write";
 import {
   extractNameHints,
   matchVendorByNames,
@@ -69,7 +70,7 @@ export async function processInboundEmail(
     .slice(0, MAX_PDFS);
 
   if (pdfs.length === 0) {
-    await admin.from("audit_events").insert({
+    await insertAuditEvent(admin, {
       org_id: org.id,
       actor_type: "system",
       actor_id: "postmark:inbound",
@@ -81,7 +82,7 @@ export async function processInboundEmail(
         subject: payload.Subject,
         from: payload.From,
       },
-    });
+    }, { captureRequest: false });
     return {
       ok: true,
       ignored: true,
@@ -136,7 +137,7 @@ export async function processInboundEmail(
     }
 
     vendorId = created.id;
-    await admin.from("audit_events").insert({
+    await insertAuditEvent(admin, {
       org_id: org.id,
       actor_type: "system",
       actor_id: "postmark:inbound",
@@ -148,7 +149,7 @@ export async function processInboundEmail(
         hints,
         message_id: payload.MessageID,
       },
-    });
+    }, { captureRequest: false });
   }
 
   const documents: EmailInResult["documents"] = [];

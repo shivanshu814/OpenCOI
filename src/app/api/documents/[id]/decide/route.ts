@@ -8,6 +8,7 @@ import {
   type OverrideReasonCode,
 } from "@/lib/verdicts/customer-decision";
 import { createClient } from "@/lib/supabase/server";
+import { insertAuditEvent } from "@/lib/audit/write";
 import { NextResponse } from "next/server";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -194,10 +195,11 @@ export async function POST(request: Request, ctx: Ctx) {
       );
     }
 
-    await supabase.from("audit_events").insert({
+    await insertAuditEvent(supabase, {
       org_id: session.orgId,
       actor_type: "customer",
       actor_id: session.userId,
+      actor_email: session.email,
       entity_type: "document",
       entity_id: id,
       action: "disputed",
@@ -252,10 +254,11 @@ export async function POST(request: Request, ctx: Ctx) {
         ? "routed_to_internal_review"
         : "overridden";
 
-  await supabase.from("audit_events").insert({
+  await insertAuditEvent(supabase, {
     org_id: session.orgId,
     actor_type: "customer",
     actor_id: session.userId,
+      actor_email: session.email,
     entity_type: "document",
     entity_id: id,
     action: auditAction,

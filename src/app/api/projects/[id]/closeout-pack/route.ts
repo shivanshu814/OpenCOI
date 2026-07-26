@@ -7,6 +7,7 @@ import {
   closeoutFilename,
 } from "@/lib/projects/types";
 import { createClient } from "@/lib/supabase/server";
+import { insertAuditEvent } from "@/lib/audit/write";
 import { NextResponse } from "next/server";
 
 /** D2 closeout compliance pack — all subs' final certs summary in one ZIP. */
@@ -169,10 +170,11 @@ export async function GET(
     },
   ]);
 
-  await supabase.from("audit_events").insert({
+  await insertAuditEvent(supabase, {
     org_id: session.orgId,
     actor_type: "admin",
     actor_id: session.userId,
+      actor_email: session.email,
     entity_type: "project",
     entity_id: projectId,
     action: "closeout_pack_exported",

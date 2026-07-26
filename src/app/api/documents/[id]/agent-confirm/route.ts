@@ -14,9 +14,12 @@ export async function POST(
       {
         ok: false,
         demo: true,
-        message: "Demo mode — connect Supabase to request agent confirmation.",
+        error:
+          "Agent confirmation not sent — connect Supabase and mail transport.",
+        message:
+          "Demo mode — connect Supabase to request agent confirmation.",
       },
-      { status: 200 },
+      { status: 503 },
     );
   }
 

@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
@@ -84,20 +85,20 @@ export function AddProjectForm() {
           </Field>
           <Field>
             <FieldLabel htmlFor="start">Start</FieldLabel>
-            <Input
+            <DatePicker
               id="start"
-              type="date"
+              placeholder="Start date"
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
+              onChange={setStartDate}
             />
           </Field>
           <Field>
             <FieldLabel htmlFor="end">End</FieldLabel>
-            <Input
+            <DatePicker
               id="end"
-              type="date"
+              placeholder="End date"
               value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
+              onChange={setEndDate}
             />
           </Field>
           <div className="flex items-center gap-3 sm:col-span-4">

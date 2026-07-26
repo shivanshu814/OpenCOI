@@ -174,9 +174,9 @@ const FEEDS: Record<string, FeedItem[]> = {
     { text: "Plans $99 / $249 / $499", tone: "brand" },
   ],
   "/app/admin": [
-    { text: "AI cost · latency · confidence", tone: "info" },
-    { text: "Golden-set accuracy gate", tone: "brand" },
-    { text: "Internal review until M3", tone: "warn" },
+    { text: "AI cost & speed logged per read", tone: "info" },
+    { text: "Accuracy gate grows from your corrections", tone: "brand" },
+    { text: "You approve every verdict until M3", tone: "warn" },
   ],
   "/app/onboarding": [
     { text: "Setup wizard · almost live", tone: "info" },
@@ -240,7 +240,7 @@ export function AppLiveTicker({ demo = false }: { demo?: boolean }) {
 
   return (
     <div
-      className="border-border/70 bg-muted/40 hidden max-w-[min(100%,18rem)] items-center gap-2 truncate rounded-full border px-2.5 py-1 text-[11px] font-medium md:flex lg:max-w-xs"
+      className="border-border/70 bg-muted/40 hidden h-8 max-w-[min(100%,18rem)] items-center gap-2 truncate rounded-full border px-2.5 text-[11px] font-medium md:flex lg:max-w-xs"
       aria-live="polite"
     >
       <LiveDot tone={item.tone} />

@@ -34,7 +34,10 @@ export const extractionToolInputSchema = {
             "other",
           ],
         },
-        issue_date: { type: ["string", "null"] },
+        issue_date: {
+          type: ["string", "null"],
+          description: "ISO date YYYY-MM-DD (convert from MM/DD/YYYY)",
+        },
         confidence: { type: "number", minimum: 0, maximum: 1 },
       },
     },
@@ -110,8 +113,14 @@ export const extractionToolInputSchema = {
             enum: ["A", "B", "C", "D", "E", "F", null],
           },
           policy_number: { type: ["string", "null"] },
-          effective_date: { type: ["string", "null"] },
-          expiration_date: { type: ["string", "null"] },
+          effective_date: {
+            type: ["string", "null"],
+            description: "ISO date YYYY-MM-DD (convert from MM/DD/YYYY)",
+          },
+          expiration_date: {
+            type: ["string", "null"],
+            description: "ISO date YYYY-MM-DD (convert from MM/DD/YYYY)",
+          },
           limits: {
             type: "array",
             items: {

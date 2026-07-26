@@ -12,6 +12,7 @@ import {
   loadPropertyValidation,
 } from "@/lib/requirements/merge";
 import { createClient } from "@/lib/supabase/server";
+import { insertAuditEvent } from "@/lib/audit/write";
 import { NextResponse } from "next/server";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -169,10 +170,11 @@ export async function POST(request: Request, ctx: Ctx) {
     created_by: session.userId,
   });
 
-  await supabase.from("audit_events").insert({
+  await insertAuditEvent(supabase, {
     org_id: session.orgId,
     actor_type: "admin",
     actor_id: session.userId,
+      actor_email: session.email,
     entity_type: "document",
     entity_id: id,
     action: "correction_saved",

@@ -19,6 +19,7 @@ import {
 } from "@/lib/requirements/merge";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { nameSimilarity } from "@/lib/vendors/fuzzy-match";
+import { insertAuditEvent } from "@/lib/audit/write";
 
 export const extractDocument = inngest.createFunction(
   {
@@ -163,7 +164,7 @@ export const extractDocument = inngest.createFunction(
         })
         .eq("id", doc.vendor_id);
 
-      await supabase.from("audit_events").insert({
+      await insertAuditEvent(supabase, {
         org_id: orgId,
         actor_type: "system",
         actor_id: "inngest:extract-document",
@@ -176,7 +177,7 @@ export const extractDocument = inngest.createFunction(
           prompt_version: PROMPT_VERSION,
           fraud_signal_count: fraudSignals.length,
         },
-      });
+      }, { captureRequest: false });
     });
 
     return { documentId, overall: checks.overall };

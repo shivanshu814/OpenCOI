@@ -4,6 +4,7 @@ import { vendorStatusFromVerdict } from "@/lib/data/types";
 import { demoAcceptPublish, getDemoDocument } from "@/lib/demo/store";
 import type { Verdict } from "@/lib/requirements/engine";
 import { createClient } from "@/lib/supabase/server";
+import { insertAuditEvent } from "@/lib/audit/write";
 import { NextResponse } from "next/server";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -109,10 +110,11 @@ export async function POST(_request: Request, ctx: Ctx) {
       .eq("id", doc.vendor_id);
   }
 
-  await supabase.from("audit_events").insert({
+  await insertAuditEvent(supabase, {
     org_id: session.orgId,
     actor_type: "admin",
     actor_id: session.userId,
+      actor_email: session.email,
     entity_type: "document",
     entity_id: id,
     action: "published",

@@ -1,45 +1,18 @@
 import { DownloadOwnerReportButton } from "@/components/download-owner-report-button";
 import { LiveBadge } from "@/components/live-activity";
+import {
+  DetailHeader,
+  PageFrame,
+  PageSecondary,
+} from "@/components/page-frame";
 import { SendOwnerReportButton } from "@/components/send-owner-report-button";
 import { Button } from "@/components/ui/button";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import type { RequirementRule } from "@/lib/requirements/engine";
 import { createClient } from "@/lib/supabase/server";
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PropertyEditor } from "./property-editor";
-
-function BackLink() {
-  return (
-    <Link
-      href="/app/properties"
-      className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm"
-    >
-      <ArrowLeft className="size-3.5" aria-hidden />
-      Properties
-    </Link>
-  );
-}
-
-function PropertyHeading({
-  name,
-  description,
-}: {
-  name: string;
-  description: string;
-}) {
-  return (
-    <div>
-      <div className="flex flex-wrap items-center gap-2.5">
-        <h1 className="text-lg font-semibold tracking-tight">{name}</h1>
-        <LiveBadge label="Live" />
-      </div>
-      <p className="text-muted-foreground mt-1 text-sm">{description}</p>
-    </div>
-  );
-}
 
 export default async function PropertyDetailPage({
   params,
@@ -48,47 +21,8 @@ export default async function PropertyDetailPage({
 }) {
   const { id } = await params;
 
-  if (!isSupabaseConfigured()) {
-    return (
-      <div className="space-y-6">
-        <div className="space-y-4">
-          <BackLink />
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <PropertyHeading
-              name="Oak Street Apartments"
-              description="Certificate holder + AI wording + overrides merge over global/trade rules."
-            />
-            <div className="flex flex-wrap items-center gap-2">
-              <DownloadOwnerReportButton propertyId={id} />
-              <SendOwnerReportButton
-                propertyId={id}
-                toHint="owner@oakstreet.example"
-              />
-            </div>
-          </div>
-        </div>
-        <PropertyEditor
-          propertyId={id}
-          initial={{
-            name: "Oak Street Apartments",
-            address_line: "100 Oak St",
-            city: "Austin",
-            state: "TX",
-            postal_code: "78701",
-            certificate_holder_name: "Oak Street LLC",
-            additional_insured_wording: "",
-            owner_llc_names: "Oak Street LLC",
-            lender_names: "",
-            owner_report_email: "owner@oakstreet.example",
-            owner_report_enabled: true,
-          }}
-          rules={[]}
-          vendorIds={[]}
-          vendors={[]}
-        />
-      </div>
-    );
-  }
+  // No invented sample buildings.
+  if (!isSupabaseConfigured()) notFound();
 
   const session = await getSessionOrg();
   if (!session) notFound();
@@ -130,17 +64,25 @@ export default async function PropertyDetailPage({
   const lenders = Array.isArray(property.lender_names)
     ? (property.lender_names as string[])
     : [];
+  const location = [property.city, property.state].filter(Boolean).join(", ");
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <BackLink />
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <PropertyHeading
-            name={property.name}
-            description="Certificate holder + AI wording + overrides merge over global/trade rules."
-          />
-          <div className="flex flex-wrap items-center gap-2">
+    <PageFrame>
+      <DetailHeader
+        backHref="/app/properties"
+        backLabel="Properties"
+        title={property.name}
+        meta={[
+          property.certificate_holder_name
+            ? `Holder: ${property.certificate_holder_name}`
+            : "Certificate holder not set",
+          location || null,
+        ]
+          .filter(Boolean)
+          .join(" · ")}
+        badge={<LiveBadge label="Live" />}
+        actions={
+          <>
             <DownloadOwnerReportButton propertyId={property.id} />
             <SendOwnerReportButton
               propertyId={property.id}
@@ -155,9 +97,10 @@ export default async function PropertyDetailPage({
             >
               Audit pack
             </Button>
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      />
+
       <PropertyEditor
         propertyId={id}
         initial={{
@@ -177,6 +120,12 @@ export default async function PropertyDetailPage({
         vendorIds={(links ?? []).map((l) => l.vendor_id)}
         vendors={(vendors ?? []) as { id: string; name: string }[]}
       />
-    </div>
+
+      <PageSecondary>
+        Holder and AI-wording checks route uncertainty to review — never a
+        silent pass. Document review assistance — not legal, insurance, or
+        professional advice.
+      </PageSecondary>
+    </PageFrame>
   );
 }

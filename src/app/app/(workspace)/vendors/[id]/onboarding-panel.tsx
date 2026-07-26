@@ -8,9 +8,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useEffect, useState } from "react";
+
+const TIN_TYPE_ITEMS: ReadonlyArray<{ label: string; value: "ein" | "ssn" }> = [
+  { label: "EIN", value: "ein" },
+  { label: "SSN", value: "ssn" },
+];
 
 type Props = { vendorId: string };
 
@@ -129,15 +142,24 @@ export function VendorOnboardingPanel({ vendorId }: Props) {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="tintype">Type</Label>
-              <select
-                id="tintype"
-                className="border-input bg-background h-9 w-full rounded-lg border px-2.5 text-sm"
+              <Select
+                items={TIN_TYPE_ITEMS}
                 value={tinType}
-                onChange={(e) => setTinType(e.target.value as "ein" | "ssn")}
+                onValueChange={(value) => {
+                  if (value) setTinType(value);
+                }}
               >
-                <option value="ein">EIN</option>
-                <option value="ssn">SSN</option>
-              </select>
+                <SelectTrigger id="tintype" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIN_TYPE_ITEMS.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <Button
@@ -171,10 +193,11 @@ export function VendorOnboardingPanel({ vendorId }: Props) {
               value={licState}
               onChange={(e) => setLicState(e.target.value)}
             />
-            <Input
-              type="date"
+            <DatePicker
+              aria-label="License expiration date"
+              placeholder="Expiration date"
               value={licExp}
-              onChange={(e) => setLicExp(e.target.value)}
+              onChange={setLicExp}
             />
           </div>
           <Button

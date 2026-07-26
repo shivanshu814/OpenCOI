@@ -25,8 +25,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ChevronDown } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 export function IntegrationsClient() {
@@ -97,19 +103,46 @@ export function IntegrationsClient() {
 
   return (
     <div className="space-y-6">
+      <div className="border-brand/15 bg-brand-muted/40 space-y-3 rounded-xl border px-4 py-3.5 sm:px-5">
+        <p className="text-sm leading-relaxed">
+          <span className="text-foreground font-medium">In plain words:</span>{" "}
+          <span className="text-muted-foreground">
+            API keys let Zapier or your own scripts read vendor status from
+            CertShield. Webhooks push a ping to your tools when a vendor&apos;s
+            status changes or a COI verdict is published — so work-order systems
+            can block non-compliant vendors.
+          </span>
+        </p>
+        <ul className="text-muted-foreground list-inside list-disc space-y-1 text-xs leading-relaxed sm:text-sm">
+          <li>
+            Sync compliant / non-compliant flags into AppFolio, Buildium, or a
+            spreadsheet via Zapier
+          </li>
+          <li>
+            Notify Slack when a vendor drops out of compliance (do-not-dispatch)
+          </li>
+          <li>
+            Pull vendor lists into an internal dashboard without logging into
+            CertShield
+          </li>
+        </ul>
+        <p className="text-muted-foreground text-xs leading-relaxed">
+          Most property managers never need this page — skip it unless you&apos;re
+          on Business or connecting custom tooling. Native AppFolio/Buildium
+          connectors are not live yet; Zapier + REST is the path today.
+        </p>
+      </div>
+
       <Card className="gap-0 overflow-hidden py-0">
         <CardLiveAccent />
         <CardHeader className="border-b pt-4">
           <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-            API keys (E4)
+            API keys
             <LiveBadge label="Live" />
           </CardTitle>
           <CardDescription className="text-xs">
-            Use{" "}
-            <code className="text-foreground">
-              Authorization: Bearer cs_live_…
-            </code>{" "}
-            against <code className="text-foreground">/api/v1/vendors</code>.
+            Create a key when you want another tool to ask CertShield for vendor
+            data. Name it after the tool (e.g. Zapier).
           </CardDescription>
           <CardAction className="self-center">
             <LiveCount value={keys.length} />
@@ -146,6 +179,24 @@ export function IntegrationsClient() {
               </AlertDescription>
             </Alert>
           ) : null}
+
+          <Collapsible className="group">
+            <CollapsibleTrigger className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 text-xs font-medium transition-colors">
+              <ChevronDown className="size-3.5 transition-transform group-data-open:rotate-180" />
+              Technical details
+            </CollapsibleTrigger>
+            <CollapsibleContent className="text-muted-foreground mt-2 space-y-1.5 text-xs leading-relaxed">
+              <p>
+                Send{" "}
+                <code className="text-foreground">
+                  Authorization: Bearer cs_live_…
+                </code>{" "}
+                to{" "}
+                <code className="text-foreground">/api/v1/vendors</code>. Revoke
+                a key immediately if it leaks.
+              </p>
+            </CollapsibleContent>
+          </Collapsible>
         </CardContent>
 
         <ul className="divide-y border-t">
@@ -201,8 +252,8 @@ export function IntegrationsClient() {
           ))}
           {keys.length === 0 ? (
             <li className="text-muted-foreground px-4 py-6 text-center text-sm">
-              No API keys yet — create one to connect Zapier or your own
-              tooling.
+              No API keys yet — create one only when you&apos;re ready to connect
+              Zapier or your own tooling.
             </li>
           ) : null}
         </ul>
@@ -216,9 +267,8 @@ export function IntegrationsClient() {
             <LiveBadge label="Live" tone="info" />
           </CardTitle>
           <CardDescription className="text-xs">
-            Events: vendor.status_changed, document.published. Verify{" "}
-            <code className="text-foreground">X-CertShield-Signature</code>{" "}
-            (HMAC SHA-256 of body).
+            Paste a Zapier (or other) hook URL to get notified when vendor status
+            changes — no need to poll CertShield.
           </CardDescription>
           <CardAction className="self-center">
             <LiveCount value={webhooks.length} />
@@ -253,6 +303,23 @@ export function IntegrationsClient() {
               </AlertDescription>
             </Alert>
           ) : null}
+
+          <Collapsible className="group">
+            <CollapsibleTrigger className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 text-xs font-medium transition-colors">
+              <ChevronDown className="size-3.5 transition-transform group-data-open:rotate-180" />
+              Technical details
+            </CollapsibleTrigger>
+            <CollapsibleContent className="text-muted-foreground mt-2 space-y-1.5 text-xs leading-relaxed">
+              <p>
+                Events:{" "}
+                <code className="text-foreground">vendor.status_changed</code>,{" "}
+                <code className="text-foreground">document.published</code>.
+                Verify{" "}
+                <code className="text-foreground">X-CertShield-Signature</code>{" "}
+                (HMAC SHA-256 of the body) with the signing secret.
+              </p>
+            </CollapsibleContent>
+          </Collapsible>
         </CardContent>
 
         <ul className="divide-y border-t">
@@ -276,8 +343,8 @@ export function IntegrationsClient() {
           ))}
           {webhooks.length === 0 ? (
             <li className="text-muted-foreground px-4 py-6 text-center text-sm">
-              No webhooks yet — add an endpoint to get notified when a vendor
-              status changes or a document is published.
+              No webhooks yet — add an endpoint only when another system needs
+              live status updates.
             </li>
           ) : null}
         </ul>

@@ -8,6 +8,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  apiErrorMessage,
+  notifyApiError,
+  notifyCaughtError,
+  notifyNotSent,
+  notifySuccess,
+} from "@/lib/ui/toast";
 import { MailCheck } from "lucide-react";
 import { useState } from "react";
 
@@ -17,11 +24,9 @@ export function RequestAgentConfirmButton({
   documentId: string;
 }) {
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
 
   async function onClick() {
     setBusy(true);
-    setMsg(null);
     try {
       const res = await fetch(`/api/documents/${documentId}/agent-confirm`, {
         method: "POST",
@@ -31,23 +36,29 @@ export function RequestAgentConfirmButton({
         demo?: boolean;
         message?: string;
         error?: string;
+        reason?: string;
         urlConfirm?: string;
       };
       if (!res.ok) {
-        setMsg(data.error ?? "Failed");
+        notifyApiError(data, "Agent confirmation not sent");
         return;
       }
-      if (data.demo) {
-        setMsg(data.message ?? "Demo mode");
+      if (data.demo || data.ok === false) {
+        notifyNotSent(
+          apiErrorMessage(
+            data,
+            "Agent confirmation not sent — connect Supabase and mail transport.",
+          ),
+        );
         return;
       }
-      setMsg(
+      notifySuccess(
         data.urlConfirm
-          ? "Confirmation email sent to producer/agent."
-          : "Requested.",
+          ? "Confirmation email sent to the producer/agent"
+          : "Agent confirmation requested",
       );
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : "Failed");
+      notifyCaughtError(e, "Agent confirmation not sent");
     } finally {
       setBusy(false);
     }
@@ -66,7 +77,7 @@ export function RequestAgentConfirmButton({
           automatically.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent>
         <Button
           type="button"
           variant="outline"
@@ -76,11 +87,6 @@ export function RequestAgentConfirmButton({
         >
           {busy ? "Sending…" : "Request agent confirmation"}
         </Button>
-        {msg ? (
-          <p className="text-muted-foreground text-xs leading-relaxed">
-            {msg}
-          </p>
-        ) : null}
       </CardContent>
     </Card>
   );

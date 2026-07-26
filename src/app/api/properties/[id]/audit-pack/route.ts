@@ -2,6 +2,7 @@ import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import { buildPackSummaryPdf, zipPack } from "@/lib/packs/build";
 import { createClient } from "@/lib/supabase/server";
+import { insertAuditEvent } from "@/lib/audit/write";
 import { NextResponse } from "next/server";
 
 /** C7 audit pack — ZIP+PDF for one property (all assigned vendors). */
@@ -97,10 +98,11 @@ export async function GET(
     },
   ]);
 
-  await supabase.from("audit_events").insert({
+  await insertAuditEvent(supabase, {
     org_id: session.orgId,
     actor_type: "admin",
     actor_id: session.userId,
+      actor_email: session.email,
     entity_type: "property",
     entity_id: propertyId,
     action: "audit_pack_exported",

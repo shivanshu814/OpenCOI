@@ -1,6 +1,7 @@
 import type { VendorStatus } from "@/lib/data/types";
 import { sendOutboundEmail } from "@/lib/email/resend";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { insertAuditEvent } from "@/lib/audit/write";
 import { buildOwnerReport } from "./owner-build";
 import { loadOwnerReport } from "./owner-load";
 import {
@@ -200,7 +201,7 @@ export async function sendMonthlyOwnerReportsForOrg(orgId: string): Promise<{
     }
     sent += 1;
 
-    await supabase.from("audit_events").insert({
+    await insertAuditEvent(supabase, {
       org_id: orgId,
       actor_type: "system",
       actor_id: "owner_report:monthly",
@@ -214,7 +215,7 @@ export async function sendMonthlyOwnerReportsForOrg(orgId: string): Promise<{
         documents_on_file: report.documents_on_file,
         transport: send.transport,
       },
-    });
+    }, { captureRequest: false });
   }
 
   return {

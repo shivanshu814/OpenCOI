@@ -1,8 +1,13 @@
-import { PageHeader } from "@/components/page-header";
+import { EmptyState } from "@/components/empty-state";
+import {
+  ContentSurface,
+  PageFrame,
+  PageHeader,
+  PageSecondary,
+} from "@/components/page-frame";
 import { VerdictBadge } from "@/components/status-badges";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
   CardAction,
   CardContent,
   CardHeader,
@@ -20,10 +25,17 @@ export default async function ReviewQueuePage() {
   const vendorById = new Map(vendors.map((v) => [v.id, v]));
 
   return (
-    <div className="space-y-6">
+    <PageFrame>
       <PageHeader
         title="Internal review queue"
-        description="Side-by-side PDF + extraction · corrections become golden-set cases."
+        description="Check AI-extracted fields against the PDF before a verdict reaches the customer."
+        audience="Internal reviewers — you approve every verdict"
+        nextStep={
+          queue.length === 0
+            ? "Queue is clear — upload a COI when the next certificate arrives."
+            : "Open the oldest item, confirm or correct fields, then publish for customer decision."
+        }
+        help="Until the Month 3 accuracy gate, every verdict still passes internal review before publish. Corrections become golden-set regression cases. You remain the final approver."
         live
         actions={
           <Button variant="outline" render={<Link href="/app/upload" />}>
@@ -32,11 +44,7 @@ export default async function ReviewQueuePage() {
         }
       />
 
-      <Card className="gap-0 overflow-hidden py-0">
-        <div
-          className="from-brand via-brand/70 to-brand/20 h-1 w-full bg-gradient-to-r"
-          aria-hidden
-        />
+      <ContentSurface className="gap-0 py-0">
         <CardHeader className="border-b">
           <CardTitle>Documents awaiting review</CardTitle>
           <CardAction>
@@ -50,61 +58,63 @@ export default async function ReviewQueuePage() {
           </CardAction>
         </CardHeader>
         <CardContent className="px-0">
-          <div className="divide-y">
-            {queue.map((doc) => {
-              const vendor = vendorById.get(doc.vendor_id);
-              return (
-                <div
-                  key={doc.id}
-                  className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
-                >
-                  <div className="flex min-w-0 items-center gap-3">
-                    <span className="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-lg">
-                      <FileText className="size-4" aria-hidden />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">
-                        {vendor?.name ?? "Vendor"}
-                      </p>
-                      <p className="text-muted-foreground truncate text-xs">
-                        {doc.file_name}
-                      </p>
+          {queue.length === 0 ? (
+            <div className="p-4 sm:p-6">
+              <EmptyState
+                title="Queue empty"
+                description="Upload a COI and it lands here once extraction finishes — every verdict passes review before publish."
+                actionHref="/app/upload"
+                actionLabel="Upload COI"
+                liveHint="Listening for extractions"
+                icon={<FileText className="size-5" aria-hidden />}
+              />
+            </div>
+          ) : (
+            <div className="divide-y">
+              {queue.map((doc) => {
+                const vendor = vendorById.get(doc.vendor_id);
+                return (
+                  <div
+                    key={doc.id}
+                    className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-lg">
+                        <FileText className="size-4" aria-hidden />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">
+                          {vendor?.name ?? "Vendor"}
+                        </p>
+                        <p className="text-muted-foreground truncate text-xs">
+                          {doc.file_name}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {doc.overall_verdict ? (
+                        <VerdictBadge verdict={doc.overall_verdict} />
+                      ) : null}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        render={<Link href={`/app/review/${doc.id}`} />}
+                      >
+                        Open
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    {doc.overall_verdict ? (
-                      <VerdictBadge verdict={doc.overall_verdict} />
-                    ) : null}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      render={<Link href={`/app/review/${doc.id}`} />}
-                    >
-                      Open
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-            {queue.length === 0 ? (
-              <div className="px-6 py-12 text-center">
-                <p className="text-sm font-medium">Queue empty</p>
-                <p className="text-muted-foreground mx-auto mt-1 max-w-sm text-xs leading-relaxed">
-                  Upload a COI and it lands here once extraction finishes —
-                  every verdict passes review before publish.
-                </p>
-                <p className="text-muted-foreground mt-3 inline-flex items-center gap-1.5 text-xs">
-                  <span className="relative flex size-1.5">
-                    <span className="bg-emerald-500 absolute inline-flex size-full animate-ping rounded-full opacity-40" />
-                    <span className="bg-emerald-500 relative inline-flex size-1.5 rounded-full" />
-                  </span>
-                  Listening for extractions
-                </p>
-              </div>
-            ) : null}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
-      </Card>
-    </div>
+      </ContentSurface>
+
+      <PageSecondary>
+        Document review assistance — not legal, insurance, or professional
+        advice. Customer remains the final approver after publish.
+      </PageSecondary>
+    </PageFrame>
   );
 }

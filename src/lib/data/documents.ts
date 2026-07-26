@@ -69,7 +69,7 @@ export async function listReviewQueue(): Promise<DocumentRow[]> {
   const supabase = await createClient();
   const { data: docs, error } = await supabase
     .from("documents")
-    .select("id, org_id, vendor_id, file_name, storage_path, status")
+    .select("id, org_id, vendor_id, file_name, storage_path, status, created_at")
     .eq("org_id", session.orgId)
     .eq("status", "in_internal_review")
     .order("created_at", { ascending: false });
@@ -109,6 +109,80 @@ export async function listAwaitingCustomerDecision(): Promise<DocumentRow[]> {
   return Promise.all(docs.map((d) => hydrateDocument(d)));
 }
 
+/** Lightweight per-vendor document history for the vendor detail page. */
+export type VendorDocumentSummary = {
+  id: string;
+  file_name: string;
+  status: DocumentRow["status"];
+  created_at: string | null;
+  overall_verdict: Verdict | null;
+  customer_decision: DocumentRow["customer_decision"];
+};
+
+export async function listVendorDocuments(
+  vendorId: string,
+): Promise<VendorDocumentSummary[]> {
+  if (!isSupabaseConfigured()) {
+    return DEMO_DOCUMENTS.filter((d) => d.vendor_id === vendorId).map((d) => ({
+      id: d.id,
+      file_name: d.file_name,
+      status: d.status,
+      created_at: null,
+      overall_verdict: d.overall_verdict,
+      customer_decision: d.customer_decision ?? null,
+    }));
+  }
+
+  const session = await getSessionOrg();
+  if (!session) return [];
+
+  const supabase = await createClient();
+  const { data: docs, error } = await supabase
+    .from("documents")
+    .select("id, file_name, status, created_at")
+    .eq("org_id", session.orgId)
+    .eq("vendor_id", vendorId)
+    .order("created_at", { ascending: false });
+
+  if (error || !docs?.length) {
+    if (error) console.error("listVendorDocuments", error);
+    return [];
+  }
+
+  const { data: checks } = await supabase
+    .from("compliance_checks")
+    .select("document_id, overall_verdict, customer_decision, created_at")
+    .in(
+      "document_id",
+      docs.map((d) => d.id),
+    )
+    .order("created_at", { ascending: false });
+
+  // Latest check per document (rows are newest-first).
+  const latestByDoc = new Map<
+    string,
+    { overall_verdict: string | null; customer_decision: string | null }
+  >();
+  for (const check of checks ?? []) {
+    if (!latestByDoc.has(check.document_id)) {
+      latestByDoc.set(check.document_id, check);
+    }
+  }
+
+  return docs.map((d) => {
+    const check = latestByDoc.get(d.id);
+    return {
+      id: d.id,
+      file_name: d.file_name,
+      status: d.status as DocumentRow["status"],
+      created_at: (d.created_at as string | null) ?? null,
+      overall_verdict: (check?.overall_verdict as Verdict) ?? null,
+      customer_decision:
+        (check?.customer_decision as DocumentRow["customer_decision"]) ?? null,
+    };
+  });
+}
+
 export async function getDocument(id: string): Promise<DocumentRow | null> {
   if (!isSupabaseConfigured()) {
     const demo = getDemoDocument(id);
@@ -141,6 +215,7 @@ async function hydrateDocument(doc: {
   file_name: string;
   storage_path: string | null;
   status: string;
+  created_at?: string | null;
   fraud_signals?: DocumentRow["fraud_signals"];
 }): Promise<DocumentRow> {
   const supabase = await createClient();
@@ -171,6 +246,7 @@ async function hydrateDocument(doc: {
     file_name: doc.file_name,
     storage_path: doc.storage_path,
     status: doc.status as DocumentRow["status"],
+    created_at: doc.created_at ?? null,
     extraction: (extraction?.payload as Extraction) ?? null,
     check_lines: (check?.lines as CheckLine[]) ?? [],
     overall_verdict: (check?.overall_verdict as Verdict) ?? null,

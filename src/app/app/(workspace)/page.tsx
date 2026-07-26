@@ -1,4 +1,5 @@
 import { DownloadReportButton } from "@/components/download-report-button";
+import { GettingStarted } from "@/components/getting-started";
 import { IntakeEmailCard } from "@/components/intake-email-card";
 import {
   AnimatedStatusBar,
@@ -7,7 +8,12 @@ import {
   LiveDot,
   PageLiveStrip,
 } from "@/components/live-activity";
-import { PageHeader } from "@/components/page-header";
+import {
+  ContentSurface,
+  PageFrame,
+  PageHeader,
+  PageSecondary,
+} from "@/components/page-frame";
 import { ScoreRing } from "@/components/product-preview";
 import { SendChaseButton } from "@/components/send-chase-button";
 import { VendorStatusBadge } from "@/components/status-badges";
@@ -147,11 +153,44 @@ export default async function DashboardPage() {
   const totalVendors = vendors.length;
 
   return (
-    <div className="space-y-6">
+    <PageFrame width="wide">
       <div className="space-y-2">
         <PageHeader
           title="Needs attention today"
-          description="Chase runs by email + SMS (opt-in) — you approve every verdict."
+          description="Your daily compliance pulse — who needs a chase, a review, or your approval."
+          audience="Property managers & ops leads"
+          nextStep={
+            totalVendors === 0 ? (
+              <>
+                Start with{" "}
+                <Link
+                  href="/app/vendors"
+                  className="text-foreground underline-offset-2 hover:underline"
+                >
+                  Add vendor
+                </Link>
+                , then upload a COI.
+              </>
+            ) : reviewQueue.length > 0 ? (
+              <>
+                Clear the{" "}
+                <Link
+                  href="/app/review"
+                  className="text-foreground underline-offset-2 hover:underline"
+                >
+                  review queue
+                </Link>{" "}
+                first.
+              </>
+            ) : awaitingDecision.length > 0 ? (
+              "Accept or override published verdicts waiting on you."
+            ) : attention.length > 0 ? (
+              "Chase expiring or non-compliant vendors below."
+            ) : (
+              "Portfolio looks clear — upload the next COI when it arrives."
+            )
+          }
+          help="Chase runs by email (and SMS when Twilio is live). You approve every verdict — CertShield never auto-approves. Document review assistance — not legal, insurance, or professional advice."
           live
           actions={
             <Button render={<Link href="/app/upload" />}>Upload COI</Button>
@@ -173,9 +212,12 @@ export default async function DashboardPage() {
         />
       </div>
 
-      <Card className="overflow-hidden shadow-xs">
+      <GettingStarted hasVendors={totalVendors > 0} />
+
+      {/* Primary: portfolio score — only meaningful when vendors exist */}
+      <ContentSurface rail={false} className="overflow-hidden">
         <CardLiveAccent />
-        <CardContent className="pt-5">
+        <div className="p-5">
           <div className="flex flex-wrap items-center gap-5">
             <ScoreRing
               score={portfolio.score}
@@ -187,11 +229,14 @@ export default async function DashboardPage() {
                 <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase">
                   Portfolio compliance
                 </p>
-                <LiveBadge label="Live" tone="ok" />
+                {totalVendors > 0 ? (
+                  <LiveBadge label="Live" tone="ok" />
+                ) : null}
               </div>
               <p className="mt-1 text-sm font-medium">
-                Average across {portfolio.counted} vendors — screenshot-ready
-                for owner meetings.
+                {totalVendors > 0
+                  ? `Average across ${portfolio.counted} vendors — screenshot-ready for owner meetings.`
+                  : "Add vendors and upload COIs to see portfolio health here."}
               </p>
               {totalVendors > 0 ? (
                 <>
@@ -225,14 +270,13 @@ export default async function DashboardPage() {
               ) : (
                 <p className="text-muted-foreground mt-3 flex items-center gap-2 text-sm">
                   <LiveDot />
-                  No vendors yet — add your first vendor or upload a COI to see
-                  portfolio health here.
+                  No vendors yet — nothing to score.
                 </p>
               )}
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </ContentSurface>
 
       <IntakeEmailCard email={intakeEmail} inboundLive={intakeLive} />
 
@@ -269,9 +313,9 @@ export default async function DashboardPage() {
             <h2 className="text-sm font-semibold">Vendors needing attention</h2>
             {attention.length > 0 ? (
               <LiveBadge label={`${attention.length}`} tone="warn" />
-            ) : (
+            ) : totalVendors > 0 ? (
               <LiveBadge label="Clear" tone="ok" />
-            )}
+            ) : null}
           </div>
           <Link
             href="/app/vendors"
@@ -313,12 +357,19 @@ export default async function DashboardPage() {
             {attention.length === 0 ? (
               <p className="text-muted-foreground flex items-center justify-center gap-2 px-4 py-8 text-center text-sm">
                 <LiveDot tone="ok" />
-                All vendors compliant.
+                {totalVendors === 0
+                  ? "Add a vendor to start tracking compliance."
+                  : "All vendors compliant."}
               </p>
             ) : null}
           </CardContent>
         </Card>
       </section>
-    </div>
+
+      <PageSecondary>
+        Document review assistance — not legal, insurance, or professional
+        advice. You remain the final approver on every verdict.
+      </PageSecondary>
+    </PageFrame>
   );
 }

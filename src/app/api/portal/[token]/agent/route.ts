@@ -3,6 +3,7 @@ import { isSupabaseConfigured } from "@/lib/config";
 import { sendOutboundEmail } from "@/lib/email/resend";
 import { resolvePortalToken } from "@/lib/portal/tokens";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { insertAuditEvent } from "@/lib/audit/write";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -94,7 +95,7 @@ export async function POST(
     status: "sent",
   });
 
-  await admin.from("audit_events").insert({
+  await insertAuditEvent(admin, {
     org_id: ctx.orgId,
     actor_type: "vendor",
     actor_id: ctx.vendorId,

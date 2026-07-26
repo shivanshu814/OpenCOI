@@ -6,6 +6,7 @@ import {
 } from "@/lib/reports/owner-load";
 import { sendOwnerReportEmail } from "@/lib/reports/owner-send";
 import { createClient } from "@/lib/supabase/server";
+import { insertAuditEvent } from "@/lib/audit/write";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -37,9 +38,20 @@ export async function POST(request: Request) {
       to,
       report,
     });
+    if (!result.ok) {
+      return NextResponse.json(
+        {
+          ok: false,
+          demo: true,
+          error: result.reason ?? "Owner report not sent",
+          to,
+        },
+        { status: 400 },
+      );
+    }
     return NextResponse.json({
-      ok: result.ok,
-      demo: true,
+      ok: true,
+      demo: result.demo ?? false,
       to,
       compliance_percent: report.compliance_percent,
     });
@@ -93,10 +105,11 @@ export async function POST(request: Request) {
     );
   }
 
-  await supabase.from("audit_events").insert({
+  await insertAuditEvent(supabase, {
     org_id: session.orgId,
     actor_type: "admin",
     actor_id: session.userId,
+      actor_email: session.email,
     entity_type: "property",
     entity_id: propertyId,
     action: "owner_report_sent",

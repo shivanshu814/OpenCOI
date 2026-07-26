@@ -3,6 +3,7 @@ import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import { buildPackSummaryPdf, zipPack } from "@/lib/packs/build";
 import { createClient } from "@/lib/supabase/server";
+import { insertAuditEvent } from "@/lib/audit/write";
 import { NextResponse } from "next/server";
 
 /** C7 litigation pack — ZIP+PDF for one vendor. */
@@ -138,10 +139,11 @@ export async function GET(
   const zip = await zipPack(files);
   const safe = vendor.name.replace(/[^a-z0-9]+/gi, "-").slice(0, 40);
 
-  await supabase.from("audit_events").insert({
+  await insertAuditEvent(supabase, {
     org_id: session.orgId,
     actor_type: "admin",
     actor_id: session.userId,
+      actor_email: session.email,
     entity_type: "vendor",
     entity_id: vendorId,
     action: "litigation_pack_exported",

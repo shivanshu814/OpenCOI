@@ -154,6 +154,11 @@ describe("compliance report PDF", () => {
     assert.ok(bytes.byteLength > 500);
     const head = Buffer.from(bytes.slice(0, 5)).toString("utf8");
     assert.equal(head, "%PDF-");
+    // Binding disclaimer stays on the report object (footer draws report.disclaimer)
+    assert.match(
+      report.disclaimer,
+      /Document review assistance — not legal, insurance, or professional advice/,
+    );
     assert.match(reportFilename(report), /certshield-compliance-sunshine/);
   });
 });

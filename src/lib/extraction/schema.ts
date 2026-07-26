@@ -1,7 +1,18 @@
 import { z } from "zod";
+import { normalizeIsoDate } from "./dates";
 
 /** docs/01 Appendix A — canonical extraction schema (binding) */
 const confidence = z.number().min(0).max(1);
+
+/**
+ * Appendix A dates are "YYYY-MM-DD|null". ACORD forms print MM/DD/YYYY and
+ * models sometimes echo that — normalize at the schema boundary so every
+ * consumer (engine, chase, reports) sees ISO.
+ */
+const isoDate = z
+  .string()
+  .nullable()
+  .transform((v) => normalizeIsoDate(v));
 
 const limitName = z.enum([
   "each_occurrence",
@@ -44,7 +55,7 @@ export const extractionSchema = z.object({
       "carrier_letter",
       "other",
     ]),
-    issue_date: z.string().nullable(),
+    issue_date: isoDate,
     confidence,
   }),
   producer: z.object({
@@ -72,8 +83,8 @@ export const extractionSchema = z.object({
       line: policyLine,
       insurer_letter: z.enum(["A", "B", "C", "D", "E", "F"]).nullable(),
       policy_number: z.string().nullable(),
-      effective_date: z.string().nullable(),
-      expiration_date: z.string().nullable(),
+      effective_date: isoDate,
+      expiration_date: isoDate,
       limits: z.array(
         z.object({
           name: limitName,

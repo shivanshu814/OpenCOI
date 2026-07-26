@@ -1,22 +1,32 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  notifyApiError,
+  notifyCaughtError,
+  notifyNotSent,
+  notifySuccess,
+} from "@/lib/ui/toast";
+import { Mail } from "lucide-react";
 import { useState } from "react";
 
 export function SendOwnerReportButton({
   propertyId,
   toHint,
+  variant = "outline",
+  label = "Email owner report",
 }: {
   propertyId: string;
   toHint?: string | null;
+  /** `primary` = mint CTA for Reports list; outline elsewhere. */
+  variant?: "outline" | "primary";
+  label?: string;
 }) {
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
 
   async function onSend() {
     setBusy(true);
-    setMsg(null);
     try {
       const res = await fetch("/api/reports/owner/send", {
         method: "POST",
@@ -25,46 +35,54 @@ export function SendOwnerReportButton({
       });
       const data = (await res.json()) as {
         error?: string;
+        reason?: string;
         to?: string;
         demo?: boolean;
+        ok?: boolean;
         compliance_percent?: number;
       };
-      if (!res.ok) {
-        setMsg(data.error ?? "Send failed");
+      if (!res.ok || data.ok === false) {
+        notifyApiError(data, "Owner report not sent");
         return;
       }
-      setMsg(
-        data.demo
-          ? `Demo send logged to ${data.to}`
-          : `Sent to ${data.to} (${data.compliance_percent}% covered)`,
-      );
+      // Demo flag without a real send — never celebrate delivery.
+      if (data.demo) {
+        notifyNotSent(
+          data.error ??
+            data.reason ??
+            "Owner report not emailed — connect mail transport to send live.",
+        );
+        return;
+      }
+      const to = data.to ?? toHint ?? "owner";
+      const pct =
+        typeof data.compliance_percent === "number"
+          ? ` (${data.compliance_percent}% covered)`
+          : "";
+      notifySuccess(`Owner report emailed to ${to}${pct}`);
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : "Send failed");
+      notifyCaughtError(err, "Owner report not sent");
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        disabled={busy}
-        onClick={onSend}
-      >
-        {busy ? "Sending…" : "Email owner report"}
-      </Button>
-      {toHint ? (
-        <span className="text-muted-foreground inline-flex items-center gap-1 text-xs">
-          <ArrowRight className="size-3" strokeWidth={2.25} aria-hidden />
-          {toHint}
-        </span>
-      ) : null}
-      {msg ? (
-        <span className="text-muted-foreground text-xs">{msg}</span>
-      ) : null}
-    </div>
+    <Button
+      type="button"
+      variant={variant === "primary" ? "default" : "outline"}
+      size="sm"
+      disabled={busy}
+      onClick={onSend}
+      title={toHint ? `Send to ${toHint}` : "Set owner email on property first"}
+      className={cn(
+        "gap-1.5",
+        variant === "primary" &&
+          "bg-brand text-brand-foreground hover:bg-brand/90",
+      )}
+    >
+      <Mail className="size-3.5" strokeWidth={2.25} aria-hidden />
+      {busy ? "Sending…" : label}
+    </Button>
   );
 }

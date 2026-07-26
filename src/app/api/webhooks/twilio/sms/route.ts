@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { phoneLast10, phoneMatchOrFilter } from "@/lib/sms/phone-match";
+import { insertAuditEvent } from "@/lib/audit/write";
 import {
   twilioVerificationEnabled,
   twilioVerificationMisconfigured,
@@ -103,7 +104,7 @@ export async function POST(request: Request) {
           .update({ sms_opt_out_at: now, updated_at: now })
           .eq("id", v.id);
 
-        await admin.from("audit_events").insert({
+        await insertAuditEvent(admin, {
           org_id: v.org_id,
           actor_type: "vendor",
           actor_id: from,

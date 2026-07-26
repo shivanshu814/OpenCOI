@@ -21,6 +21,7 @@ import {
 } from "@/lib/sms/templates";
 import { sendOutboundSms } from "@/lib/sms/twilio";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { insertAuditEvent } from "@/lib/audit/write";
 
 export type ChaseSendRequest = {
   orgId: string;
@@ -226,7 +227,7 @@ export async function sendChaseForVendor(
     })
     .eq("id", sequence.id);
 
-  await supabase.from("audit_events").insert({
+  await insertAuditEvent(supabase, {
     org_id: req.orgId,
     actor_type: "system",
     actor_id: "chase:send",
@@ -240,7 +241,7 @@ export async function sendChaseForVendor(
       transport: sendResult.transport,
       message_id: msg?.id,
     },
-  });
+  }, { captureRequest: false });
 
   // C3 SMS — TCPA: only when logged opt-in and not opted out (docs/08 §4).
   const smsKey = smsKeyFromChaseTemplate(templateKey);
@@ -281,7 +282,7 @@ export async function sendChaseForVendor(
         provider_message_id: smsResult.id,
         status: smsResult.demo ? "demo" : "sent",
       });
-      await supabase.from("audit_events").insert({
+      await insertAuditEvent(supabase, {
         org_id: req.orgId,
         actor_type: "system",
         actor_id: "chase:sms",
@@ -294,7 +295,7 @@ export async function sendChaseForVendor(
           provider_message_id: smsResult.id,
           demo: smsResult.demo,
         },
-      });
+      }, { captureRequest: false });
     }
   }
 

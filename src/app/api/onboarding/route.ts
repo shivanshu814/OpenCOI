@@ -2,6 +2,7 @@ import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import { templateById } from "@/lib/requirements/templates";
 import { createClient } from "@/lib/supabase/server";
+import { insertAuditEvent } from "@/lib/audit/write";
 import { NextResponse } from "next/server";
 
 function parseVendorCsv(raw: string): Array<{
@@ -64,10 +65,11 @@ export async function POST(request: Request) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    await supabase.from("audit_events").insert({
+    await insertAuditEvent(supabase, {
       org_id: session.orgId,
       actor_type: "admin",
       actor_id: session.userId,
+      actor_email: session.email,
       entity_type: "org",
       entity_id: session.orgId,
       action: "onboarding_company",
@@ -111,10 +113,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    await supabase.from("audit_events").insert({
+    await insertAuditEvent(supabase, {
       org_id: session.orgId,
       actor_type: "admin",
       actor_id: session.userId,
+      actor_email: session.email,
       entity_type: "org",
       entity_id: session.orgId,
       action: "onboarding_templates",
@@ -152,10 +155,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    await supabase.from("audit_events").insert({
+    await insertAuditEvent(supabase, {
       org_id: session.orgId,
       actor_type: "admin",
       actor_id: session.userId,
+      actor_email: session.email,
       entity_type: "org",
       entity_id: session.orgId,
       action: "onboarding_vendors",
@@ -176,10 +180,11 @@ export async function POST(request: Request) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    await supabase.from("audit_events").insert({
+    await insertAuditEvent(supabase, {
       org_id: session.orgId,
       actor_type: "admin",
       actor_id: session.userId,
+      actor_email: session.email,
       entity_type: "org",
       entity_id: session.orgId,
       action: "onboarding_completed",

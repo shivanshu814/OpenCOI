@@ -2,6 +2,7 @@ import type { VendorStatus } from "@/lib/data/types";
 import { sendOutboundEmail } from "@/lib/email/resend";
 import { portfolioComplianceScore } from "@/lib/scores/compute";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { insertAuditEvent } from "@/lib/audit/write";
 
 /** C6 weekly digest — "5 expiring, 2 new non-compliant". */
 export async function sendWeeklyDigestForOrg(orgId: string): Promise<{
@@ -94,7 +95,7 @@ ${listBlock("Non-compliant", nonCompliant)}
 
   if (!send.ok) return { ok: false, reason: send.error };
 
-  await supabase.from("audit_events").insert({
+  await insertAuditEvent(supabase, {
     org_id: orgId,
     actor_type: "system",
     actor_id: "digest:weekly",
@@ -108,7 +109,7 @@ ${listBlock("Non-compliant", nonCompliant)}
       non_compliant: nonCompliant.length,
       transport: send.transport,
     },
-  });
+  }, { captureRequest: false });
 
   return { ok: true, demo: false };
 }

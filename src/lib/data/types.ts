@@ -37,6 +37,8 @@ export type DocumentRow = {
   file_name: string;
   storage_path?: string | null;
   status: DocumentPipelineStatus;
+  /** ISO timestamp — present when loaded from Supabase. */
+  created_at?: string | null;
   extraction: Extraction | null;
   check_lines: CheckLine[];
   overall_verdict: Verdict | null;

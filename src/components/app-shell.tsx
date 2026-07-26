@@ -137,7 +137,7 @@ function AppSidebar({ live }: { live: boolean }) {
 
   return (
     <Sidebar collapsible="icon" className="border-r">
-      <SidebarHeader className="border-b border-sidebar-border group-data-[collapsible=icon]:px-1.5">
+      <SidebarHeader className="h-14 justify-center border-b border-sidebar-border py-0 group-data-[collapsible=icon]:px-1.5">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
@@ -250,9 +250,9 @@ function AppHeader({ live }: { live: boolean }) {
 
   return (
     <header className="bg-background sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b px-4">
-      <SidebarTrigger className="-ml-1" />
+      <SidebarTrigger className="-ml-1 size-8 shrink-0" />
       <Breadcrumb className="min-w-0">
-        <BreadcrumbList className="flex-nowrap">
+        <BreadcrumbList className="flex-nowrap items-center">
           <BreadcrumbItem className="hidden sm:block">
             <BreadcrumbLink render={<Link href="/app" />}>
               CertShield
@@ -283,24 +283,24 @@ function AppHeader({ live }: { live: boolean }) {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex h-8 items-center gap-2">
         <AppLiveTicker demo={!live} />
         {live ? (
           <LiveBadge
             label="Online"
             tone="ok"
-            className="hidden lg:inline-flex"
+            className="hidden h-8 px-2.5 lg:inline-flex"
           />
         ) : (
           <LiveBadge
             label="Demo"
             tone="warn"
-            className="hidden sm:inline-flex"
+            className="hidden h-8 px-2.5 sm:inline-flex"
           />
         )}
         <Button
           size="sm"
-          className="hidden sm:inline-flex"
+          className="hidden h-8 sm:inline-flex"
           render={<Link href="/app/upload" />}
         >
           <Upload data-icon="inline-start" />
@@ -312,7 +312,7 @@ function AppHeader({ live }: { live: boolean }) {
               <button
                 type="button"
                 aria-label="Account menu"
-                className="focus-visible:ring-ring/50 rounded-full outline-none focus-visible:ring-3"
+                className="focus-visible:ring-ring/50 inline-flex size-8 shrink-0 items-center justify-center rounded-full outline-none focus-visible:ring-3"
               />
             }
           >

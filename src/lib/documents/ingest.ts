@@ -11,6 +11,7 @@ import {
   loadPropertyValidation,
 } from "@/lib/requirements/merge";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { insertAuditEvent } from "@/lib/audit/write";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type IngestPdfArgs = {
@@ -80,7 +81,7 @@ export async function ingestPdfDocument(
     .update({ storage_path: storagePath })
     .eq("id", doc.id);
 
-  await db.from("audit_events").insert({
+  await insertAuditEvent(db, {
     org_id: args.orgId,
     actor_type: args.actor?.type ?? "system",
     actor_id: args.actor?.id ?? "ingest",
@@ -205,7 +206,7 @@ export async function markExtractionFailed(input: {
     .eq("org_id", input.orgId)
     .in("status", ["uploaded", "extracted", "checked"]);
 
-  await admin.from("audit_events").insert({
+  await insertAuditEvent(admin, {
     org_id: input.orgId,
     actor_type: "system",
     actor_id: input.actorId ?? "extract-document",
@@ -213,7 +214,7 @@ export async function markExtractionFailed(input: {
     entity_id: input.documentId,
     action: "extraction_failed",
     after_state: { error: input.error },
-  });
+  }, { captureRequest: false });
 }
 
 export async function runExtractInline(args: {
@@ -278,7 +279,7 @@ export async function runExtractInline(args: {
       .update({ status: "in_review" })
       .eq("id", doc.vendor_id);
 
-    await admin.from("audit_events").insert({
+    await insertAuditEvent(admin, {
       org_id: args.orgId,
       actor_type: "system",
       actor_id: "sync:extract-document",
@@ -290,7 +291,7 @@ export async function runExtractInline(args: {
         model_version: MODEL_VERSION,
         prompt_version: PROMPT_VERSION,
       },
-    });
+    }, { captureRequest: false });
   } catch (err) {
     await markExtractionFailed({
       documentId: args.documentId,

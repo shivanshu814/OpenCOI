@@ -239,6 +239,73 @@ describe("B4 endorsement checks", () => {
   });
 });
 
+describe("expiration is a separate check line (roofer-sample false MISSING)", () => {
+  const glRule: RequirementRule = {
+    id: "gl_each_occ",
+    line: "general_liability",
+    limit_name: "each_occurrence",
+    min_amount: 1_000_000,
+    check_expiration: true,
+    label: "GL each-occurrence ≥ $1M",
+  };
+
+  function withExpiration(expiration_date: string | null) {
+    return baseExtraction({
+      policies: [{ ...baseExtraction().policies[0]!, expiration_date }],
+    });
+  }
+
+  it("US-format expiration (01/01/2099) still computes — limit passes AND expiration passes", () => {
+    const result = runRequirementsEngine(withExpiration("01/01/2099"), [glRule]);
+    assert.equal(line(result, "gl_each_occ").verdict, "PASS");
+    assert.equal(line(result, "gl_each_occ").reason, "Meets requirement.");
+    assert.equal(line(result, "gl_each_occ_expiration").verdict, "PASS");
+  });
+
+  it("missing expiration → separate MISSING line; the $1M limit row keeps its own PASS verdict", () => {
+    const result = runRequirementsEngine(withExpiration(null), [glRule]);
+    const limit = line(result, "gl_each_occ");
+    assert.equal(limit.verdict, "PASS");
+    assert.ok(!limit.reason.toLowerCase().includes("expiration"));
+    const exp = line(result, "gl_each_occ_expiration");
+    assert.equal(exp.verdict, "MISSING");
+    assert.equal(exp.low_confidence, true);
+    assert.match(exp.reason, /Expiration date missing/);
+    assert.equal(result.overall, "MISSING");
+  });
+
+  it("expired policy → separate FAIL line", () => {
+    const result = runRequirementsEngine(withExpiration("2020-01-01"), [glRule]);
+    assert.equal(line(result, "gl_each_occ").verdict, "PASS");
+    assert.equal(line(result, "gl_each_occ_expiration").verdict, "FAIL");
+    assert.equal(result.overall, "FAIL");
+  });
+
+  it("expiration is evaluated even when the limit FAILs (no short-circuit)", () => {
+    const low = baseExtraction({
+      policies: [
+        {
+          ...baseExtraction().policies[0]!,
+          expiration_date: "2020-01-01",
+          limits: [
+            { name: "each_occurrence", amount: 500_000, confidence: 0.95 },
+          ],
+        },
+      ],
+    });
+    const result = runRequirementsEngine(low, [glRule]);
+    assert.equal(line(result, "gl_each_occ").verdict, "FAIL");
+    assert.equal(line(result, "gl_each_occ_expiration").verdict, "FAIL");
+  });
+
+  it("no expiration line when the policy itself is missing", () => {
+    const none = baseExtraction({ policies: [] });
+    const result = runRequirementsEngine(none, [glRule]);
+    assert.equal(line(result, "gl_each_occ").verdict, "MISSING");
+    assert.ok(!result.lines.some((l) => l.rule_id === "gl_each_occ_expiration"));
+  });
+});
+
 describe("D1 per-property certificate-holder + AI wording validation", () => {
   it("PASS when extracted holder fuzzy-matches the property holder", () => {
     const ex = baseExtraction({

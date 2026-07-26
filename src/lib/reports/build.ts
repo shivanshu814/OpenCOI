@@ -15,6 +15,10 @@ const STATUS_LABEL: Record<VendorStatus, string> = {
 export function askAgentForLine(line: CheckLine): string | null {
   if (line.verdict === "PASS") return null;
 
+  if (line.rule_id.endsWith("_expiration") && line.verdict === "MISSING") {
+    return "Please issue a COI with clearly legible policy effective and expiration dates.";
+  }
+
   switch (line.rule_id) {
     case "gl_each_occ":
       return "Please issue an updated COI showing General Liability each-occurrence limit of at least $1,000,000.";

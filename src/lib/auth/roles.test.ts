@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   canAdminSensitive,
+  canViewFullAudit,
   canWriteOrgData,
   productRoleLabel,
   toProductRole,
@@ -21,5 +22,12 @@ describe("G1 roles", () => {
     assert.equal(canAdminSensitive("member"), false);
     assert.equal(canWriteOrgData("viewer"), false);
     assert.equal(canWriteOrgData("member"), true);
+  });
+
+  it("gates full audit forensics to admin/owner", () => {
+    assert.equal(canViewFullAudit("owner"), true);
+    assert.equal(canViewFullAudit("admin"), true);
+    assert.equal(canViewFullAudit("member"), false);
+    assert.equal(canViewFullAudit("viewer"), false);
   });
 });

@@ -18,8 +18,24 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { productRoleLabel, toProductRole } from "@/lib/auth/roles";
 import { useCallback, useEffect, useState } from "react";
+
+const ROLE_ITEMS: ReadonlyArray<{
+  label: string;
+  value: "admin" | "member" | "viewer";
+}> = [
+  { label: "Admin", value: "admin" },
+  { label: "Manager", value: "member" },
+  { label: "Read-only", value: "viewer" },
+];
 
 export function TeamSettingsClient() {
   const [members, setMembers] = useState<
@@ -144,18 +160,24 @@ export function TeamSettingsClient() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="invite-role">Role</Label>
-              <select
-                id="invite-role"
-                className="border-input bg-background h-9 w-full rounded-lg border px-2.5 text-sm"
+              <Select
+                items={ROLE_ITEMS}
                 value={role}
-                onChange={(e) =>
-                  setRole(e.target.value as "admin" | "member" | "viewer")
-                }
+                onValueChange={(value) => {
+                  if (value) setRole(value);
+                }}
               >
-                <option value="admin">Admin</option>
-                <option value="member">Manager</option>
-                <option value="viewer">Read-only</option>
-              </select>
+                <SelectTrigger id="invite-role" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROLE_ITEMS.map((r) => (
+                    <SelectItem key={r.value} value={r.value}>
+                      {r.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <Button
