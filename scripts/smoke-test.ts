@@ -153,12 +153,32 @@ type ApiCheck = {
 };
 
 const API_CHECKS: ApiCheck[] = [
-  // Address + timezone data must be real lookups, not stubs. These run
-  // against any target — they need no session.
-  { path: "/api/geo/states", keys: ["source", "states"] },
-  { path: "/api/geo/zip?zip=19107", keys: ["found", "city", "state"] },
-  { path: "/api/geo/zip?zip=abc", keys: ["error"], expectStatus: 400 },
-  { path: "/api/geo/cities?state=PA", keys: ["state", "cities"] },
+  // Address + timezone data must be real lookups, not stubs.
+  //
+  // Marked demo-only because middleware guards every `/api/*` route on a real
+  // deployment. That is deliberate: these proxy a third party, and leaving
+  // them open would turn our domain into a free relay for anyone.
+  {
+    path: "/api/geo/states",
+    keys: ["source", "states"],
+    scope: "demo-only",
+  },
+  {
+    path: "/api/geo/zip?zip=19107",
+    keys: ["found", "city", "state"],
+    scope: "demo-only",
+  },
+  {
+    path: "/api/geo/zip?zip=abc",
+    keys: ["error"],
+    expectStatus: 400,
+    scope: "demo-only",
+  },
+  {
+    path: "/api/geo/cities?state=PA",
+    keys: ["state", "cities"],
+    scope: "demo-only",
+  },
   {
     path: "/api/settings/team",
     keys: ["members", "invites", "branding"],
