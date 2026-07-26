@@ -108,19 +108,17 @@ export default async function ProjectsPage() {
             <h2 className="text-sm font-semibold tracking-tight">
               All projects
             </h2>
-            <ListLiveCount>{projects.length}</ListLiveCount>
+            {hasData ? <ListLiveCount>{projects.length}</ListLiveCount> : null}
           </div>
         </div>
 
         {!hasData ? (
-          <div className="p-4 sm:p-6">
-            <EmptyState
-              title="No projects yet"
-              description="Create a job above, assign subcontractors, and raise limits for the site. Closeout packs export when you're ready."
-              liveHint="No sample projects — your list stays empty until you create one."
-              icon={<FolderKanban className="size-5" aria-hidden />}
-            />
-          </div>
+          <EmptyState
+            title="No projects yet"
+            description="Create a job above, assign subcontractors, and raise limits for the site. Closeout packs export when you're ready."
+            liveHint="No sample projects — your list stays empty until you create one."
+            icon={<FolderKanban className="size-5" aria-hidden />}
+          />
         ) : (
           <>
             <ListTableHead

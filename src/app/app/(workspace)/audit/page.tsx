@@ -84,20 +84,20 @@ export default async function AuditPage() {
             {events.length} {events.length === 1 ? "event" : "events"}
           </CardAction>
         </CardHeader>
-        <CardContent className="px-4 py-5 sm:px-6 sm:py-6">
-          {events.length === 0 ? (
-            <EmptyState
-              title="No audit events yet"
-              description="As you upload COIs, publish verdicts, and send chase messages, every action lands here — append-only."
-              actionHref="/app/upload"
-              actionLabel="Upload a COI"
-              liveHint="Empty is honest — nothing has happened in this workspace yet."
-              icon={<ScrollText className="size-5" aria-hidden />}
-            />
-          ) : (
+        {events.length === 0 ? (
+          <EmptyState
+            title="No audit events yet"
+            description="As you upload COIs, publish verdicts, and send chase messages, every action lands here — append-only."
+            actionHref="/app/upload"
+            actionLabel="Upload a COI"
+            liveHint="Empty is honest — nothing has happened in this workspace yet."
+            icon={<ScrollText className="size-5" aria-hidden />}
+          />
+        ) : (
+          <CardContent className="px-4 py-5 sm:px-6 sm:py-6">
             <AuditTimeline events={events} fullDetail={fullDetail} />
-          )}
-        </CardContent>
+          </CardContent>
+        )}
       </ContentSurface>
 
       <PageSecondary>

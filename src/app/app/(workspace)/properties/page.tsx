@@ -101,21 +101,21 @@ export default async function PropertiesPage() {
             <h2 className="text-sm font-semibold tracking-tight">
               All properties
             </h2>
-            <ListLiveCount>{properties.length}</ListLiveCount>
+            {hasData ? (
+              <ListLiveCount>{properties.length}</ListLiveCount>
+            ) : null}
           </div>
         </div>
 
         {!hasData ? (
-          <div className="p-4 sm:p-6">
-            <EmptyState
-              title="No properties yet"
-              description="Add your first building above to set its certificate holder and required limits. Owner reports unlock from here."
-              actionHref="/app/reports"
-              actionLabel="See owner reports"
-              liveHint="No sample properties — your list stays empty until you add one."
-              icon={<Building2 className="size-5" aria-hidden />}
-            />
-          </div>
+          <EmptyState
+            title="No properties yet"
+            description="Add your first building above to set its certificate holder and required limits. Owner reports unlock from here."
+            actionHref="/app/reports"
+            actionLabel="See owner reports"
+            liveHint="No sample properties — your list stays empty until you add one."
+            icon={<Building2 className="size-5" aria-hidden />}
+          />
         ) : (
           <>
             <ListTableHead

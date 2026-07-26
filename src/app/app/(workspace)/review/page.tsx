@@ -145,16 +145,14 @@ export default async function ReviewQueuePage({
         </div>
 
         {queue.length === 0 ? (
-          <div className="p-4 sm:p-6">
-            <EmptyState
-              title="Queue empty"
-              description="Upload a COI and it lands here once extraction finishes — every verdict passes review before publish."
-              actionHref="/app/upload"
-              actionLabel="Upload COI"
-              liveHint="Listening for extractions"
-              icon={<FileText className="size-5" aria-hidden />}
-            />
-          </div>
+          <EmptyState
+            title="Queue empty"
+            description="Upload a COI and it lands here once extraction finishes — every verdict passes review before publish."
+            actionHref="/app/upload"
+            actionLabel="Upload COI"
+            liveHint="Listening for extractions"
+            icon={<FileText className="size-5" aria-hidden />}
+          />
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
             <p className="text-sm font-medium">Nothing matches this filter</p>
