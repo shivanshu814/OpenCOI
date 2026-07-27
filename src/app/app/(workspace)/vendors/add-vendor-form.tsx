@@ -26,6 +26,9 @@ export function AddVendorForm() {
   const [trade, setTrade] = useState("");
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Pending affordance ko users reliably notice karein, kyunki very-fast
+  // responses + `router.refresh()` sometimes UI paint ko miss kara dete hain.
+  const MIN_BUSY_MS = 350;
 
   const validation = useZodForm(vendorCreateSchema, { name, email, trade });
 
@@ -33,8 +36,10 @@ export function AddVendorForm() {
     e.preventDefault();
     validation.markSubmitted();
     if (!validation.valid) return;
+    const t0 = performance.now();
     setBusy(true);
     setFieldError(null);
+    let shouldRefresh = false;
     try {
       const res = await fetch("/api/vendors", {
         method: "POST",
@@ -67,11 +72,18 @@ export function AddVendorForm() {
       setEmail("");
       setTrade("");
       validation.reset();
-      router.refresh();
+      shouldRefresh = true;
     } catch (err) {
       notifyCaughtError(err, "Could not add vendor");
     } finally {
+      // Keep the loading UI visible for a short, fixed time window.
+      const elapsed = performance.now() - t0;
+      const waitMs = Math.max(0, MIN_BUSY_MS - elapsed);
+      if (waitMs > 0) {
+        await new Promise((r) => setTimeout(r, waitMs));
+      }
       setBusy(false);
+      if (shouldRefresh) router.refresh();
     }
   }
 

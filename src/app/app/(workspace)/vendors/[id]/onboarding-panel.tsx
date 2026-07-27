@@ -26,6 +26,7 @@ import {
 import { FALLBACK_US_STATES, toStateItems } from "@/lib/geo/us-states";
 import { CACHE_POLICIES } from "@/lib/live/policy";
 import { useCachedResource } from "@/lib/live/use-live";
+import { SAMPLE_AGREEMENTS } from "@/lib/samples/agreements";
 import {
   notifyApiError,
   notifyCaughtError,
@@ -38,7 +39,13 @@ import {
   vendorTaxProfileSchema,
 } from "@/lib/validation/schemas";
 import { useZodForm } from "@/lib/validation/use-zod-form";
-import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
+
+type AgreementTemplateState = {
+  template: { name: string | null; uploadedAt: string | null } | null;
+};
 
 const TIN_TYPE_ITEMS: ReadonlyArray<{ label: string; value: "ein" | "ssn" }> = [
   { label: "EIN", value: "ein" },
@@ -106,8 +113,11 @@ export function VendorOnboardingPanel({
   canWrite,
   canAdmin,
 }: Props) {
+  const router = useRouter();
+  const agreementFileRef = useRef<HTMLInputElement>(null);
   const [signingUrl, setSigningUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [templateBusy, setTemplateBusy] = useState(false);
 
   const [tin, setTin] = useState("");
   const [tinType, setTinType] = useState<"ein" | "ssn">("ein");
@@ -133,6 +143,20 @@ export function VendorOnboardingPanel({
     },
     { orgId, id: vendorId },
   );
+
+  const {
+    data: templateData,
+    mutate: mutateTemplate,
+  } = useCachedResource<AgreementTemplateState>(
+    CACHE_POLICIES.agreementTemplate,
+    async () => {
+      const res = await fetch("/api/settings/agreement-template");
+      if (!res.ok) throw new Error("Could not load the agreement template");
+      return (await res.json()) as AgreementTemplateState;
+    },
+    { orgId },
+  );
+  const agreementTemplate = templateData?.template ?? null;
 
   const licenses = data?.licenses ?? [];
   const agreements = data?.agreements ?? [];
@@ -210,6 +234,67 @@ export function VendorOnboardingPanel({
       notifyCaughtError(e, "Could not save onboarding");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function sendAgreementForSignature() {
+    if (!agreementTemplate) {
+      notifyWarning(
+        "No agreement template uploaded yet. Opening Workspace settings…",
+      );
+      router.push("/app/settings/team");
+      return;
+    }
+
+    void post({ action: "create_agreement" });
+  }
+
+  async function uploadAgreementTemplate(file: File) {
+    setTemplateBusy(true);
+    try {
+      const body = new FormData();
+      body.append("file", file);
+
+      const res = await fetch("/api/settings/agreement-template", {
+        method: "POST",
+        body,
+      });
+      const json = (await res.json()) as {
+        error?: string;
+        template?: { name: string; uploadedAt: string | null } | null;
+      };
+
+      if (!res.ok) {
+        notifyApiError(json, "Agreement not uploaded");
+        return;
+      }
+
+      if (json.template !== undefined) {
+        mutateTemplate({ template: json.template ?? null });
+      }
+
+      notifySuccess(`Agreement template saved — ${file.name}`);
+    } catch (e) {
+      notifyCaughtError(e, "Agreement not uploaded");
+    } finally {
+      setTemplateBusy(false);
+      if (agreementFileRef.current) agreementFileRef.current.value = "";
+    }
+  }
+
+  async function applySpecimenTemplate() {
+    const specimen = SAMPLE_AGREEMENTS.find((s) => s.id === "esign-specimen");
+    if (!specimen) return;
+    try {
+      const res = await fetch(specimen.href);
+      if (!res.ok) throw new Error("Could not load specimen PDF");
+      const blob = await res.blob();
+      const file = new File([blob], specimen.fileName, {
+        type: "application/pdf",
+      });
+      await uploadAgreementTemplate(file);
+    } catch (e) {
+      notifyCaughtError(e, "Could not apply specimen template");
     }
   }
 
@@ -438,15 +523,80 @@ export function VendorOnboardingPanel({
             Sends Confirm-style signing link to vendor email (demo without API
             key).
           </p>
+          {canAdmin ? (
+            <div className="mt-3 space-y-2">
+              <p className="text-muted-foreground text-xs">
+                {agreementTemplate
+                  ? `Template: ${agreementTemplate.name}`
+                  : "No agreement template set yet"}
+              </p>
+
+              <input
+                ref={agreementFileRef}
+                type="file"
+                accept="application/pdf"
+                className="sr-only"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) void uploadAgreementTemplate(file);
+                }}
+              />
+
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  pending={templateBusy}
+                  pendingGlyph="pen"
+                  disabled={templateBusy}
+                  onClick={() => agreementFileRef.current?.click()}
+                >
+                  {agreementTemplate ? "Replace PDF" : "Upload agreement PDF"}
+                </Button>
+
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  pending={templateBusy}
+                  pendingGlyph="spark"
+                  disabled={templateBusy}
+                  onClick={() => void applySpecimenTemplate()}
+                >
+                  Use e-sign specimen (test only)
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Alert className="mt-3">
+              <AlertDescription className="text-xs">
+                Admin only — upload the agreement template in{" "}
+                <Link
+                  href="/app/settings/team"
+                  className="underline underline-offset-4"
+                >
+                  Workspace settings
+                </Link>
+                .
+              </AlertDescription>
+            </Alert>
+          )}
           <Button
             className="mt-3"
             size="sm"
             variant="outline"
-            disabled={busy || !canWrite || !agreementForm.valid}
+            disabled={
+              busy ||
+              templateBusy ||
+              !canWrite ||
+              !agreementForm.valid ||
+              !agreementTemplate
+            }
             onClick={() => {
               agreementForm.markSubmitted();
               if (!agreementForm.valid) return;
-              void post({ action: "create_agreement" });
+              void sendAgreementForSignature();
             }}
           >
             Send hold-harmless for signature
