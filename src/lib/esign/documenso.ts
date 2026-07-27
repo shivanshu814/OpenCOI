@@ -7,11 +7,14 @@
  *
  *   1. POST   {base}/api/v1/documents            -> { uploadUrl, documentId, recipients[] }
  *   2. PUT    {uploadUrl}  (the PDF bytes)       -> stores the file
- *   3. POST   {base}/api/v1/documents/{id}/send  -> moves DRAFT -> PENDING, emails signers
+ *   3. POST   {base}/api/v1/documents/{id}/fields -> places a SIGNATURE for the signer
+ *   4. POST   {base}/api/v1/documents/{id}/send  -> moves DRAFT -> PENDING, emails signers
  *
- * Step 3 is what makes `/sign/<token>` resolve. A document that was created but
- * never uploaded-to and never sent stays a DRAFT, and Documenso 404s its signing
- * page — which is exactly how the previous implementation produced dead links.
+ * Step 3 is required: Documenso refuses to send when a SIGNER has no signature
+ * field ("Signers must have at least one signature field"). Step 4 is what
+ * makes `/sign/<token>` resolve. A document that was created but never
+ * uploaded-to and never sent stays a DRAFT, and Documenso 404s its signing
+ * page — which is exactly how an earlier implementation produced dead links.
  *
  * Honesty rule (CLAUDE.md): we NEVER invent a signing URL. If the API response
  * does not carry a real per-recipient signing URL or token, this returns
@@ -78,19 +81,19 @@ export type CreateSigningRequest = {
  */
 export type CreateSigningResult =
   | {
-      ok: true;
-      demo: boolean;
-      documentId: string;
-      signingUrl: string;
-      error?: undefined;
-    }
+    ok: true;
+    demo: boolean;
+    documentId: string;
+    signingUrl: string;
+    error?: undefined;
+  }
   | {
-      ok: false;
-      demo: false;
-      documentId: "";
-      signingUrl: "";
-      error: string;
-    };
+    ok: false;
+    demo: false;
+    documentId: "";
+    signingUrl: "";
+    error: string;
+  };
 
 function failure(error: string): CreateSigningResult {
   return { ok: false, demo: false, documentId: "", signingUrl: "", error };
@@ -128,16 +131,28 @@ type CreateDocumentResponse = {
   recipients?: unknown;
 };
 
-type ParsedRecipient = { token: string; signingUrl: string };
+type ParsedRecipient = {
+  recipientId: number;
+  token: string;
+  signingUrl: string;
+};
 
 function parseRecipient(value: unknown): ParsedRecipient | null {
   if (!value || typeof value !== "object") return null;
   const rec = value as Record<string, unknown>;
+  const rawId = rec.recipientId ?? rec.id;
+  const recipientId =
+    typeof rawId === "number"
+      ? rawId
+      : typeof rawId === "string" && /^\d+$/.test(rawId.trim())
+        ? Number(rawId.trim())
+        : NaN;
+  if (!Number.isFinite(recipientId) || recipientId <= 0) return null;
   const token = typeof rec.token === "string" ? rec.token.trim() : "";
   const signingUrl =
     typeof rec.signingUrl === "string" ? rec.signingUrl.trim() : "";
   if (!token && !signingUrl) return null;
-  return { token, signingUrl };
+  return { recipientId, token, signingUrl };
 }
 
 function decodeBase64Pdf(base64: string): ArrayBuffer | null {
@@ -207,7 +222,7 @@ export async function createAgreementSigning(
     const created = (createBody ?? {}) as CreateDocumentResponse;
     const documentId =
       typeof created.documentId === "number" ||
-      (typeof created.documentId === "string" && created.documentId.trim())
+        (typeof created.documentId === "string" && created.documentId.trim())
         ? String(created.documentId).trim()
         : "";
     const uploadUrl =
@@ -222,7 +237,7 @@ export async function createAgreementSigning(
     const missing = [
       documentId ? null : "documentId",
       uploadUrl ? null : "uploadUrl",
-      recipient ? null : "recipients[0].signingUrl/token",
+      recipient ? null : "recipients[0].recipientId+signingUrl/token",
     ].filter((m): m is string => m !== null);
     if (missing.length > 0) {
       return failure(
@@ -257,7 +272,36 @@ export async function createAgreementSigning(
       return failure(errorText(uploadBody, uploadRes.status, "PDF upload"));
     }
 
-    // 3 — send it. Until this succeeds the document is a DRAFT and the signing
+    // 3 — place a signature field. Without this, send returns 400:
+    // "Signers must have at least one signature field."
+    // Percentages are of page size; bottom-left-ish matches a typical signature
+    // line on a one-page agreement / specimen.
+    const fieldRes = await fetch(
+      `${base}/api/v1/documents/${encodeURIComponent(documentId)}/fields`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${key}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "SIGNATURE",
+          recipientId: recipient.recipientId,
+          pageNumber: 1,
+          pageX: 10,
+          pageY: 78,
+          pageWidth: 35,
+          pageHeight: 8,
+          fieldMeta: {},
+        }),
+      },
+    );
+    if (!fieldRes.ok) {
+      const fieldBody = await readBody(fieldRes);
+      return failure(errorText(fieldBody, fieldRes.status, "signature field"));
+    }
+
+    // 4 — send it. Until this succeeds the document is a DRAFT and the signing
     // page 404s, so a failure here must NOT be reported as a working link.
     const sendRes = await fetch(
       `${base}/api/v1/documents/${encodeURIComponent(documentId)}/send`,

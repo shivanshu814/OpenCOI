@@ -199,6 +199,9 @@ describe("createAgreementSigning — configured, bad response", () => {
           ],
         });
       }
+      if (url.includes("/fields")) {
+        return json({ ok: true });
+      }
       if (url.includes("/send")) {
         return json({ message: "Document has no fields" }, 400);
       }
@@ -213,6 +216,38 @@ describe("createAgreementSigning — configured, bad response", () => {
     assert.match(result.error ?? "", /Document has no fields/);
   });
 
+  it("reports a failed signature-field create", async () => {
+    configure();
+    mockFetch((url) => {
+      if (url.endsWith("/api/v1/documents")) {
+        return json({
+          uploadUrl: "https://s3.example.com/presigned",
+          documentId: 42,
+          recipients: [
+            {
+              recipientId: 2963678,
+              token: "tok_abc",
+              signingUrl: "https://sign.certshield.com/sign/tok_abc",
+            },
+          ],
+        });
+      }
+      if (url.startsWith("https://s3.example.com")) {
+        return new Response(null, { status: 200 });
+      }
+      if (url.includes("/fields")) {
+        return json({ message: "Invalid recipientId" }, 400);
+      }
+      return json({ ok: true });
+    });
+
+    const result = await createAgreementSigning(BASE_INPUT);
+    assert.equal(result.ok, false);
+    assert.equal(result.signingUrl, "");
+    assert.match(result.error ?? "", /signature field/i);
+    assert.match(result.error ?? "", /Invalid recipientId/);
+  });
+
   it("reports a failed PDF upload", async () => {
     configure();
     mockFetch((url) => {
@@ -220,7 +255,13 @@ describe("createAgreementSigning — configured, bad response", () => {
         return json({
           uploadUrl: "https://s3.example.com/presigned",
           documentId: 42,
-          recipients: [{ token: "tok_abc", signingUrl: "https://x/sign/tok_abc" }],
+          recipients: [
+            {
+              recipientId: 1,
+              token: "tok_abc",
+              signingUrl: "https://x/sign/tok_abc",
+            },
+          ],
         });
       }
       if (url.startsWith("https://s3.example.com")) {
@@ -237,7 +278,7 @@ describe("createAgreementSigning — configured, bad response", () => {
 });
 
 describe("createAgreementSigning — configured, good response", () => {
-  it("runs create → upload → send and returns the real signing URL", async () => {
+  it("runs create → upload → field → send and returns the real signing URL", async () => {
     configure();
     const calls = mockFetch((url) => {
       if (url.endsWith("/api/v1/documents")) {
@@ -268,7 +309,7 @@ describe("createAgreementSigning — configured, good response", () => {
       "https://sign.certshield.com/sign/tok_real_123",
     );
 
-    assert.equal(calls.length, 3);
+    assert.equal(calls.length, 4);
     assert.equal(calls[0].method, "POST");
     assert.equal(calls[0].url, "https://sign.certshield.com/api/v1/documents");
     assert.equal(calls[1].method, "PUT");
@@ -276,6 +317,17 @@ describe("createAgreementSigning — configured, good response", () => {
     assert.equal(calls[2].method, "POST");
     assert.equal(
       calls[2].url,
+      "https://sign.certshield.com/api/v1/documents/4242/fields",
+    );
+    const fieldBody = JSON.parse(String(calls[2].body)) as {
+      type: string;
+      recipientId: number;
+    };
+    assert.equal(fieldBody.type, "SIGNATURE");
+    assert.equal(fieldBody.recipientId, 7);
+    assert.equal(calls[3].method, "POST");
+    assert.equal(
+      calls[3].url,
       "https://sign.certshield.com/api/v1/documents/4242/send",
     );
   });
@@ -308,7 +360,13 @@ describe("createAgreementSigning — configured, good response", () => {
         return json({
           uploadUrl: "https://s3.example.com/presigned",
           documentId: 5,
-          recipients: [{ token: "t", signingUrl: "https://sign.certshield.com/sign/t" }],
+          recipients: [
+            {
+              recipientId: 1,
+              token: "t",
+              signingUrl: "https://sign.certshield.com/sign/t",
+            },
+          ],
         });
       }
       return json({ ok: true });
@@ -318,5 +376,24 @@ describe("createAgreementSigning — configured, good response", () => {
     assert.equal(result.ok, true);
     assert.equal(calls[0].url, "https://sign.certshield.com/api/v1/documents");
     assert.doesNotMatch(calls[0].url, /api\/v1\/api\/v1/);
+  });
+
+  it("fails when the create payload has no recipientId (cannot place a field)", async () => {
+    configure();
+    mockFetch((url) => {
+      if (url.endsWith("/api/v1/documents")) {
+        return json({
+          uploadUrl: "https://s3.example.com/presigned",
+          documentId: 5,
+          recipients: [{ token: "t", signingUrl: "https://sign.certshield.com/sign/t" }],
+        });
+      }
+      return json({ ok: true });
+    });
+
+    const result = await createAgreementSigning(BASE_INPUT);
+    assert.equal(result.ok, false);
+    assert.equal(result.signingUrl, "");
+    assert.match(result.error ?? "", /recipientId/i);
   });
 });
