@@ -212,6 +212,7 @@ export function IntegrationsClient({ orgId }: { orgId: string | null }) {
               size="sm"
               pending={busy}
               pendingIcon={KeyRound}
+              pendingMotion="orbit"
               disabled={busy || !keyForm.valid}
               onClick={() => {
                 keyForm.markSubmitted();
@@ -365,6 +366,7 @@ export function IntegrationsClient({ orgId }: { orgId: string | null }) {
             variant="outline"
             pending={busy}
             pendingIcon={Webhook}
+            pendingMotion="orbit"
             disabled={busy || !url.trim() || !webhookForm.valid}
             onClick={() => {
               webhookForm.markSubmitted();

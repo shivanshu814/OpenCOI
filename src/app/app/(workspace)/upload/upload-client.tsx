@@ -206,6 +206,7 @@ export default function UploadPage({ vendors }: { vendors: Vendor[] }) {
               className="w-full"
               pending={busy}
               pendingIcon={Upload}
+              pendingMotion="lift"
               disabled={busy || !file || !vendorId}
             >
               {busy ? "Uploading…" : "Queue extraction"}

@@ -82,6 +82,7 @@ export function SendChaseButton({
         size="sm"
         pending={busy}
         pendingIcon={Mail}
+        pendingMotion="fly"
         disabled={busy}
         onClick={() => send("en")}
       >

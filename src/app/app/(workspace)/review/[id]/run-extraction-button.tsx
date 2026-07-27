@@ -49,6 +49,7 @@ export function RunExtractionButton({ documentId }: { documentId: string }) {
       onClick={run}
       pending={busy}
       pendingIcon={Sparkles}
+      pendingMotion="twinkle"
       disabled={busy}
       className="w-full"
     >

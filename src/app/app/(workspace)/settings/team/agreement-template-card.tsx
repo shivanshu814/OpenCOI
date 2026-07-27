@@ -170,6 +170,7 @@ export function AgreementTemplateCard({
               variant="outline"
               pending={busy}
               pendingIcon={FileSignature}
+              pendingMotion="lift"
               disabled={busy}
               onClick={() => inputRef.current?.click()}
             >

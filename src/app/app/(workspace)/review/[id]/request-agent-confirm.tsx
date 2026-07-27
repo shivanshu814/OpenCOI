@@ -74,6 +74,7 @@ export function RequestAgentConfirmButton({
       size="sm"
       pending={busy}
       pendingIcon={MailCheck}
+      pendingMotion="fly"
       disabled={busy}
       onClick={() => void onClick()}
     >

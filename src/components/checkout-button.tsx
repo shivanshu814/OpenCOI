@@ -121,6 +121,7 @@ export function CheckoutButton({
       className={cn(className, className?.includes("w-full") && "w-full")}
       pending={busy}
       pendingIcon={CreditCard}
+      pendingMotion="swipe"
       disabled={busy}
       onClick={onClick}
     >

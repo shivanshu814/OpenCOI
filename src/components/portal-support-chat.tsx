@@ -241,6 +241,7 @@ export function PortalSupportChat({
             className="h-11 shrink-0 sm:w-28"
             pending={busy}
             pendingIcon={Sparkles}
+            pendingMotion="twinkle"
             disabled={busy || draft.trim().length === 0}
           >
             <Send className="size-4" aria-hidden />

@@ -903,6 +903,7 @@ export function TeamSettingsClient({ orgId }: { orgId: string | null }) {
             size="sm"
             pending={busy}
             pendingIcon={Mail}
+            pendingMotion="fly"
             disabled={busy || !notificationsForm.valid}
             onClick={() => {
               notificationsForm.markSubmitted();

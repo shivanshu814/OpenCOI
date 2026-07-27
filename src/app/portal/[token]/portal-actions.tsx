@@ -179,6 +179,7 @@ export function PortalActions({ token, locale, agentEmail }: Props) {
               className="h-11 w-full text-sm font-medium"
               pending={busy}
               pendingIcon={Upload}
+              pendingMotion="lift"
               disabled={busy || !file}
             >
               {busy ? t.uploading : t.submit}

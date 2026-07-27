@@ -58,6 +58,7 @@ export function IssuePortalLinkButton({ vendorId }: { vendorId: string }) {
         size="sm"
         pending={busy}
         pendingIcon={Globe}
+        pendingMotion="orbit"
         disabled={busy}
         onClick={onClick}
       >

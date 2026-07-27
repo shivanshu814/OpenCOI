@@ -1,7 +1,7 @@
 import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cva, type VariantProps } from "class-variance-authority";
 
-import { Spinner } from "@/components/ui/spinner";
+import { Spinner, type GlyphMotion } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
@@ -54,6 +54,7 @@ function Button({
   size = "default",
   pending = false,
   pendingIcon,
+  pendingMotion = "pulse",
   children,
   ...props
 }: ButtonPrimitive.Props &
@@ -68,6 +69,8 @@ function Button({
       className?: string;
       style?: React.CSSProperties;
     }>;
+    /** How that glyph moves — a globe turns, a document travels. */
+    pendingMotion?: GlyphMotion;
   }) {
   return (
     <ButtonPrimitive
@@ -79,7 +82,9 @@ function Button({
       {...props}
       disabled={pending || props.disabled}
     >
-      {pending ? <Spinner size={16} icon={pendingIcon} /> : null}
+      {pending ? (
+        <Spinner size={16} icon={pendingIcon} motion={pendingMotion} />
+      ) : null}
       {children}
     </ButtonPrimitive>
   );

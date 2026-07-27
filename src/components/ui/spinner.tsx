@@ -23,12 +23,37 @@ type Glyph = React.ComponentType<{
   style?: React.CSSProperties;
 }>;
 
+/**
+ * How the centre glyph moves. Pick the one that acts out the verb: a globe
+ * turns, a document travels, a spark twinkles, a pen writes, a card swipes.
+ * Keyframes live in globals.css and are all disabled under reduced motion.
+ */
+export type GlyphMotion =
+  | "pulse"
+  | "orbit"
+  | "fly"
+  | "lift"
+  | "twinkle"
+  | "write"
+  | "swipe";
+
+const MOTION_CLASS: Record<GlyphMotion, string> = {
+  pulse: "cs-glyph-pulse",
+  orbit: "cs-glyph-orbit",
+  fly: "cs-glyph-fly",
+  lift: "cs-glyph-lift",
+  twinkle: "cs-glyph-twinkle",
+  write: "cs-glyph-write",
+  swipe: "cs-glyph-swipe",
+};
+
 export function Spinner({
   size = 16,
   strokeWidth = 2,
   className,
   label = "Working",
   icon: Icon,
+  motion = "pulse",
 }: {
   size?: number;
   strokeWidth?: number;
@@ -36,6 +61,7 @@ export function Spinner({
   label?: string;
   /** Optional centre glyph naming the action (Mail, Sparkles, Globe…). */
   icon?: Glyph;
+  motion?: GlyphMotion;
 }) {
   const r = (24 - strokeWidth) / 2;
   const c = 2 * Math.PI * r;
@@ -86,9 +112,11 @@ export function Spinner({
       aria-label={label}
     >
       {arc}
-      {/* Sized off the arc so the glyph clears the stroke at every size. */}
+      {/* Sized off the arc so the glyph clears the stroke at every size, and
+          beating on its own slower period so the indicator reads as live
+          rather than as one rotating asset. */}
       <Icon
-        className="relative"
+        className={cn("relative", MOTION_CLASS[motion])}
         style={{
           width: Math.round(size * 0.5),
           height: Math.round(size * 0.5),

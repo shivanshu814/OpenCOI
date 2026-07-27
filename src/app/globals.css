@@ -617,6 +617,138 @@
     transform: scale(1);
   }
 }
+/* ── Glyph motion vocabulary ────────────────────────────────────────────
+ * The icon at the centre of a spinner acts out its own verb: a globe turns,
+ * a document travels, a spark twinkles, a pen writes. The arc keeps time at
+ * 0.85s while these run on their own longer periods, so the two never lock
+ * into one rhythm and the indicator reads as alive rather than as a single
+ * looping asset.
+ *
+ * All transform/opacity only, so they stay on the compositor, and all
+ * amplitudes are small — the glyph is ~8px inside a button, where a big
+ * swing looks like a rendering fault rather than motion. Every class is in
+ * the reduced-motion guard below. */
+@keyframes cs-glyph-pulse {
+  0%,
+  100% {
+    opacity: 0.62;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+/* A globe or a key: turning on its own axis. */
+@keyframes cs-glyph-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+/* Mail leaving: enters from behind, crosses, and is gone. */
+@keyframes cs-glyph-fly {
+  0% {
+    transform: translateX(-42%);
+    opacity: 0;
+  }
+  22% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(46%);
+    opacity: 0;
+  }
+}
+/* A document going from here to there — the upload/e-sign sense. */
+@keyframes cs-glyph-lift {
+  0% {
+    transform: translateY(46%);
+    opacity: 0;
+  }
+  22% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-46%);
+    opacity: 0;
+  }
+}
+/* AI at work: a spark catching light. */
+@keyframes cs-glyph-twinkle {
+  0%,
+  100% {
+    transform: scale(0.78) rotate(-10deg);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.14) rotate(10deg);
+    opacity: 1;
+  }
+}
+/* A pen mid-stroke. */
+@keyframes cs-glyph-write {
+  0%,
+  100% {
+    transform: translateX(-13%) rotate(-7deg);
+  }
+  50% {
+    transform: translateX(13%) rotate(5deg);
+  }
+}
+/* A card going through the reader. */
+@keyframes cs-glyph-swipe {
+  0% {
+    transform: translateX(-48%);
+    opacity: 0;
+  }
+  28% {
+    opacity: 1;
+  }
+  72% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(48%);
+    opacity: 0;
+  }
+}
+
+.cs-glyph-pulse,
+.cs-glyph-orbit,
+.cs-glyph-fly,
+.cs-glyph-lift,
+.cs-glyph-twinkle,
+.cs-glyph-write,
+.cs-glyph-swipe {
+  transform-origin: center;
+}
+.cs-glyph-pulse {
+  animation: cs-glyph-pulse 1.4s var(--cs-ease-quart) infinite;
+}
+.cs-glyph-orbit {
+  animation: cs-glyph-orbit 2.6s linear infinite;
+}
+.cs-glyph-fly {
+  animation: cs-glyph-fly 1.5s var(--cs-ease-quart) infinite;
+}
+.cs-glyph-lift {
+  animation: cs-glyph-lift 1.5s var(--cs-ease-quart) infinite;
+}
+.cs-glyph-twinkle {
+  animation: cs-glyph-twinkle 1.3s var(--cs-ease-quart) infinite;
+}
+.cs-glyph-write {
+  animation: cs-glyph-write 0.9s var(--cs-ease-quart) infinite;
+}
+.cs-glyph-swipe {
+  animation: cs-glyph-swipe 1.6s var(--cs-ease-quart) infinite;
+}
 .cs-arc-spin {
   animation: cs-arc-spin 0.85s linear infinite;
   filter: drop-shadow(0 0 5px color-mix(in oklab, var(--brand) 32%, transparent));
@@ -1076,6 +1208,13 @@
   .cs-loader-arrive,
   .cs-loader-ring,
   .cs-breathe,
+  .cs-glyph-pulse,
+  .cs-glyph-orbit,
+  .cs-glyph-fly,
+  .cs-glyph-lift,
+  .cs-glyph-twinkle,
+  .cs-glyph-write,
+  .cs-glyph-swipe,
   .cs-toast-in,
   .cs-scan-sweep,
   .cs-glow-pulse,
@@ -1121,6 +1260,13 @@
   /* Never leave revealed content invisible when motion is off. */
   .cs-page > *,
   .cs-breathe,
+  .cs-glyph-pulse,
+  .cs-glyph-orbit,
+  .cs-glyph-fly,
+  .cs-glyph-lift,
+  .cs-glyph-twinkle,
+  .cs-glyph-write,
+  .cs-glyph-swipe,
   .cs-reveal,
   .cs-reveal-in,
   .cs-word-in,

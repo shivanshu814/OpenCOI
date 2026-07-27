@@ -151,6 +151,7 @@ export function VendorSmsOptIn({
             variant="outline"
             pending={busy}
             pendingIcon={MessageSquare}
+            pendingMotion="fly"
             disabled={busy || !validation.valid}
           >
             {busy ? "Saving…" : "Save SMS settings"}

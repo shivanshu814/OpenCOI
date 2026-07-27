@@ -622,6 +622,7 @@ export function ReviewActions({
             onClick={() => void saveCorrection()}
             pending={busy === "correct"}
             pendingIcon={PenLine}
+            pendingMotion="write"
             disabled={!canSaveCorrection}
           >
             {busy === "correct"

@@ -79,6 +79,7 @@ export function SendOwnerReportButton({
       size="sm"
       pending={busy}
       pendingIcon={Send}
+      pendingMotion="fly"
       disabled={busy}
       onClick={onSend}
       title={toHint ? `Send to ${toHint}` : "Set owner email on property first"}
