@@ -1,5 +1,6 @@
 import { describeExtractionError } from "@/lib/ai/extract";
 import { getSessionOrg } from "@/lib/auth/session";
+import { canWriteOrgData } from "@/lib/auth/roles";
 import { isClaudeConfigured, isSupabaseConfigured } from "@/lib/config";
 import { extractDocumentFromStorage } from "@/lib/documents/ingest";
 import { NextResponse } from "next/server";
@@ -30,6 +31,12 @@ export async function POST(_request: Request, ctx: Ctx) {
   const session = await getSessionOrg();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!canWriteOrgData(session.role)) {
+    return NextResponse.json(
+      { error: "Read-only role cannot run extraction" },
+      { status: 403 },
+    );
   }
 
   try {

@@ -39,6 +39,11 @@ import {
   SidebarSeparator,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import {
+  canAdminSensitive,
+  productRoleLabel,
+  toProductRole,
+} from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import {
@@ -67,6 +72,7 @@ type NavItem = {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   exact?: boolean;
+  adminOnly?: boolean;
 };
 
 type NavGroup = { label: string | null; items: NavItem[] };
@@ -76,6 +82,13 @@ export type Branding = {
   orgName: string | null;
   brandColor: string | null;
   logoUrl: string | null;
+};
+
+/** Signed-in member identity — email + org role, shown in the account menu. */
+export type Account = {
+  email: string | null;
+  /** Raw DB role (owner|admin|member|viewer); null in demo mode. */
+  role: string | null;
 };
 
 const NAV_GROUPS: NavGroup[] = [
@@ -119,7 +132,7 @@ const NAV_GROUPS: NavGroup[] = [
         icon: KeyRound,
       },
       { href: "/app/settings/billing", label: "Billing", icon: CreditCard },
-      { href: "/app/admin", label: "Admin", icon: ShieldCheck },
+      { href: "/app/admin", label: "Admin", icon: ShieldCheck, adminOnly: true },
     ],
   },
 ];
@@ -145,12 +158,16 @@ function useBreadcrumb(pathname: string) {
 function AppSidebar({
   live,
   branding,
+  account,
 }: {
   live: boolean;
   branding: Branding;
+  account: Account | null;
 }) {
   const pathname = usePathname();
   const workspaceName = branding.orgName?.trim() || "CertShield";
+  // Demo mode (no account) keeps the full nav so the product is explorable.
+  const isAdmin = account?.role == null || canAdminSensitive(account.role);
 
   return (
     <Sidebar collapsible="icon" className="border-r">
@@ -199,7 +216,9 @@ function AppSidebar({
             ) : null}
             <SidebarGroupContent>
               <SidebarMenu className="group-data-[collapsible=icon]:items-center">
-                {group.items.map((item) => {
+                {group.items
+                  .filter((item) => !item.adminOnly || isAdmin)
+                  .map((item) => {
                   const active = isActive(pathname, item);
                   return (
                     <SidebarMenuItem key={item.href}>
@@ -262,10 +281,20 @@ function AppSidebar({
   );
 }
 
-function AppHeader({ live }: { live: boolean }) {
+function AppHeader({
+  live,
+  account,
+}: {
+  live: boolean;
+  account: Account | null;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const { current, isDetail } = useBreadcrumb(pathname);
+  const roleLabel = account?.role
+    ? productRoleLabel(toProductRole(account.role))
+    : null;
+  const isAdmin = account?.role == null || canAdminSensitive(account.role);
 
   async function onSignOut() {
     try {
@@ -353,19 +382,40 @@ function AppHeader({ live }: { live: boolean }) {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuGroup>
               <DropdownMenuLabel>
-                {live ? "Workspace connected" : "Demo mode"}
+                {account?.email ? (
+                  <span className="grid gap-0.5">
+                    <span className="truncate font-medium">
+                      {account.email}
+                    </span>
+                    {roleLabel ? (
+                      <span className="text-muted-foreground text-xs font-normal">
+                        Role: {roleLabel}
+                      </span>
+                    ) : null}
+                  </span>
+                ) : live ? (
+                  "Workspace connected"
+                ) : (
+                  "Demo mode"
+                )}
               </DropdownMenuLabel>
               <DropdownMenuItem render={<Link href="/app/settings/team" />}>
                 <SlidersHorizontal /> Workspace settings
               </DropdownMenuItem>
-              <DropdownMenuItem render={<Link href="/app/settings/billing" />}>
-                <CreditCard /> Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                render={<Link href="/app/settings/integrations" />}
-              >
-                <KeyRound /> API &amp; integrations
-              </DropdownMenuItem>
+              {isAdmin ? (
+                <>
+                  <DropdownMenuItem
+                    render={<Link href="/app/settings/billing" />}
+                  >
+                    <CreditCard /> Billing
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    render={<Link href="/app/settings/integrations" />}
+                  >
+                    <KeyRound /> API &amp; integrations
+                  </DropdownMenuItem>
+                </>
+              ) : null}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem render={<Link href="/help" />}>
@@ -386,10 +436,12 @@ function AppHeader({ live }: { live: boolean }) {
 export function AppShell({
   live,
   branding = { orgName: null, brandColor: null, logoUrl: null },
+  account = null,
   children,
 }: {
   live: boolean;
   branding?: Branding;
+  account?: Account | null;
   children: React.ReactNode;
 }) {
   // A white-label accent only has to override the brand tokens; every mint
@@ -407,9 +459,9 @@ export function AppShell({
 
   return (
     <SidebarProvider style={themeStyle}>
-      <AppSidebar live={live} branding={branding} />
+      <AppSidebar live={live} branding={branding} account={account} />
       <SidebarInset className="bg-background">
-        <AppHeader live={live} />
+        <AppHeader live={live} account={account} />
         <main className="mx-auto w-full max-w-[110rem] flex-1 space-y-6 px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
           {children}
         </main>

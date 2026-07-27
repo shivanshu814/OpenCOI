@@ -1,5 +1,6 @@
 import { MODEL_VERSION } from "@/lib/ai/extract";
 import { getSessionOrg } from "@/lib/auth/session";
+import { canPublishVerdicts } from "@/lib/auth/roles";
 import { isSupabaseConfigured } from "@/lib/config";
 import {
   extractionSchema,
@@ -40,7 +41,7 @@ export async function POST(request: Request, ctx: Ctx) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (session.role !== "owner" && session.role !== "admin") {
+  if (!canPublishVerdicts(session.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

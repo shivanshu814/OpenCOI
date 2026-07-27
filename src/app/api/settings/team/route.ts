@@ -2,6 +2,7 @@ import { canAdminSensitive } from "@/lib/auth/roles";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import { sendOutboundEmail } from "@/lib/email/resend";
+import { normalizeStateCode } from "@/lib/geo/us-states";
 import { renderTeamInviteEmail } from "@/lib/email/team-invite";
 import { createClient } from "@/lib/supabase/server";
 import { appBaseUrl } from "@/lib/app-url";
@@ -77,6 +78,8 @@ export async function GET() {
     // full org settings row (profile + branding + notification preferences).
     branding: org ?? {},
     your_role: session.role,
+    your_user_id: session.userId,
+    your_email: session.email,
   });
 }
 
@@ -277,7 +280,16 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    const state = nullableText(body.state, 2);
+    // Accepts "PA", "pa", or "Pennsylvania"; empty clears the field, but a
+    // non-empty value must normalize to a canonical two-letter code.
+    const rawState = nullableText(body.state, 60);
+    const state = rawState ? normalizeStateCode(rawState) : null;
+    if (rawState && !state) {
+      return NextResponse.json(
+        { error: "Invalid state — use a two-letter code like PA." },
+        { status: 400 },
+      );
+    }
 
     const { error } = await supabase
       .from("orgs")
@@ -286,7 +298,7 @@ export async function POST(request: Request) {
         legal_name: nullableText(body.legal_name, 160),
         address_line: nullableText(body.address_line),
         city: nullableText(body.city, 80),
-        state: state ? state.toUpperCase() : null,
+        state,
         postal_code: nullableText(body.postal_code, 12),
         phone: nullableText(body.phone, 32),
         website,

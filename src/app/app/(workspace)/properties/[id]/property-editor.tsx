@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { UsAddressFields } from "@/components/ui/us-address-fields";
 import type { RequirementRule } from "@/lib/requirements/engine";
 import { formatUsd } from "@/lib/ui/format";
 import {
@@ -163,45 +164,18 @@ export function PropertyEditor({
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
           </Field>
-          <Field className="sm:col-span-2">
-            <FieldLabel htmlFor="addr">Address</FieldLabel>
-            <Input
-              id="addr"
-              value={form.address_line}
-              onChange={(e) =>
-                setForm({ ...form, address_line: e.target.value })
-              }
-            />
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="city">City</FieldLabel>
-            <Input
-              id="city"
-              value={form.city}
-              onChange={(e) => setForm({ ...form, city: e.target.value })}
-            />
-          </Field>
-          <div className="grid grid-cols-2 gap-4">
-            <Field>
-              <FieldLabel htmlFor="state">State</FieldLabel>
-              <Input
-                id="state"
-                maxLength={2}
-                value={form.state}
-                onChange={(e) => setForm({ ...form, state: e.target.value })}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="zip">ZIP</FieldLabel>
-              <Input
-                id="zip"
-                value={form.postal_code}
-                onChange={(e) =>
-                  setForm({ ...form, postal_code: e.target.value })
-                }
-              />
-            </Field>
-          </div>
+          <UsAddressFields
+            className="sm:col-span-2"
+            idPrefix="prop-addr"
+            streetLabel="Address"
+            value={{
+              address_line: form.address_line,
+              city: form.city,
+              state: form.state,
+              postal_code: form.postal_code,
+            }}
+            onChange={(next) => setForm({ ...form, ...next })}
+          />
         </div>
       </section>
 

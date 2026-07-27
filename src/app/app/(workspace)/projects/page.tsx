@@ -17,6 +17,7 @@ import type { ProjectStatus } from "@/lib/projects/types";
 import { createClient } from "@/lib/supabase/server";
 import { ArrowRight, ChevronRight, FolderKanban } from "lucide-react";
 import Link from "next/link";
+import { RoleGate } from "@/components/role-gate";
 import { AddProjectForm } from "./add-project-form";
 
 type ProjectRow = {
@@ -100,7 +101,11 @@ export default async function ProjectsPage() {
         />
       ) : null}
 
-      {!hasData ? <AddProjectForm /> : null}
+      {!hasData ? (
+        <RoleGate require="write">
+          <AddProjectForm />
+        </RoleGate>
+      ) : null}
 
       <ContentSurface>
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-3.5 sm:px-5">
@@ -211,7 +216,11 @@ export default async function ProjectsPage() {
         )}
       </ContentSurface>
 
-      {hasData ? <AddProjectForm /> : null}
+      {hasData ? (
+        <RoleGate require="write">
+          <AddProjectForm />
+        </RoleGate>
+      ) : null}
 
       <PageSecondary>
         Document review assistance — not legal, insurance, or professional

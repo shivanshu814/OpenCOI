@@ -4,11 +4,19 @@ import {
 } from "@/lib/auth/roles";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
+import { normalizeStateCode } from "@/lib/geo/us-states";
 import { boardLookupUrl } from "@/lib/licenses/boards";
 import { createClient } from "@/lib/supabase/server";
 import { encryptTin, maskTin } from "@/lib/tax/tin";
 import { insertAuditEvent } from "@/lib/audit/write";
 import { NextResponse } from "next/server";
+
+/** Trim to null so an emptied field clears the column instead of storing "". */
+function cleanText(value: string | undefined, maxLength: number): string | null {
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed) return null;
+  return trimmed.slice(0, maxLength);
+}
 
 export async function GET(
   _request: Request,
@@ -114,6 +122,16 @@ export async function POST(
         { status: 403 },
       );
     }
+    // Address is optional, but a non-empty state must normalize ("pa",
+    // "PA", "Pennsylvania" all become "PA"); anything else is a typo.
+    const rawState = body.state?.trim() ?? "";
+    const state = normalizeStateCode(rawState);
+    if (rawState && !state) {
+      return NextResponse.json(
+        { error: "Invalid state — use a two-letter code like PA." },
+        { status: 400 },
+      );
+    }
     let tin_ciphertext: string | null = null;
     let tin_iv: string | null = null;
     let tin_last4: string | null = null;
@@ -132,10 +150,10 @@ export async function POST(
       tin_ciphertext,
       tin_iv,
       tin_last4,
-      address_line: body.address_line ?? null,
-      city: body.city ?? null,
-      state: body.state ?? null,
-      postal_code: body.postal_code ?? null,
+      address_line: cleanText(body.address_line, 300),
+      city: cleanText(body.city, 100),
+      state,
+      postal_code: cleanText(body.postal_code, 20),
       collected_at: now,
       updated_at: now,
     };
@@ -170,15 +188,24 @@ export async function POST(
   }
 
   if (body.action === "add_license") {
-    const state = body.license_state?.trim().toUpperCase() ?? null;
+    // Same rule as the tax profile: empty stays allowed, a non-empty state
+    // must normalize to a canonical code.
+    const rawState = body.license_state?.trim() ?? "";
+    const state = normalizeStateCode(rawState);
+    if (rawState && !state) {
+      return NextResponse.json(
+        { error: "Invalid license state — use a two-letter code like PA." },
+        { status: 400 },
+      );
+    }
     const { data, error } = await supabase
       .from("vendor_licenses")
       .insert({
         org_id: session.orgId,
         vendor_id: vendorId,
-        license_number: body.license_number?.trim() ?? null,
+        license_number: cleanText(body.license_number, 100),
         state,
-        trade: body.trade?.trim() ?? null,
+        trade: cleanText(body.trade, 100),
         expires_on: body.expires_on || null,
         board_lookup_url: boardLookupUrl(state),
       })

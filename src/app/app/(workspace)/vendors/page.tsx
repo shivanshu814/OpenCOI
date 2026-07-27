@@ -20,6 +20,7 @@ import type { VendorStatus } from "@/lib/data/types";
 import { cn } from "@/lib/utils";
 import { ChevronRight, Search, Upload, Users } from "lucide-react";
 import Link from "next/link";
+import { RoleGate } from "@/components/role-gate";
 import { AddVendorForm } from "./add-vendor-form";
 
 const STATUS_FILTERS: { value: VendorStatus; label: string }[] = [
@@ -168,7 +169,9 @@ export default async function VendorsPage({
         />
       ) : null}
 
-      <AddVendorForm />
+      <RoleGate require="write">
+        <AddVendorForm />
+      </RoleGate>
 
       <ContentSurface>
         {/* Toolbar: title + count | search + filters */}

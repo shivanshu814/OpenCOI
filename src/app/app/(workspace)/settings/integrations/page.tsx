@@ -3,6 +3,7 @@ import {
   PageHeader,
   PageSecondary,
 } from "@/components/page-frame";
+import { RoleGate } from "@/components/role-gate";
 import Link from "next/link";
 import { IntegrationsClient } from "./integrations-client";
 
@@ -37,7 +38,21 @@ export default function IntegrationsSettingsPage() {
         </p>
       </div>
 
-      <IntegrationsClient />
+      <RoleGate
+        require="admin"
+        fallback={
+          <div className="bg-card rounded-xl border p-6 text-sm leading-relaxed shadow-xs">
+            <p className="font-medium">Admin only</p>
+            <p className="text-muted-foreground mt-1">
+              API keys and webhooks can read vendor data and push it to other
+              systems, so only workspace admins can manage them. Ask an admin
+              if you need an integration set up.
+            </p>
+          </div>
+        }
+      >
+        <IntegrationsClient />
+      </RoleGate>
 
       <PageSecondary>
         Native AppFolio/Buildium sync is coming later (honestly labeled).

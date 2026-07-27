@@ -13,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { canAdminSensitive } from "@/lib/auth/roles";
 import { getSessionOrg } from "@/lib/auth/session";
 import { PLANS, planById, type PlanId } from "@/lib/billing/plans";
 import { isPaddleCheckoutConfigured, isSupabaseConfigured } from "@/lib/config";
@@ -45,6 +46,10 @@ export default async function BillingSettingsPage() {
   const live = isSupabaseConfigured();
   const session = live ? await getSessionOrg() : null;
   const paddleReady = isPaddleCheckoutConfigured();
+
+  // Demo mode (no session) stays explorable; live viewers/managers can look
+  // but only admins can start a checkout (API enforces the same rule).
+  const isAdmin = session ? canAdminSensitive(session.role) : true;
 
   const currentId = isPlanId(session?.plan) ? session.plan : null;
   const currentPlan = planById(currentId);
@@ -227,6 +232,13 @@ export default async function BillingSettingsPage() {
                 )}
 
                 <div className="mt-5 w-full">
+                  {!isAdmin ? (
+                    <p className="text-muted-foreground rounded-md border border-dashed px-3 py-2 text-center text-xs">
+                      {isCurrent
+                        ? "Current plan"
+                        : "Admin only — ask a workspace admin to change the plan."}
+                    </p>
+                  ) : (
                   <CheckoutButton
                     planId={plan.id}
                     label={
@@ -246,6 +258,7 @@ export default async function BillingSettingsPage() {
                     size="default"
                     className="w-full"
                   />
+                  )}
                 </div>
 
                 <ul className="mt-5 flex-1 space-y-2 border-t border-border/70 pt-4 text-sm leading-relaxed">

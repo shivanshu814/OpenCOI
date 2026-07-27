@@ -35,7 +35,11 @@ import {
   usTimezoneOptions,
   zoneCityName,
 } from "@/lib/geo/timezones";
-import { productRoleLabel, toProductRole } from "@/lib/auth/roles";
+import {
+  canManageTeam,
+  productRoleLabel,
+  toProductRole,
+} from "@/lib/auth/roles";
 import {
   notifyApiError,
   notifyError,
@@ -43,7 +47,13 @@ import {
   notifyWarning,
 } from "@/lib/ui/toast";
 import { cn } from "@/lib/utils";
-import { Building2, Mail, MessageSquare, Palette } from "lucide-react";
+import {
+  Building2,
+  Mail,
+  MessageSquare,
+  Palette,
+  UserRound,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 const ROLE_ITEMS: ReadonlyArray<{
@@ -136,6 +146,11 @@ export function TeamSettingsClient() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [me, setMe] = useState<{
+    role: string | null;
+    userId: string | null;
+    email: string | null;
+  }>({ role: null, userId: null, email: null });
 
   const set = useCallback(
     <K extends keyof OrgSettings>(key: K, value: OrgSettings[K]) => {
@@ -154,6 +169,9 @@ export function TeamSettingsClient() {
         members?: Member[];
         invites?: { id: string; email: string; role: string }[];
         branding?: Partial<Record<keyof OrgSettings, unknown>>;
+        your_role?: string;
+        your_user_id?: string;
+        your_email?: string | null;
         error?: string;
       };
       if (data.error) {
@@ -164,6 +182,11 @@ export function TeamSettingsClient() {
       setLoadError(null);
       setMembers(data.members ?? []);
       setInvites(data.invites ?? []);
+      setMe({
+        role: data.your_role ?? null,
+        userId: data.your_user_id ?? null,
+        email: data.your_email ?? null,
+      });
 
       const org = data.branding ?? {};
       setSettings({
@@ -298,8 +321,53 @@ export function TeamSettingsClient() {
     );
   }
 
+  // Demo mode has no role; treat it as admin so the page stays explorable.
+  const iAmAdmin = me.role == null || canManageTeam(me.role);
+  const myRoleLabel = me.role
+    ? productRoleLabel(toProductRole(me.role))
+    : null;
+
   return (
     <div className="space-y-6">
+      {/* ── Your access ───────────────────────────────────────────────── */}
+      {me.role ? (
+        <Card className="gap-0 overflow-hidden py-0">
+          <CardLiveAccent />
+          <CardHeader className="pt-4 pb-4">
+            <SectionTitle
+              icon={UserRound}
+              title="Your access"
+              badge={<Badge>{myRoleLabel}</Badge>}
+            />
+            <CardDescription className="text-xs leading-relaxed">
+              Signed in as {me.email ?? "your account"} with the{" "}
+              <span className="text-foreground font-medium">
+                {myRoleLabel}
+              </span>{" "}
+              role.{" "}
+              {toProductRole(me.role) === "admin"
+                ? "You can manage billing, team, integrations, and every setting on this page."
+                : toProductRole(me.role) === "manager"
+                  ? "You can add vendors, upload certificates, send chases, and accept verdicts. Workspace settings below are managed by admins."
+                  : "You can view vendors, documents, and reports. Uploading, sending, and settings changes are handled by managers and admins."}
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      ) : null}
+
+      {!iAmAdmin ? (
+        <Alert>
+          <AlertDescription>
+            These workspace settings are read-only for your role — ask a
+            workspace admin to make changes.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      <fieldset
+        disabled={!iAmAdmin}
+        className="m-0 min-w-0 space-y-6 border-0 p-0"
+      >
       {/* ── Company profile ───────────────────────────────────────────── */}
       <Card className="gap-0 overflow-hidden py-0">
         <CardLiveAccent />
@@ -723,6 +791,8 @@ export function TeamSettingsClient() {
             <MemberRow
               key={m.id}
               member={m}
+              isYou={me.userId != null && me.userId === m.user_id}
+              yourEmail={me.email}
               properties={properties}
               grantedPropertyIds={grantsByUser[m.user_id] ?? []}
               onSaveScope={saveScope}
@@ -794,6 +864,7 @@ export function TeamSettingsClient() {
           ) : null}
         </CardFooter>
       </Card>
+      </fieldset>
 
       {loadError ? (
         <Alert variant="destructive">
@@ -863,12 +934,16 @@ function ChannelRow({
  */
 function MemberRow({
   member,
+  isYou = false,
+  yourEmail = null,
   properties,
   grantedPropertyIds,
   onSaveScope,
   busy,
 }: {
   member: Member;
+  isYou?: boolean;
+  yourEmail?: string | null;
   properties: PropertyOption[];
   grantedPropertyIds: string[];
   onSaveScope: (userId: string, propertyIds: string[]) => Promise<void>;
@@ -897,8 +972,11 @@ function MemberRow({
 
   return (
     <li className="hover:bg-muted/40 grid items-start gap-x-3 gap-y-2 px-4 py-2.5 transition-colors sm:grid-cols-[minmax(0,1.1fr)_minmax(0,0.8fr)_minmax(0,1.1fr)] sm:px-5">
-      <span className="font-mono text-xs sm:pt-1">
-        {member.user_id.slice(0, 8)}…
+      <span className="flex items-center gap-1.5 text-xs sm:pt-1">
+        <span className="truncate font-mono">
+          {isYou && yourEmail ? yourEmail : `${member.user_id.slice(0, 8)}…`}
+        </span>
+        {isYou ? <Badge variant="secondary">You</Badge> : null}
       </span>
       <span className="text-sm sm:pt-0.5">
         {productRoleLabel(toProductRole(member.role))}{" "}

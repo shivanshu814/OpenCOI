@@ -1,4 +1,5 @@
 import { getSessionOrg } from "@/lib/auth/session";
+import { canAdminSensitive } from "@/lib/auth/roles";
 import { resolveCheckoutPlan } from "@/lib/billing/checkout";
 import { isSupabaseConfigured } from "@/lib/config";
 import { NextResponse } from "next/server";
@@ -33,6 +34,12 @@ export async function POST(request: Request) {
         hint: "Sign in again, then retry checkout. If this persists, org bootstrap failed — contact support.",
       },
       { status: 401 },
+    );
+  }
+  if (!canAdminSensitive(session.role)) {
+    return NextResponse.json(
+      { error: "Admin only — ask a workspace admin to change the plan." },
+      { status: 403 },
     );
   }
 

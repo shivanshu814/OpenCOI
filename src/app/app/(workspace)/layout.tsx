@@ -24,6 +24,9 @@ export default async function WorkspaceLayout({
         brandColor: session?.brandColor ?? null,
         logoUrl: session?.logoUrl ?? null,
       }}
+      account={
+        session ? { email: session.email, role: session.role } : null
+      }
     >
       {live ? <RealtimeRefresh /> : null}
       {children}

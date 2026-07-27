@@ -64,6 +64,9 @@ type OrgRow = {
   chase_notify_email: string | null;
   from_email: string | null;
   reply_to_email: string | null;
+  /** F2 white-label — sanitized by the email layout before use. */
+  brand_primary_color: string | null;
+  logo_url: string | null;
 };
 
 export async function sendChaseForVendor(
@@ -92,7 +95,7 @@ export async function sendChaseForVendor(
   const { data: org } = await supabase
     .from("orgs")
     .select(
-      "id, name, intake_token, chase_notify_email, from_email, reply_to_email",
+      "id, name, intake_token, chase_notify_email, from_email, reply_to_email, brand_primary_color, logo_url",
     )
     .eq("id", req.orgId)
     .single();
@@ -165,7 +168,18 @@ export async function sendChaseForVendor(
     physicalAddress: DEFAULT_PHYSICAL_ADDRESS,
   };
 
-  const rendered = renderChaseEmail({ templateKey, locale, vars });
+  // Vendor-facing send carries the customer org's white-label branding
+  // (F2); the layout sanitizes color/logo. Escalation below stays CertShield.
+  const rendered = renderChaseEmail({
+    templateKey,
+    locale,
+    vars,
+    brand: {
+      name: o.name,
+      color: o.brand_primary_color,
+      logoUrl: o.logo_url,
+    },
+  });
 
   if (req.previewOnly) {
     return { ok: true, demo: true, rendered };

@@ -1,4 +1,10 @@
 import type { VendorStatus } from "@/lib/data/types";
+import {
+  escapeHtml,
+  listHtml,
+  paragraphHtml,
+  renderBrandedEmailHtml,
+} from "@/lib/email/layout";
 import { sendOutboundEmail } from "@/lib/email/resend";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { insertAuditEvent } from "@/lib/audit/write";
@@ -9,13 +15,6 @@ import {
   renderOwnerReportPdf,
 } from "./owner-pdf";
 import type { OwnerReport } from "./types";
-
-function escape(s: string): string {
-  return s
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
-}
 
 export function ownerReportEmailBodies(report: OwnerReport): {
   subject: string;
@@ -40,18 +39,23 @@ export function ownerReportEmailBodies(report: OwnerReport): {
     report.disclaimer,
   ].join("\n");
 
-  const html = `<h2>Owner compliance report</h2>
-<p><strong>${escape(report.property.name)}</strong> · ${escape(report.period_label)}<br/>
-Prepared by ${escape(report.org_name)}</p>
-<p>${escape(report.summary)}</p>
-<ul>
-<li>Compliance %: <strong>${report.compliance_percent}%</strong></li>
-<li>Documents on file: <strong>${report.documents_on_file}</strong></li>
-<li>Risks flagged: <strong>${report.risks_flagged}</strong></li>
-<li>Expiring ≤30d: <strong>${report.expiring_count}</strong></li>
-</ul>
-<p style="color:#666;font-size:12px">${escape(report.honesty_note)}</p>
-<p style="color:#666;font-size:11px">${escape(report.disclaimer)}</p>`;
+  const html = renderBrandedEmailHtml({
+    preheader: `${report.property.name} — ${report.period_label} · ${report.compliance_percent}% covered`,
+    heading: "Owner compliance report",
+    bodyHtml: [
+      paragraphHtml(
+        `<strong style="color:#121b29;">${escapeHtml(report.property.name)}</strong> · ${escapeHtml(report.period_label)}<br />Prepared by ${escapeHtml(report.org_name)}`,
+      ),
+      paragraphHtml(escapeHtml(report.summary)),
+      listHtml([
+        `Compliance %: <strong style="color:#121b29;">${report.compliance_percent}%</strong>`,
+        `Documents on file: <strong style="color:#121b29;">${report.documents_on_file}</strong>`,
+        `Risks flagged: <strong style="color:#121b29;">${report.risks_flagged}</strong>`,
+        `Expiring ≤30d: <strong style="color:#121b29;">${report.expiring_count}</strong>`,
+      ]),
+    ].join("\n"),
+    footerNote: `${escapeHtml(report.honesty_note)}<br /><br />${escapeHtml(report.disclaimer)}`,
+  });
 
   return { subject, text, html };
 }

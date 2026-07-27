@@ -6,6 +6,7 @@ import {
   PageFrame,
   PageSecondary,
 } from "@/components/page-frame";
+import { RoleGate } from "@/components/role-gate";
 import { SendChaseButton } from "@/components/send-chase-button";
 import {
   DocumentStatusBadge,
@@ -108,7 +109,9 @@ export default async function VendorDetailPage({
             >
               Litigation pack
             </Button>
-            <SendChaseButton vendorId={vendor.id} vendorName={vendor.name} />
+            <RoleGate require="write">
+              <SendChaseButton vendorId={vendor.id} vendorName={vendor.name} />
+            </RoleGate>
             <Button
               variant="outline"
               size="sm"
@@ -254,7 +257,17 @@ export default async function VendorDetailPage({
               </CardDescription>
             </CardHeader>
             <CardContent className="py-4">
-              <IssuePortalLinkButton vendorId={vendor.id} />
+              <RoleGate
+                require="write"
+                fallback={
+                  <p className="text-muted-foreground text-xs">
+                    Read-only role — ask a manager or admin to issue portal
+                    links.
+                  </p>
+                }
+              >
+                <IssuePortalLinkButton vendorId={vendor.id} />
+              </RoleGate>
             </CardContent>
           </Card>
 

@@ -3,6 +3,7 @@ import {
   PageHeader,
   PageSecondary,
 } from "@/components/page-frame";
+import { RoleGate } from "@/components/role-gate";
 import { Skeleton } from "@/components/ui/skeleton";
 import { listVendors } from "@/lib/data/documents";
 import Link from "next/link";
@@ -68,7 +69,21 @@ export default async function Page() {
           </div>
         }
       >
-        <UploadPage vendors={vendors} />
+        <RoleGate
+          require="write"
+          fallback={
+            <div className="bg-card rounded-xl border p-6 text-sm leading-relaxed shadow-xs">
+              <p className="font-medium">Read-only role</p>
+              <p className="text-muted-foreground mt-1">
+                Your role can view vendors, documents, and reports, but cannot
+                upload certificates. Ask a workspace admin to change your role
+                if you need to upload.
+              </p>
+            </div>
+          }
+        >
+          <UploadPage vendors={vendors} />
+        </RoleGate>
       </Suspense>
 
       <PageSecondary>

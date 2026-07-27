@@ -1,4 +1,5 @@
 import { getSessionOrg } from "@/lib/auth/session";
+import { canWriteOrgData } from "@/lib/auth/roles";
 import { isSupabaseConfigured } from "@/lib/config";
 import { templateById } from "@/lib/requirements/templates";
 import { createClient } from "@/lib/supabase/server";
@@ -51,6 +52,12 @@ export async function POST(request: Request) {
   const session = await getSessionOrg();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!canWriteOrgData(session.role)) {
+    return NextResponse.json(
+      { error: "Read-only role cannot change onboarding settings" },
+      { status: 403 },
+    );
   }
 
   const supabase = await createClient();

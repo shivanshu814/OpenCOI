@@ -6,6 +6,7 @@ import {
 } from "@/lib/chase/send";
 import type { ChaseLocale, ChaseTemplateKey } from "@/lib/chase/types";
 import { getSessionOrg } from "@/lib/auth/session";
+import { canWriteOrgData } from "@/lib/auth/roles";
 import { DEMO_VENDORS } from "@/lib/demo/store";
 import { inngest } from "@/inngest/client";
 import { isInngestConfigured } from "@/lib/config";
@@ -81,6 +82,12 @@ export async function POST(request: Request) {
   const session = await getSessionOrg();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!canWriteOrgData(session.role)) {
+    return NextResponse.json(
+      { error: "Read-only role cannot send chase emails" },
+      { status: 403 },
+    );
   }
 
   if (useAsync && isInngestConfigured() && !previewOnly) {

@@ -1,6 +1,7 @@
 import { canWriteOrgData } from "@/lib/auth/roles";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
+import { normalizeStateCode } from "@/lib/geo/us-states";
 import type { RequirementRule } from "@/lib/requirements/engine";
 import { createClient } from "@/lib/supabase/server";
 import { insertAuditEvent } from "@/lib/audit/write";
@@ -11,7 +12,8 @@ const patchSchema = z.object({
   name: z.string().min(1).max(200).optional(),
   address_line: z.string().max(300).optional().nullable(),
   city: z.string().max(100).optional().nullable(),
-  state: z.string().max(2).optional().nullable(),
+  // Accepts "PA", "pa", or "Pennsylvania"; normalized to the code on write.
+  state: z.string().max(60).optional().nullable(),
   postal_code: z.string().max(20).optional().nullable(),
   certificate_holder_name: z.string().max(300).optional().nullable(),
   additional_insured_wording: z.string().max(1000).optional().nullable(),
@@ -123,8 +125,18 @@ export async function PATCH(
   if (p.address_line !== undefined)
     updates.address_line = p.address_line?.trim() || null;
   if (p.city !== undefined) updates.city = p.city?.trim() || null;
-  if (p.state !== undefined)
-    updates.state = p.state?.trim()?.toUpperCase() || null;
+  if (p.state !== undefined) {
+    // Empty clears the field; a non-empty state must normalize to a real
+    // code, or it later fails the D1 cert-holder state match silently.
+    const state = normalizeStateCode(p.state);
+    if (p.state?.trim() && !state) {
+      return NextResponse.json(
+        { error: "Invalid state — use a two-letter code like PA." },
+        { status: 400 },
+      );
+    }
+    updates.state = state;
+  }
   if (p.postal_code !== undefined)
     updates.postal_code = p.postal_code?.trim() || null;
   if (p.certificate_holder_name !== undefined)

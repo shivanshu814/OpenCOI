@@ -18,6 +18,7 @@ import {
 } from "@/components/page-frame";
 import { ScoreRing } from "@/components/product-preview";
 import { ReportsEmptyState } from "@/components/reports-empty-state";
+import { RoleGate } from "@/components/role-gate";
 import { SendOwnerReportButton } from "@/components/send-owner-report-button";
 import { Button } from "@/components/ui/button";
 import { listOwnerReportRows } from "@/lib/reports/owner-load";
@@ -240,11 +241,13 @@ export default async function ReportsPage() {
                       propertyId={p.id}
                       label="PDF"
                     />
-                    <SendOwnerReportButton
-                      propertyId={p.id}
-                      toHint={p.owner_report_email}
-                      variant="primary"
-                    />
+                    <RoleGate require="write">
+                      <SendOwnerReportButton
+                        propertyId={p.id}
+                        toHint={p.owner_report_email}
+                        variant="primary"
+                      />
+                    </RoleGate>
                   </div>
                 </ListTableRow>
               );

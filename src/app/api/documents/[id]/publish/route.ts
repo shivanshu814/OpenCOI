@@ -1,4 +1,5 @@
 import { getSessionOrg } from "@/lib/auth/session";
+import { canPublishVerdicts } from "@/lib/auth/roles";
 import { isSupabaseConfigured } from "@/lib/config";
 import { vendorStatusFromVerdict } from "@/lib/data/types";
 import { demoAcceptPublish, getDemoDocument } from "@/lib/demo/store";
@@ -40,7 +41,7 @@ export async function POST(_request: Request, ctx: Ctx) {
   }
 
   // Until M3: only founder/admin roles publish (owner|admin).
-  if (session.role !== "owner" && session.role !== "admin") {
+  if (!canPublishVerdicts(session.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

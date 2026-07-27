@@ -1,6 +1,7 @@
 import { canWriteOrgData } from "@/lib/auth/roles";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
+import { normalizeStateCode } from "@/lib/geo/us-states";
 import { DEFAULT_GLOBAL_RULES } from "@/lib/requirements/engine";
 import { createClient } from "@/lib/supabase/server";
 import { insertAuditEvent } from "@/lib/audit/write";
@@ -11,7 +12,8 @@ const createSchema = z.object({
   name: z.string().min(1).max(200),
   address_line: z.string().max(300).optional().nullable(),
   city: z.string().max(100).optional().nullable(),
-  state: z.string().max(2).optional().nullable(),
+  // Accepts "PA", "pa", or "Pennsylvania"; normalized to the code below.
+  state: z.string().max(60).optional().nullable(),
   postal_code: z.string().max(20).optional().nullable(),
   certificate_holder_name: z.string().max(300).optional().nullable(),
   additional_insured_wording: z.string().max(1000).optional().nullable(),
@@ -79,6 +81,16 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const row = parsed.data;
 
+  // Empty state stays optional; a non-empty one must normalize to a real code,
+  // or it later fails the D1 cert-holder state match silently.
+  const state = normalizeStateCode(row.state);
+  if (row.state?.trim() && !state) {
+    return NextResponse.json(
+      { error: "Invalid state — use a two-letter code like PA." },
+      { status: 400 },
+    );
+  }
+
   const { data: property, error } = await supabase
     .from("properties")
     .insert({
@@ -86,7 +98,7 @@ export async function POST(request: Request) {
       name: row.name.trim(),
       address_line: row.address_line?.trim() || null,
       city: row.city?.trim() || null,
-      state: row.state?.trim()?.toUpperCase() || null,
+      state,
       postal_code: row.postal_code?.trim() || null,
       certificate_holder_name: row.certificate_holder_name?.trim() || null,
       additional_insured_wording:

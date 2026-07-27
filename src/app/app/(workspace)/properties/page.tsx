@@ -16,6 +16,7 @@ import { isSupabaseConfigured } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { Building2, ChevronRight, MapPin } from "lucide-react";
 import Link from "next/link";
+import { RoleGate } from "@/components/role-gate";
 import { AddPropertyForm } from "./add-property-form";
 
 type PropertyRow = {
@@ -93,7 +94,11 @@ export default async function PropertiesPage() {
         />
       ) : null}
 
-      {!hasData ? <AddPropertyForm /> : null}
+      {!hasData ? (
+        <RoleGate require="write">
+          <AddPropertyForm />
+        </RoleGate>
+      ) : null}
 
       <ContentSurface>
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-3.5 sm:px-5">
@@ -202,7 +207,11 @@ export default async function PropertiesPage() {
         )}
       </ContentSurface>
 
-      {hasData ? <AddPropertyForm /> : null}
+      {hasData ? (
+        <RoleGate require="write">
+          <AddPropertyForm />
+        </RoleGate>
+      ) : null}
 
       <PageSecondary>
         Uncertainty on holder match always routes to review — never a silent

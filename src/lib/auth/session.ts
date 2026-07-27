@@ -2,6 +2,7 @@ import { isSupabaseConfigured } from "@/lib/config";
 import { sanitizeHexColor, sanitizeLogoUrl } from "@/lib/portal/tokens";
 import { intakeEmailForToken } from "@/lib/email/intake-address";
 import { createClient } from "@/lib/supabase/server";
+import { cache } from "react";
 
 export type SessionOrg = {
   orgId: string;
@@ -54,8 +55,12 @@ function toSession(
   };
 }
 
-/** Returns null in demo mode or when the user is not signed in / has no org. */
-export async function getSessionOrg(): Promise<SessionOrg | null> {
+/**
+ * Returns null in demo mode or when the user is not signed in / has no org.
+ * Wrapped in React cache() so layout, page, and RoleGate calls within one
+ * request share a single lookup instead of re-querying Supabase.
+ */
+export const getSessionOrg = cache(async (): Promise<SessionOrg | null> => {
   if (!isSupabaseConfigured()) return null;
 
   const supabase = await createClient();
@@ -200,4 +205,4 @@ export async function getSessionOrg(): Promise<SessionOrg | null> {
   }
 
   return toSession(user.id, user.email ?? null, "owner", orgRow as OrgRow);
-}
+});

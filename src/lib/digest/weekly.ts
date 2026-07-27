@@ -1,4 +1,10 @@
 import type { VendorStatus } from "@/lib/data/types";
+import {
+  escapeHtml,
+  listHtml,
+  paragraphHtml,
+  renderBrandedEmailHtml,
+} from "@/lib/email/layout";
 import { sendOutboundEmail } from "@/lib/email/resend";
 import { portfolioComplianceScore } from "@/lib/scores/compute";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -73,17 +79,25 @@ export async function sendWeeklyDigestForOrg(orgId: string): Promise<{
     "We catch expirations and chase renewals automatically; mid-term cancellations are mitigated via agent confirmation — no tool can guarantee catching a silent cancellation.",
   ].join("\n");
 
-  const html = `<h2>Weekly digest — ${escape(org.name)}</h2>
-<p><strong>Portfolio score:</strong> ${portfolio.score}/100 · ${portfolio.counted} vendors</p>
-<ul>
-<li>Expiring ≤30d: <strong>${expiring.length}</strong></li>
-<li>Non-compliant: <strong>${nonCompliant.length}</strong></li>
-<li>Missing docs: <strong>${missing.length}</strong></li>
-<li>In review: <strong>${inReview.length}</strong></li>
-</ul>
-${listBlock("Expiring", expiring)}
-${listBlock("Non-compliant", nonCompliant)}
-<p style="color:#666;font-size:12px">Document review assistance — not legal, insurance, or professional advice. Mid-term cancellations are mitigated via agent confirmation — not automatic detection.</p>`;
+  const html = renderBrandedEmailHtml({
+    preheader: `Portfolio score ${portfolio.score}/100 · ${expiring.length} expiring · ${nonCompliant.length} non-compliant`,
+    heading: `Weekly digest — ${org.name}`,
+    bodyHtml: [
+      paragraphHtml(
+        `<strong style="color:#121b29;">Portfolio score:</strong> ${portfolio.score}/100 · ${portfolio.counted} vendors`,
+      ),
+      listHtml([
+        `Expiring ≤30d: <strong style="color:#121b29;">${expiring.length}</strong>`,
+        `Non-compliant: <strong style="color:#121b29;">${nonCompliant.length}</strong>`,
+        `Missing docs: <strong style="color:#121b29;">${missing.length}</strong>`,
+        `In review: <strong style="color:#121b29;">${inReview.length}</strong>`,
+      ]),
+      listBlock("Expiring", expiring),
+      listBlock("Non-compliant", nonCompliant),
+    ].join("\n"),
+    footerNote:
+      "Document review assistance — not legal, insurance, or professional advice. Mid-term cancellations are mitigated via agent confirmation — not automatic detection.",
+  });
 
   const send = await sendOutboundEmail({
     to,
@@ -118,16 +132,11 @@ function listBlock(
   title: string,
   vendors: { name: string }[],
 ): string {
-  if (!vendors.length) return `<p>No ${title.toLowerCase()} vendors.</p>`;
-  return `<p><strong>${title}:</strong></p><ul>${vendors
-    .slice(0, 15)
-    .map((v) => `<li>${escape(v.name)}</li>`)
-    .join("")}</ul>`;
-}
-
-function escape(s: string): string {
-  return s
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
+  if (!vendors.length) {
+    return paragraphHtml(`No ${escapeHtml(title.toLowerCase())} vendors.`);
+  }
+  return (
+    paragraphHtml(`<strong style="color:#121b29;">${escapeHtml(title)}:</strong>`) +
+    listHtml(vendors.slice(0, 15).map((v) => escapeHtml(v.name)))
+  );
 }

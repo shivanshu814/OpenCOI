@@ -1,4 +1,5 @@
 import { getSessionOrg } from "@/lib/auth/session";
+import { canWriteOrgData } from "@/lib/auth/roles";
 import { isSupabaseConfigured } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { insertAuditEvent } from "@/lib/audit/write";
@@ -20,6 +21,12 @@ export async function POST(
   const session = await getSessionOrg();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!canWriteOrgData(session.role)) {
+    return NextResponse.json(
+      { error: "Read-only role cannot change SMS opt-in" },
+      { status: 403 },
+    );
   }
 
   const body = (await request.json()) as {

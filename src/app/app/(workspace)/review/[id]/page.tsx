@@ -17,6 +17,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { RoleGate } from "@/components/role-gate";
+import {
+  canCustomerDecide,
+  canPublishVerdicts,
+} from "@/lib/auth/roles";
+import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import { getDocument, listVendors } from "@/lib/data/documents";
 import type { Verdict } from "@/lib/requirements/engine";
@@ -46,8 +52,16 @@ export default async function ReviewDocumentPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [doc, vendors] = await Promise.all([getDocument(id), listVendors()]);
+  const [doc, vendors, session] = await Promise.all([
+    getDocument(id),
+    listVendors(),
+    getSessionOrg(),
+  ]);
   if (!doc) notFound();
+
+  // Demo mode (no session) stays fully explorable.
+  const canPublish = session ? canPublishVerdicts(session.role) : true;
+  const canDecide = session ? canCustomerDecide(session.role) : true;
 
   // Uploaded but extraction hasn't landed yet — show why, don't 404.
   if (!doc.extraction) {
@@ -132,7 +146,16 @@ export default async function ReviewDocumentPage({
               </p>
               {doc.status === "uploaded" ||
               doc.status === "extraction_failed" ? (
-                <RunExtractionButton documentId={doc.id} />
+                <RoleGate
+                  require="write"
+                  fallback={
+                    <p className="text-muted-foreground text-xs">
+                      Read-only role — a manager or admin runs extraction.
+                    </p>
+                  }
+                >
+                  <RunExtractionButton documentId={doc.id} />
+                </RoleGate>
               ) : (
                 <p className="text-muted-foreground text-xs">
                   Processing is already underway — this page refreshes itself.
@@ -390,7 +413,9 @@ export default async function ReviewDocumentPage({
             </Alert>
           ) : null}
 
-          <RequestAgentConfirmButton documentId={doc.id} />
+          <RoleGate require="write">
+            <RequestAgentConfirmButton documentId={doc.id} />
+          </RoleGate>
 
           <ReviewActions
             documentId={doc.id}
@@ -398,6 +423,8 @@ export default async function ReviewDocumentPage({
             overallVerdict={doc.overall_verdict}
             customerDecision={doc.customer_decision}
             customerDecisionReason={doc.customer_decision_reason}
+            canPublish={canPublish}
+            canDecide={canDecide}
           />
         </section>
       </div>

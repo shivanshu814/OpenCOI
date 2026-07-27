@@ -1,5 +1,10 @@
 import { DEFAULT_PHYSICAL_ADDRESS } from "@/lib/chase/render";
 import { isSupabaseConfigured } from "@/lib/config";
+import {
+  escapeHtml,
+  paragraphHtml,
+  renderBrandedEmailHtml,
+} from "@/lib/email/layout";
 import { sendOutboundEmail } from "@/lib/email/resend";
 import { resolvePortalToken } from "@/lib/portal/tokens";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -63,12 +68,34 @@ export async function POST(
     "Document review assistance — not legal, insurance, or professional advice.",
   ].join("\n");
 
+  // Vendor/org names are untrusted — everything interpolated into the HTML
+  // goes through escapeHtml; the branded layout carries F2 org branding.
+  const html = renderBrandedEmailHtml({
+    preheader: `${ctx.vendorName} needs a current COI sent to ${ctx.orgName}.`,
+    heading: `COI request for ${ctx.vendorName}`,
+    bodyHtml: [
+      paragraphHtml("Hello,"),
+      paragraphHtml(
+        `${escapeHtml(ctx.vendorName)} asked CertShield to request a current Certificate of Insurance (ACORD 25) for <strong style="color:#121b29;">${escapeHtml(ctx.orgName)}</strong>.`,
+      ),
+      paragraphHtml(
+        "Please reply to this email with the PDF, or have the vendor upload via their portal link.",
+      ),
+    ].join("\n"),
+    footerNote: `${escapeHtml(ctx.orgName)} · via CertShield<br />${escapeHtml(DEFAULT_PHYSICAL_ADDRESS)}<br /><br />Document review assistance — not legal, insurance, or professional advice.`,
+    brand: {
+      name: ctx.orgName,
+      color: ctx.brandColor,
+      logoUrl: ctx.logoUrl,
+    },
+  });
+
   const send = await sendOutboundEmail({
     to: agentEmail,
     cc: ctx.vendorEmail ? [ctx.vendorEmail] : undefined,
     subject,
     text,
-    html: text.replaceAll("\n", "<br/>"),
+    html,
     tags: [{ name: "template", value: "portal_agent_handoff" }],
   });
 

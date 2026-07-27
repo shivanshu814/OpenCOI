@@ -1,4 +1,5 @@
 import { getSessionOrg } from "@/lib/auth/session";
+import { canWriteOrgData } from "@/lib/auth/roles";
 import { isSupabaseConfigured } from "@/lib/config";
 import { issuePortalToken } from "@/lib/portal/tokens";
 import { createClient } from "@/lib/supabase/server";
@@ -23,6 +24,12 @@ export async function POST(
   const session = await getSessionOrg();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!canWriteOrgData(session.role)) {
+    return NextResponse.json(
+      { error: "Read-only role cannot issue portal links" },
+      { status: 403 },
+    );
   }
 
   const supabase = await createClient();

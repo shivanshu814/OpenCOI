@@ -48,6 +48,9 @@ type Props = {
   overallVerdict?: Verdict | null;
   customerDecision?: CustomerDecision | null;
   customerDecisionReason?: string | null;
+  /** Role gates (server-derived): publish/correct = admin, decide = manager+. */
+  canPublish?: boolean;
+  canDecide?: boolean;
 };
 
 type FieldKind = "date" | "text" | "number" | "boolean";
@@ -160,6 +163,8 @@ export function ReviewActions({
   overallVerdict = null,
   customerDecision,
   customerDecisionReason,
+  canPublish = true,
+  canDecide = true,
 }: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState<
@@ -358,6 +363,25 @@ export function ReviewActions({
     );
   }
 
+  if (status === "published" && !canDecide) {
+    return (
+      <Card>
+        <CardHeader className="border-b">
+          <CardTitle>Awaiting customer decision</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            The verdict is published. Your Read-only role cannot accept or
+            override it — a manager or admin in your workspace makes that call.
+          </p>
+          <p className="text-muted-foreground text-xs leading-relaxed">
+            {DISCLAIMER}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (status === "published") {
     return (
       <Card>
@@ -448,6 +472,25 @@ export function ReviewActions({
   }
 
   // Internal review (founder) — default
+  if (!canPublish) {
+    return (
+      <Card>
+        <CardHeader className="border-b">
+          <CardTitle>In internal review</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            Corrections and publishing are limited to workspace admins. You
+            will see the verdict here once it is published.
+          </p>
+          <p className="text-muted-foreground text-xs leading-relaxed">
+            {DISCLAIMER}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader className="border-b">

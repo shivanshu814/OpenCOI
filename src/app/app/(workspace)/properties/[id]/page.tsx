@@ -5,6 +5,7 @@ import {
   PageFrame,
   PageSecondary,
 } from "@/components/page-frame";
+import { RoleGate } from "@/components/role-gate";
 import { SendOwnerReportButton } from "@/components/send-owner-report-button";
 import { Button } from "@/components/ui/button";
 import { getSessionOrg } from "@/lib/auth/session";
@@ -84,10 +85,12 @@ export default async function PropertyDetailPage({
         actions={
           <>
             <DownloadOwnerReportButton propertyId={property.id} />
-            <SendOwnerReportButton
-              propertyId={property.id}
-              toHint={property.owner_report_email as string | null}
-            />
+            <RoleGate require="write">
+              <SendOwnerReportButton
+                propertyId={property.id}
+                toHint={property.owner_report_email as string | null}
+              />
+            </RoleGate>
             <Button
               variant="outline"
               size="sm"

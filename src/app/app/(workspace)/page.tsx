@@ -15,6 +15,7 @@ import {
   PageSecondary,
 } from "@/components/page-frame";
 import { ScoreRing } from "@/components/product-preview";
+import { RoleGate } from "@/components/role-gate";
 import { SendChaseButton } from "@/components/send-chase-button";
 import { VendorStatusBadge } from "@/components/status-badges";
 import { Button } from "@/components/ui/button";
@@ -375,7 +376,9 @@ export default async function DashboardPage() {
                 <div className="ml-auto flex flex-wrap items-center justify-end gap-2 lg:ml-0">
                   <DownloadReportButton vendorId={v.id} label="Report" />
                   {v.email ? (
-                    <SendChaseButton vendorId={v.id} vendorName={v.name} />
+                    <RoleGate require="write">
+                      <SendChaseButton vendorId={v.id} vendorName={v.name} />
+                    </RoleGate>
                   ) : null}
                 </div>
               </div>

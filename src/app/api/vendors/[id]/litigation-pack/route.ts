@@ -1,4 +1,3 @@
-import { canWriteOrgData } from "@/lib/auth/roles";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import { buildPackSummaryPdf, zipPack } from "@/lib/packs/build";
@@ -35,10 +34,7 @@ export async function GET(
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (!canWriteOrgData(session.role) && session.role === "viewer") {
-    // viewers can export for litigation support
-  }
-
+  // Read export — all roles including read-only may download packs.
   const supabase = await createClient();
   const { data: vendor } = await supabase
     .from("vendors")

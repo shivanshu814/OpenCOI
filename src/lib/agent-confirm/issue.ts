@@ -1,4 +1,9 @@
 import { appBaseUrl } from "@/lib/app-url";
+import {
+  escapeHtml,
+  paragraphHtml,
+  renderBrandedEmailHtml,
+} from "@/lib/email/layout";
 import { sendOutboundEmail } from "@/lib/email/resend";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { insertAuditEvent } from "@/lib/audit/write";
@@ -135,12 +140,25 @@ export async function issueAgentConfirmation(input: {
     "CertShield does not detect mid-term cancellations automatically; agent confirmation is our mitigation.",
   ].join("\n");
 
-  const html = `<p>Hello${producerName ? ` ${escapeHtml(producerName)}` : ""},</p>
-<p><strong>${escapeHtml(org.name)}</strong> is verifying a certificate for <strong>${escapeHtml(vendor.name)}</strong> (${escapeHtml(doc.file_name)}).</p>
-<p>Please confirm this certificate is valid and current:</p>
-<p><a href="${urlConfirm}">Confirm — valid &amp; current</a></p>
-<p><a href="${urlDeny}">Deny — not valid / cancelled / superseded</a></p>
-<p style="color:#666;font-size:12px">Link expires in ${TOKEN_TTL_DAYS} days. Document review assistance — not legal, insurance, or professional advice. Mid-term cancellations are mitigated via agent confirmation — no tool can guarantee catching a silent cancellation.</p>`;
+  const html = renderBrandedEmailHtml({
+    preheader: `${org.name} is verifying a certificate of insurance for ${vendor.name}.`,
+    heading: `Please confirm a certificate for ${vendor.name}`,
+    bodyHtml: [
+      paragraphHtml(
+        `Hello${producerName ? ` ${escapeHtml(producerName)}` : ""},`,
+      ),
+      paragraphHtml(
+        `<strong style="color:#121b29;">${escapeHtml(org.name)}</strong> is verifying a certificate of insurance for <strong style="color:#121b29;">${escapeHtml(vendor.name)}</strong> (${escapeHtml(doc.file_name)}).`,
+      ),
+      paragraphHtml("Please confirm this certificate is valid and current:"),
+    ].join("\n"),
+    cta: { label: "Confirm — valid & current", url: urlConfirm },
+    secondaryCta: {
+      label: "Deny — not valid / cancelled / superseded",
+      url: urlDeny,
+    },
+    footerNote: `Link expires in ${TOKEN_TTL_DAYS} days. Document review assistance — not legal, insurance, or professional advice. Mid-term cancellations are mitigated via agent confirmation — no tool can guarantee catching a silent cancellation.`,
+  });
 
   const send = await sendOutboundEmail({
     to: producerEmail,
@@ -280,12 +298,4 @@ export async function resolveAgentConfirmation(input: {
     orgName: org?.name,
     vendorName: vendor?.name,
   };
-}
-
-function escapeHtml(s: string): string {
-  return s
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
 }

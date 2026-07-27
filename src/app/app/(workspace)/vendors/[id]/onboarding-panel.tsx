@@ -19,6 +19,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  UsAddressFields,
+  type UsAddress,
+} from "@/components/ui/us-address-fields";
+import { FALLBACK_US_STATES, toStateItems } from "@/lib/geo/us-states";
+import {
   notifyApiError,
   notifyCaughtError,
   notifySuccess,
@@ -30,6 +35,15 @@ const TIN_TYPE_ITEMS: ReadonlyArray<{ label: string; value: "ein" | "ssn" }> = [
   { label: "EIN", value: "ein" },
   { label: "SSN", value: "ssn" },
 ];
+
+const STATE_ITEMS = toStateItems(FALLBACK_US_STATES);
+
+const EMPTY_ADDRESS: UsAddress = {
+  address_line: "",
+  city: "",
+  state: "",
+  postal_code: "",
+};
 
 type Props = { vendorId: string };
 
@@ -53,19 +67,35 @@ export function VendorOnboardingPanel({ vendorId }: Props) {
   const [legalName, setLegalName] = useState("");
   const [tin, setTin] = useState("");
   const [tinType, setTinType] = useState<"ein" | "ssn">("ein");
+  const [taxAddress, setTaxAddress] = useState<UsAddress>(EMPTY_ADDRESS);
   const [licNum, setLicNum] = useState("");
-  const [licState, setLicState] = useState("CA");
+  const [licState, setLicState] = useState("");
   const [licExp, setLicExp] = useState("");
 
   async function load() {
     const res = await fetch(`/api/vendors/${vendorId}/onboarding`);
     const data = (await res.json()) as {
-      tax?: { tin_masked?: string; legal_name?: string } | null;
+      tax?: {
+        tin_masked?: string;
+        legal_name?: string;
+        address_line?: string | null;
+        city?: string | null;
+        state?: string | null;
+        postal_code?: string | null;
+      } | null;
       licenses?: typeof licenses;
       agreements?: typeof agreements;
     };
     setTaxMasked(data.tax?.tin_masked ?? null);
     if (data.tax?.legal_name) setLegalName(data.tax.legal_name);
+    if (data.tax) {
+      setTaxAddress({
+        address_line: data.tax.address_line ?? "",
+        city: data.tax.city ?? "",
+        state: data.tax.state ?? "",
+        postal_code: data.tax.postal_code ?? "",
+      });
+    }
     setLicenses(data.licenses ?? []);
     setAgreements(data.agreements ?? []);
   }
@@ -172,6 +202,12 @@ export function VendorOnboardingPanel({ vendorId }: Props) {
                 </SelectContent>
               </Select>
             </div>
+            <UsAddressFields
+              className="sm:col-span-2"
+              idPrefix="w9-addr"
+              value={taxAddress}
+              onChange={setTaxAddress}
+            />
           </div>
           <Button
             className="mt-3"
@@ -184,6 +220,10 @@ export function VendorOnboardingPanel({ vendorId }: Props) {
                 legal_name: legalName,
                 tin,
                 tin_type: tinType,
+                address_line: taxAddress.address_line,
+                city: taxAddress.city,
+                state: taxAddress.state,
+                postal_code: taxAddress.postal_code,
               })
             }
           >
@@ -199,11 +239,22 @@ export function VendorOnboardingPanel({ vendorId }: Props) {
               value={licNum}
               onChange={(e) => setLicNum(e.target.value)}
             />
-            <Input
-              placeholder="State (CA)"
-              value={licState}
-              onChange={(e) => setLicState(e.target.value)}
-            />
+            <Select
+              items={STATE_ITEMS}
+              value={licState || null}
+              onValueChange={(value) => setLicState(value ?? "")}
+            >
+              <SelectTrigger aria-label="License state" className="w-full">
+                <SelectValue placeholder="State" />
+              </SelectTrigger>
+              <SelectContent>
+                {STATE_ITEMS.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    {s.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <DatePicker
               aria-label="License expiration date"
               placeholder="Expiration date"

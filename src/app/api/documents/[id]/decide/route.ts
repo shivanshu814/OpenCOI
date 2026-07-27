@@ -1,4 +1,5 @@
 import { getSessionOrg } from "@/lib/auth/session";
+import { canCustomerDecide } from "@/lib/auth/roles";
 import { isSupabaseConfigured } from "@/lib/config";
 import { demoCustomerDecide, getDemoDocument } from "@/lib/demo/store";
 import type { Verdict } from "@/lib/requirements/engine";
@@ -76,11 +77,7 @@ export async function POST(request: Request, ctx: Ctx) {
   }
 
   // Customer disposition: any active org member (not viewer-only).
-  if (
-    session.role !== "owner" &&
-    session.role !== "admin" &&
-    session.role !== "member"
-  ) {
+  if (!canCustomerDecide(session.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
