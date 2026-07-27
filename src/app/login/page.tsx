@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { ArcSpinner } from "@/components/ui/loader";
 import { createClient } from "@/lib/supabase/client";
 import {
   ArrowRight,
@@ -450,8 +451,11 @@ function LoginFormFallback() {
   return (
     <Card className="gap-0 overflow-hidden rounded-2xl border-border/80 py-0 shadow-xs">
       <div className="from-brand via-brand/70 to-brand/20 h-1 w-full bg-gradient-to-r" />
-      <CardContent className="text-muted-foreground px-6 py-16 text-center text-sm">
-        Loading…
+      <CardContent className="flex flex-col items-center gap-3 px-6 py-16">
+        <ArcSpinner size={28} />
+        <p className="text-muted-foreground text-xs font-medium tracking-wide">
+          Preparing sign-in…
+        </p>
       </CardContent>
     </Card>
   );

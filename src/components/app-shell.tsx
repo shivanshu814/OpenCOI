@@ -312,7 +312,7 @@ function AppHeader({
   }
 
   return (
-    <header className="bg-background sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b px-4">
+    <header className="bg-background/80 supports-[backdrop-filter]:bg-background/70 sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b px-4 backdrop-blur-md">
       <SidebarTrigger className="-ml-1 size-8 shrink-0" />
       <Breadcrumb className="min-w-0">
         <BreadcrumbList className="flex-nowrap items-center">

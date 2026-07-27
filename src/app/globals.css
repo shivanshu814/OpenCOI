@@ -51,6 +51,21 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Elevation — layered, ink-tinted, soft. Retuning the Tailwind tokens here
+     upgrades every existing `shadow-xs`/`shadow-sm` call site at once: a
+     tight contact shadow plus a wide ambient one reads as physical paper on
+     a desk, where a single mid-distance gray blob reads as a template. */
+  --shadow-2xs: 0 1px 2px oklch(0.28 0.035 260 / 0.05);
+  --shadow-xs:
+    0 1px 1.5px oklch(0.28 0.035 260 / 0.05),
+    0 3px 10px -2px oklch(0.28 0.035 260 / 0.05);
+  --shadow-sm:
+    0 1px 2px oklch(0.28 0.035 260 / 0.06),
+    0 6px 18px -4px oklch(0.28 0.035 260 / 0.07);
+  --shadow-md:
+    0 1.5px 3px oklch(0.28 0.035 260 / 0.07),
+    0 12px 28px -8px oklch(0.28 0.035 260 / 0.1);
 }
 
 :root {
@@ -530,6 +545,111 @@
 .cs-fade-rise {
   animation: cs-fade-rise 0.68s var(--cs-ease-quart) both;
 }
+
+/* ── Workspace page choreography ────────────────────────────────────────
+ * One orchestrated arrival per page: direct children rise in sequence
+ * (header → stats → content), ~40ms apart, decelerating. CSS-only, so
+ * server pages get it for free; `both` keeps everything visible once done.
+ * Compositor-only properties; the whole sequence is over in under 700ms. */
+.cs-page > * {
+  animation: cs-fade-rise 0.5s var(--cs-ease-quint) both;
+}
+.cs-page > *:nth-child(2) {
+  animation-delay: 45ms;
+}
+.cs-page > *:nth-child(3) {
+  animation-delay: 90ms;
+}
+.cs-page > *:nth-child(4) {
+  animation-delay: 135ms;
+}
+.cs-page > *:nth-child(5) {
+  animation-delay: 180ms;
+}
+.cs-page > *:nth-child(n + 6) {
+  animation-delay: 220ms;
+}
+
+/* ── Loaders ────────────────────────────────────────────────────────────
+ * One loading language for the whole product: a thin brand arc over a faint
+ * track, optionally around the shield mark, breathing — never a wall of
+ * gray boxes. Rotation is linear (a spinner that eases reads as stalling);
+ * everything else in the product decelerates. */
+@keyframes cs-arc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes cs-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.97);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.cs-arc-spin {
+  animation: cs-arc-spin 0.85s linear infinite;
+  transform-origin: center;
+}
+.cs-breathe {
+  animation: cs-breathe 2.4s var(--cs-ease-quart) infinite;
+}
+
+/* Active nav item — mint wash + a hairline pill on the leading edge. The
+   class was referenced from the shell but never defined, so "active" was
+   carried by text colour alone. Width, not colour, is what the eye finds
+   when scanning a rail. */
+.sidebar-active-indicator {
+  position: relative;
+  background: color-mix(in oklab, var(--brand) 9%, transparent);
+}
+.sidebar-active-indicator:hover {
+  background: color-mix(in oklab, var(--brand) 13%, transparent);
+}
+.sidebar-active-indicator::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 16px;
+  width: 2.5px;
+  border-radius: 999px;
+  background: var(--brand);
+  transform: translateY(-50%);
+}
+/* Collapsed-to-icons rail: the button is a centered square, so an edge pill
+   would sit on the icon — the wash alone carries the state there. */
+[data-collapsible="icon"] .sidebar-active-indicator::before {
+  display: none;
+}
+
+/* Skeleton shimmer — an ink wash with a slow light pass, replacing the flat
+   opacity pulse. Reads as "the page is being prepared", not "boxes blinking". */
+.cs-skeleton {
+  background-color: color-mix(in oklab, var(--ink) 7%, transparent);
+  background-image: linear-gradient(
+    100deg,
+    transparent 32%,
+    color-mix(in oklab, var(--background) 85%, transparent) 50%,
+    transparent 68%
+  );
+  background-size: 220% 100%;
+  background-repeat: no-repeat;
+  animation: cs-shimmer 2s var(--cs-ease-quart) infinite;
+}
+.dark .cs-skeleton {
+  background-color: oklch(1 0 0 / 7%);
+  background-image: linear-gradient(
+    100deg,
+    transparent 32%,
+    oklch(1 0 0 / 6%) 50%,
+    transparent 68%
+  );
+}
 .cs-rule {
   transform-origin: left;
   animation: cs-rule-draw 0.7s var(--cs-ease-quint) both;
@@ -911,6 +1031,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .cs-page > *,
+  .cs-skeleton,
+  .cs-breathe,
   .cs-toast-in,
   .cs-scan-sweep,
   .cs-glow-pulse,
@@ -954,6 +1077,8 @@
     animation: none !important;
   }
   /* Never leave revealed content invisible when motion is off. */
+  .cs-page > *,
+  .cs-breathe,
   .cs-reveal,
   .cs-reveal-in,
   .cs-word-in,

@@ -20,8 +20,10 @@ export function PageFrame({
   width?: "narrow" | "default" | "wide" | "full";
 }) {
   void _width;
+  // `cs-page` choreographs arrival: direct children rise in sequence
+  // (header → stats → content). CSS-only; reduced-motion turns it off.
   return (
-    <div className={cn("w-full space-y-6", className)}>{children}</div>
+    <div className={cn("cs-page w-full space-y-6", className)}>{children}</div>
   );
 }
 
