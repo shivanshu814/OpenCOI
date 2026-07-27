@@ -18,17 +18,17 @@ import {
 import { CACHE_POLICIES } from "@/lib/live/policy";
 import { useCachedResource } from "@/lib/live/use-live";
 import { cn } from "@/lib/utils";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2, MapPin } from "lucide-react";
 import * as React from "react";
 
 /**
- * Street / city / state / ZIP, with city and state filled in from the ZIP.
+ * Street / city / state / ZIP, with guided US address entry.
  *
- * Typing a ZIP is one action; typing "Philadelphia" + picking "PA" is three,
- * and a mistyped state quietly breaks the D1 certificate-holder wording check
- * later. So the ZIP drives the other two, while every field stays editable —
- * lookup is a convenience, never a gate. If the lookup service is down the
- * form behaves exactly as it did before.
+ * Users can start from either side: ZIP fills city/state, state opens city
+ * suggestions, city returns ZIP options, and street typing offers full
+ * address matches. Every field stays editable — lookup is a convenience,
+ * never a gate. If a public lookup service is down the form behaves exactly
+ * as it did before.
  */
 
 export type UsAddress = {
@@ -39,6 +39,10 @@ export type UsAddress = {
 };
 
 type Status = "idle" | "looking" | "filled" | "failed";
+
+type AddressSuggestion = UsAddress & {
+  label: string;
+};
 
 export function UsAddressFields({
   value,
@@ -57,6 +61,16 @@ export function UsAddressFields({
   disabled?: boolean;
 }) {
   const [status, setStatus] = React.useState<Status>("idle");
+  const [cityStatus, setCityStatus] = React.useState<Status>("idle");
+  const [zipStatus, setZipStatus] = React.useState<Status>("idle");
+  const [addressStatus, setAddressStatus] = React.useState<Status>("idle");
+  const [cityOptions, setCityOptions] = React.useState<string[]>([]);
+  const [zipOptions, setZipOptions] = React.useState<string[]>([]);
+  const [addressOptions, setAddressOptions] = React.useState<
+    AddressSuggestion[]
+  >([]);
+  const [cityOpen, setCityOpen] = React.useState(false);
+  const [addressOpen, setAddressOpen] = React.useState(false);
 
   // The state list is public and effectively frozen, yet this component
   // mounts on several forms and used to re-request it every single time.
@@ -76,11 +90,162 @@ export function UsAddressFields({
     [geo],
   );
   const [message, setMessage] = React.useState<string | null>(null);
+  const [cityMessage, setCityMessage] = React.useState<string | null>(null);
+  const [zipMessage, setZipMessage] = React.useState<string | null>(null);
 
   // Guards against a slow lookup for an old ZIP overwriting a newer one.
   const requestSeq = React.useRef(0);
+  const citySeq = React.useRef(0);
+  const zipSeq = React.useRef(0);
+  const addressSeq = React.useRef(0);
 
   const set = (patch: Partial<UsAddress>) => onChange({ ...value, ...patch });
+
+  const visibleCityOptions = React.useMemo(() => {
+    const query = value.city.trim().toLowerCase();
+    const options = query
+      ? cityOptions.filter((city) => city.toLowerCase().includes(query))
+      : cityOptions;
+    return options.slice(0, 60);
+  }, [cityOptions, value.city]);
+
+  React.useEffect(() => {
+    if (!value.state) {
+      const timer = window.setTimeout(() => {
+        setCityOptions([]);
+        setCityStatus("idle");
+        setCityMessage(null);
+      }, 0);
+      return () => window.clearTimeout(timer);
+    }
+
+    const seq = ++citySeq.current;
+    const timer = window.setTimeout(() => {
+      setCityStatus("looking");
+      setCityMessage(null);
+    }, 0);
+
+    void (async () => {
+      try {
+        const res = await fetch(
+          `/api/geo/cities?state=${encodeURIComponent(value.state)}`,
+        );
+        const data = (await res.json()) as { cities?: string[] };
+        if (seq !== citySeq.current) return;
+
+        const cities = data.cities ?? [];
+        setCityOptions(cities);
+        setCityStatus(cities.length ? "filled" : "failed");
+        setCityMessage(
+          cities.length
+            ? "Choose a city to look up ZIP options."
+            : "City suggestions are unavailable — type the city manually.",
+        );
+      } catch {
+        if (seq !== citySeq.current) return;
+        setCityOptions([]);
+        setCityStatus("failed");
+        setCityMessage("City suggestions are unavailable — type the city.");
+      }
+    })();
+
+    return () => window.clearTimeout(timer);
+  }, [value.state]);
+
+  const lookupZips = React.useCallback(
+    async (state: string, city: string) => {
+      if (!state || !city.trim()) {
+        setZipOptions([]);
+        setZipStatus("idle");
+        setZipMessage(null);
+        return;
+      }
+
+      const seq = ++zipSeq.current;
+      setZipStatus("looking");
+      setZipMessage(null);
+
+      try {
+        const res = await fetch(
+          `/api/geo/zips?state=${encodeURIComponent(state)}&city=${encodeURIComponent(city.trim())}`,
+        );
+        const data = (await res.json()) as { zips?: string[] };
+        if (seq !== zipSeq.current) return;
+
+        const zips = data.zips ?? [];
+        setZipOptions(zips);
+
+        if (zips.length === 1) {
+          onChange({ ...value, state, city, postal_code: zips[0] });
+          setZipStatus("filled");
+          setZipMessage("ZIP filled from the selected city.");
+          return;
+        }
+
+        if (zips.length > 1) {
+          onChange({
+            ...value,
+            state,
+            city,
+            postal_code: value.postal_code || zips[0],
+          });
+          setZipStatus("filled");
+          setZipMessage(
+            "This city has multiple ZIPs. We filled the first match; pick another if needed.",
+          );
+          return;
+        }
+
+        setZipStatus("failed");
+        setZipMessage("No ZIP suggestion found — enter it manually.");
+      } catch {
+        if (seq !== zipSeq.current) return;
+        setZipOptions([]);
+        setZipStatus("failed");
+        setZipMessage("ZIP lookup is unavailable — enter it manually.");
+      }
+    },
+    [onChange, value],
+  );
+
+  React.useEffect(() => {
+    const q = value.address_line.trim();
+    if (disabled || q.length < 4) {
+      const timer = window.setTimeout(() => {
+        setAddressOptions([]);
+        setAddressStatus("idle");
+      }, 0);
+      return () => window.clearTimeout(timer);
+    }
+
+    const seq = ++addressSeq.current;
+    const timer = window.setTimeout(() => {
+      setAddressStatus("looking");
+      void (async () => {
+        try {
+          const params = new URLSearchParams({ q });
+          if (value.state) params.set("state", value.state);
+          if (value.city) params.set("city", value.city);
+          const res = await fetch(`/api/geo/address?${params.toString()}`);
+          const data = (await res.json()) as {
+            suggestions?: AddressSuggestion[];
+          };
+          if (seq !== addressSeq.current) return;
+
+          const suggestions = data.suggestions ?? [];
+          setAddressOptions(suggestions);
+          setAddressStatus(suggestions.length ? "filled" : "idle");
+          setAddressOpen(suggestions.length > 0);
+        } catch {
+          if (seq !== addressSeq.current) return;
+          setAddressOptions([]);
+          setAddressStatus("failed");
+        }
+      })();
+    }, 300);
+
+    return () => window.clearTimeout(timer);
+  }, [disabled, value.address_line, value.city, value.state]);
 
   const lookup = React.useCallback(
     async (zip: string) => {
@@ -128,14 +293,53 @@ export function UsAddressFields({
     <div className={cn("grid gap-4 sm:grid-cols-2", className)}>
       <div className="space-y-1.5 sm:col-span-2">
         <Label htmlFor={`${idPrefix}-line`}>{streetLabel}</Label>
-        <Input
-          id={`${idPrefix}-line`}
-          value={value.address_line}
-          disabled={disabled}
-          onChange={(e) => set({ address_line: e.target.value })}
-          placeholder="1200 Market St, Suite 400"
-          autoComplete="address-line1"
-        />
+        <div className="relative">
+          <Input
+            id={`${idPrefix}-line`}
+            value={value.address_line}
+            disabled={disabled}
+            onFocus={() => setAddressOpen(addressOptions.length > 0)}
+            onChange={(e) => {
+              set({ address_line: e.target.value });
+              setAddressOpen(true);
+            }}
+            placeholder="1200 Market St, Suite 400"
+            autoComplete="address-line1"
+          />
+          {addressStatus === "looking" ? (
+            <Loader2 className="text-muted-foreground absolute top-1/2 right-3 size-4 -translate-y-1/2 animate-spin" />
+          ) : null}
+          {addressOpen && addressOptions.length ? (
+            <div className="absolute z-40 mt-1 max-h-56 w-full overflow-auto rounded-lg border bg-popover p-1 text-popover-foreground shadow-lg ring-1 ring-foreground/5">
+              {addressOptions.map((option) => (
+                <button
+                  key={`${option.address_line}-${option.city}-${option.state}-${option.postal_code}`}
+                  type="button"
+                  className="flex w-full items-start gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    onChange(option);
+                    setAddressOpen(false);
+                    setAddressOptions([]);
+                    setStatus("filled");
+                    setZipStatus("filled");
+                    setZipMessage("ZIP filled from the selected address.");
+                  }}
+                >
+                  <MapPin className="mt-0.5 size-4 shrink-0 text-brand" />
+                  <span className="min-w-0">
+                    <span className="block truncate font-medium">
+                      {option.address_line}
+                    </span>
+                    <span className="text-muted-foreground block truncate text-xs">
+                      {option.city}, {option.state} {option.postal_code}
+                    </span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <div className="space-y-1.5">
@@ -159,6 +363,7 @@ export function UsAddressFields({
           onChange={(e) => {
             const zip = e.target.value;
             set({ postal_code: zip });
+            setZipMessage(null);
             if (status !== "idle") setStatus("idle");
             // Fire as soon as it is a complete ZIP; no debounce needed since
             // a 5-digit value is only reached once per entry.
@@ -178,20 +383,96 @@ export function UsAddressFields({
               : "text-muted-foreground",
           )}
         >
-          {message ?? "City and state fill in automatically."}
+          {message ??
+            zipMessage ??
+            "ZIP fills city/state; city or address can suggest ZIP too."}
         </p>
+        {zipOptions.length > 1 ? (
+          <div className="flex max-h-20 flex-wrap gap-1 overflow-auto">
+            {zipOptions.slice(0, 24).map((zip) => (
+              <button
+                key={zip}
+                type="button"
+                disabled={disabled}
+                className={cn(
+                  "rounded-full border px-2 py-0.5 text-xs transition-colors",
+                  value.postal_code === zip
+                    ? "border-brand bg-brand/10 text-foreground"
+                    : "border-border text-muted-foreground hover:border-brand/40 hover:text-foreground",
+                )}
+                onClick={() => {
+                  set({ postal_code: zip });
+                  setZipStatus("filled");
+                  setZipMessage("ZIP selected.");
+                }}
+              >
+                {zip}
+              </button>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor={`${idPrefix}-city`}>City</Label>
-        <Input
-          id={`${idPrefix}-city`}
-          value={value.city}
-          disabled={disabled}
-          autoComplete="address-level2"
-          onChange={(e) => set({ city: e.target.value })}
-          placeholder="Philadelphia"
-        />
+        <Label htmlFor={`${idPrefix}-city`} className="flex items-center gap-1.5">
+          City
+          {cityStatus === "looking" ? (
+            <Loader2 className="text-muted-foreground size-3 animate-spin" />
+          ) : null}
+          {zipStatus === "looking" ? (
+            <Loader2 className="text-muted-foreground size-3 animate-spin" />
+          ) : null}
+        </Label>
+        <div className="relative">
+          <Input
+            id={`${idPrefix}-city`}
+            value={value.city}
+            disabled={disabled}
+            autoComplete="address-level2"
+            onFocus={() => setCityOpen(Boolean(value.state))}
+            onChange={(e) => {
+              const city = e.target.value;
+              set({ city });
+              setCityOpen(Boolean(value.state));
+              setZipOptions([]);
+              setZipMessage(null);
+            }}
+            onBlur={() => {
+              window.setTimeout(() => setCityOpen(false), 120);
+              if (value.state && value.city.trim()) {
+                void lookupZips(value.state, value.city);
+              }
+            }}
+            placeholder={
+              value.state ? "Choose or type a city" : "Select state first"
+            }
+          />
+          {cityOpen && visibleCityOptions.length ? (
+            <div className="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-lg border bg-popover p-1 text-popover-foreground shadow-lg ring-1 ring-foreground/5">
+              {visibleCityOptions.map((city) => (
+                <button
+                  key={city}
+                  type="button"
+                  className="w-full rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    onChange({ ...value, city });
+                    setCityOpen(false);
+                    void lookupZips(value.state, city);
+                  }}
+                >
+                  {city}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+        <p className="text-muted-foreground text-xs leading-relaxed">
+          {cityMessage ??
+            (value.state
+              ? "City suggestions appear after state selection."
+              : "Select a state to load cities.")}
+        </p>
       </div>
 
       <div className="space-y-1.5 sm:col-span-2">
@@ -200,7 +481,14 @@ export function UsAddressFields({
           items={stateItems}
           value={value.state || null}
           disabled={disabled}
-          onValueChange={(next) => set({ state: next ?? "" })}
+          onValueChange={(next) => {
+            const state = next ?? "";
+            onChange({ ...value, state, city: "", postal_code: "" });
+            setCityOpen(Boolean(state));
+            setZipOptions([]);
+            setZipMessage(null);
+            setStatus("idle");
+          }}
         >
           <SelectTrigger id={`${idPrefix}-state`} className="w-full sm:max-w-xs">
             <SelectValue placeholder="Select a state" />

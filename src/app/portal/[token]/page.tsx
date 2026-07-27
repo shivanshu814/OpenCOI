@@ -16,7 +16,6 @@ import { Alert, AlertTitle } from "@/components/ui/alert";
 import {
   Card,
   CardAction,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
@@ -119,7 +118,9 @@ export default async function PortalPage({
               className="h-9 w-auto max-w-[200px] object-contain"
             />
             <div className="min-w-0">
-              <p className="text-sm font-medium tracking-tight">{ctx.orgName}</p>
+              <p className="text-sm font-medium tracking-tight">
+                {ctx.orgName}
+              </p>
               <p className="text-muted-foreground text-xs">
                 {locale === "es" ? "Portal de proveedores" : "Vendor portal"}
               </p>
@@ -132,7 +133,9 @@ export default async function PortalPage({
             title={title}
             description={intro}
             audience={
-              locale === "es" ? "Proveedores · sin contraseña" : "Vendors · no login"
+              locale === "es"
+                ? "Proveedores · sin contraseña"
+                : "Vendors · no login"
             }
             nextStep={
               locale === "es"
@@ -152,6 +155,7 @@ export default async function PortalPage({
         </div>
 
         <StatStrip
+          className="lg:max-w-none"
           items={[
             {
               label: locale === "es" ? "Estado" : "Status",
@@ -183,7 +187,7 @@ export default async function PortalPage({
               label: locale === "es" ? "Siguiente paso" : "Next step",
               value: (
                 <span className="inline-flex items-center gap-2 text-base font-semibold tracking-tight">
-                  <Upload className="size-4 text-brand" aria-hidden />
+                  <Upload className="text-brand size-4" aria-hidden />
                   {locale === "es" ? "Subir COI" : "Upload COI"}
                 </span>
               ),
@@ -243,10 +247,7 @@ export default async function PortalPage({
               </Card>
             ) : (
               <Alert className="bg-card px-4 py-4 shadow-xs">
-                <CheckCircle2
-                  className="size-5 text-emerald-600"
-                  aria-hidden
-                />
+                <CheckCircle2 className="size-5 text-emerald-600" aria-hidden />
                 <AlertTitle className="font-normal leading-relaxed">
                   {locale === "es"
                     ? "No hay hallazgos publicados todavía, o está al día."

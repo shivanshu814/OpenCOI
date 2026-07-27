@@ -64,7 +64,8 @@ import {
   UserRound,
   Wrench,
 } from "lucide-react";
-import Link from "next/link";
+import { ArcSpinner } from "@/components/ui/loader";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 type NavItem = {
@@ -155,6 +156,30 @@ function useBreadcrumb(pathname: string) {
   return { current, isDetail };
 }
 
+/**
+ * Pending state for the nav item you actually clicked.
+ *
+ * The workspace deliberately has no route-level `loading.tsx`: every page
+ * here is dynamic, so a loading boundary meant Next threw the current screen
+ * away and painted a full-page loader on every navigation whose 30s client
+ * cache had lapsed — which is what "why is it loading again" was about. With
+ * no boundary the page you are on stays put until the next one is ready, and
+ * this is the honest signal that something is happening in the meantime.
+ * Next documents `useLinkStatus` for exactly this case (a dynamic route with
+ * no loading.js).
+ */
+function NavPending() {
+  const { pending } = useLinkStatus();
+  if (!pending) return null;
+  return (
+    <ArcSpinner
+      size={12}
+      strokeWidth={2}
+      className="ml-auto group-data-[collapsible=icon]:hidden"
+    />
+  );
+}
+
 function AppSidebar({
   live,
   branding,
@@ -235,6 +260,7 @@ function AppSidebar({
                         <span className="group-data-[collapsible=icon]:hidden">
                           {item.label}
                         </span>
+                        <NavPending />
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );
