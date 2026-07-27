@@ -2,10 +2,15 @@
 
 import { LiveDot, type LiveTone } from "@/components/live-activity";
 import type { DocumentPipelineStatus } from "@/lib/data/types";
+import { useLiveEvent } from "@/lib/live/use-live";
+import type { LiveTable } from "@/lib/live/tables";
 import { cn } from "@/lib/utils";
 import { Check, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+
+/** Module-level so the identity is stable and the subscription is not reopened. */
+const PIPELINE_TABLES: readonly LiveTable[] = ["documents", "compliance_checks"];
 
 type Stage = {
   key: string;
@@ -67,15 +72,21 @@ export function DocumentPipelineTracker({
   const activeIdx = activeStageIndex(status);
   const allDone = activeIdx >= STAGES.length;
 
-  // Live-poll while the pipeline is still moving on the server
-  // (upload → extraction → checks land via Inngest in prod).
+  // The pipeline is still moving on the server (upload → extraction → checks
+  // land via Inngest in prod), so this is the one screen where someone is
+  // actively watching and waiting.
   const polling = status === "uploaded" || status === "extracted";
   const [secs, setSecs] = useState(0);
+
+  // Realtime is the primary signal now — the row flips the moment the job
+  // writes it, instead of up to 5s later. The interval stays as a fail-soft
+  // backstop but can be slower, which is 3x fewer server renders per wait.
+  useLiveEvent(polling ? PIPELINE_TABLES : null, () => router.refresh());
 
   useEffect(() => {
     if (!polling) return;
     const tick = window.setInterval(() => setSecs((s) => s + 1), 1000);
-    const poll = window.setInterval(() => router.refresh(), 5000);
+    const poll = window.setInterval(() => router.refresh(), 15000);
     return () => {
       window.clearInterval(tick);
       window.clearInterval(poll);

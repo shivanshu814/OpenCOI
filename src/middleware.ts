@@ -46,6 +46,21 @@ export async function middleware(request: NextRequest) {
     });
   }
 
+  // Routes that never read a cookie session: webhooks (signature-authed),
+  // Inngest (signing key), the vendor portal (magic-link token), the public
+  // API (Bearer key) and the geo lookups (static reference data). These used
+  // to pay for a `getUser()` network round trip to Supabase Auth on every
+  // call anyway — pure latency on the vendor-facing portal, which is the one
+  // surface where we control none of the client's network.
+  if (
+    isPublicApi(request.nextUrl.pathname) ||
+    request.nextUrl.pathname.startsWith("/api/geo")
+  ) {
+    return NextResponse.next({
+      request: { headers: requestHeaders },
+    });
+  }
+
   let response = NextResponse.next({
     request: { headers: requestHeaders },
   });

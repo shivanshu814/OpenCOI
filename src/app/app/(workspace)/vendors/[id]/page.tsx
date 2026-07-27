@@ -27,7 +27,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { listVendorAuditTrail } from "@/lib/audit/list";
-import { canViewFullAudit } from "@/lib/auth/roles";
+import {
+  canAdminSensitive,
+  canViewFullAudit,
+  canWriteOrgData,
+} from "@/lib/auth/roles";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import { listVendorDocuments } from "@/lib/data/documents";
@@ -79,6 +83,8 @@ export default async function VendorDetailPage({
   ]);
   const chatRows = (chat.data ?? []) as TranscriptRow[];
   const fullDetail = canViewFullAudit(session.role);
+  const canWrite = canWriteOrgData(session.role);
+  const canAdmin = canAdminSensitive(session.role);
   const meta = [vendor.trade, vendor.email, vendor.agent_email].filter(Boolean);
 
   return (
@@ -233,7 +239,11 @@ export default async function VendorDetailPage({
             </CardContent>
           </Card>
 
-          <VendorOnboardingPanel vendorId={vendor.id} />
+          <VendorOnboardingPanel
+            vendorId={vendor.id}
+            canWrite={canWrite}
+            canAdmin={canAdmin}
+          />
 
           <section className="min-w-0 space-y-3">
             <div className="flex items-center gap-2">
@@ -278,6 +288,7 @@ export default async function VendorDetailPage({
             phone={vendor.phone}
             smsOptInAt={vendor.sms_opt_in_at}
             smsOptOutAt={vendor.sms_opt_out_at}
+            canEdit={canWrite}
           />
         </aside>
       </div>

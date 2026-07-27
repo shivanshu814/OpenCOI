@@ -24,39 +24,20 @@ export async function loadComplianceReport(
   if (!session) return null;
 
   const supabase = await createClient();
-  const [{ data: vendor, error }, { data: org }] = await Promise.all([
-    supabase
-      .from("vendors")
-      .select("id, name, email, trade, status")
-      .eq("id", vendorId)
-      .eq("org_id", session.orgId)
-      .maybeSingle(),
-    supabase
-      .from("orgs")
-      .select("brand_primary_color")
-      .eq("id", session.orgId)
-      .maybeSingle(),
-  ]);
 
-  if (error || !vendor) return null;
-
-  let docRow: {
-    id: string;
-    file_name: string;
-    status: string;
-  } | null = null;
-
-  if (documentId) {
-    const { data } = await supabase
+  // The document lookup is keyed only on ids the caller already handed us, so
+  // it never needed to wait for the vendor row. Three sequential round trips
+  // became two — and this path runs on every "Download report" click as well
+  // as inside the owner-report PDF build.
+  const documentQuery = documentId
+    ? supabase
       .from("documents")
       .select("id, file_name, status")
       .eq("id", documentId)
       .eq("org_id", session.orgId)
       .eq("vendor_id", vendorId)
-      .maybeSingle();
-    docRow = data;
-  } else {
-    const { data } = await supabase
+      .maybeSingle()
+    : supabase
       .from("documents")
       .select("id, file_name, status")
       .eq("org_id", session.orgId)
@@ -64,8 +45,28 @@ export async function loadComplianceReport(
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    docRow = data;
-  }
+
+  const [{ data: vendor, error }, { data: org }, { data: docRow }] =
+    await Promise.all([
+      supabase
+        .from("vendors")
+        .select("id, name, email, trade, status")
+        .eq("id", vendorId)
+        .eq("org_id", session.orgId)
+        .maybeSingle(),
+      supabase
+        .from("orgs")
+        .select("brand_primary_color")
+        .eq("id", session.orgId)
+        .maybeSingle(),
+      documentQuery,
+    ]);
+
+  // Checked after the batch: a missing vendor discards the other two results
+  // rather than the other two waiting on this check. Still no vendor, still
+  // null — the ordering change cannot leak another org's document, because the
+  // document query is itself org- and vendor-scoped.
+  if (error || !vendor) return null;
 
   let checkLines: CheckLine[] = [];
   let overall: Verdict | null = null;
@@ -74,6 +75,7 @@ export async function loadComplianceReport(
     const { data: check } = await supabase
       .from("compliance_checks")
       .select("lines, overall_verdict")
+      .eq("org_id", session.orgId)
       .eq("document_id", docRow.id)
       .order("created_at", { ascending: false })
       .limit(1)

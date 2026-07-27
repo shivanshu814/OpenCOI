@@ -9,10 +9,17 @@ import { boardLookupUrl } from "@/lib/licenses/boards";
 import { createClient } from "@/lib/supabase/server";
 import { encryptTin, maskTin } from "@/lib/tax/tin";
 import { insertAuditEvent } from "@/lib/audit/write";
+import {
+  validationErrorBody,
+  vendorOnboardingSchema,
+} from "@/lib/validation/schemas";
 import { NextResponse } from "next/server";
 
 /** Trim to null so an emptied field clears the column instead of storing "". */
-function cleanText(value: string | undefined, maxLength: number): string | null {
+function cleanText(
+  value: string | null | undefined,
+  maxLength: number,
+): string | null {
   const trimmed = value?.trim() ?? "";
   if (!trimmed) return null;
   return trimmed.slice(0, maxLength);
@@ -87,22 +94,16 @@ export async function POST(
     return NextResponse.json({ error: "Read-only role" }, { status: 403 });
   }
 
-  const body = (await request.json()) as {
-    action?: "upsert_tax" | "add_license" | "create_agreement";
-    legal_name?: string;
-    tin?: string;
-    tin_type?: "ein" | "ssn";
-    address_line?: string;
-    city?: string;
-    state?: string;
-    postal_code?: string;
-    license_number?: string;
-    license_state?: string;
-    trade?: string;
-    expires_on?: string;
-    agreement_title?: string;
-    signer_email?: string;
-  };
+  const parsed = vendorOnboardingSchema.safeParse(
+    await request.json().catch(() => null),
+  );
+  if (!parsed.success) {
+    return NextResponse.json(
+      validationErrorBody(parsed.error, "Unknown action"),
+      { status: 400 },
+    );
+  }
+  const body = parsed.data;
 
   const supabase = await createClient();
   const { data: vendor } = await supabase
@@ -228,7 +229,9 @@ export async function POST(
   }
 
   if (body.action === "create_agreement") {
-    const { createAgreementSigning } = await import("@/lib/esign/documenso");
+    const { createAgreementSigning, isDocumensoConfigured } = await import(
+      "@/lib/esign/documenso"
+    );
     const title =
       body.agreement_title?.trim() || "Hold-harmless / indemnification";
     const signerEmail =
@@ -239,10 +242,34 @@ export async function POST(
         { status: 400 },
       );
     }
+
+    // Documenso signs a file. Sending only a title created an empty draft,
+    // and a draft has no signing page — which is why every generated link
+    // 404'd. The file is the org's own uploaded agreement (migration 025);
+    // we never draft one, because writing indemnification language would be
+    // legal advice (docs/08 §3). The demo path still needs no PDF.
+    let pdfBase64: string | undefined;
+    if (isDocumensoConfigured()) {
+      const { loadAgreementPdfBase64 } = await import(
+        "@/lib/esign/agreement-template"
+      );
+      const { data: orgRow } = await supabase
+        .from("orgs")
+        .select("agreement_template_path, agreement_template_name")
+        .eq("id", session.orgId)
+        .maybeSingle();
+      const template = await loadAgreementPdfBase64(supabase, orgRow ?? {});
+      if (!template.ok) {
+        return NextResponse.json({ error: template.error }, { status: 400 });
+      }
+      pdfBase64 = template.base64;
+    }
+
     const signed = await createAgreementSigning({
       title,
       signerEmail,
       signerName: vendor.name,
+      pdfBase64,
     });
     if (!signed.ok) {
       return NextResponse.json({ error: signed.error }, { status: 502 });

@@ -9,6 +9,7 @@ import {
   notifySuccess,
 } from "@/lib/ui/toast";
 import { Mail } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export function SendOwnerReportButton({
@@ -23,6 +24,7 @@ export function SendOwnerReportButton({
   variant?: "outline" | "primary";
   label?: string;
 }) {
+  const router = useRouter();
   const [busy, setBusy] = useState(false);
 
   async function onSend() {
@@ -60,6 +62,9 @@ export function SendOwnerReportButton({
           ? ` (${data.compliance_percent}% covered)`
           : "";
       notifySuccess(`Owner report emailed to ${to}${pct}`);
+      // Records a send against the property, so the "last sent" line on the
+      // page has to re-read rather than wait for the next manual reload.
+      router.refresh();
     } catch (err) {
       notifyCaughtError(err, "Owner report not sent");
     } finally {

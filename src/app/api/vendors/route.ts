@@ -3,6 +3,10 @@ import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { insertAuditEvent } from "@/lib/audit/write";
+import {
+  validationErrorBody,
+  vendorCreateSchema,
+} from "@/lib/validation/schemas";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -26,23 +30,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = (await request.json()) as {
-    name?: string;
-    email?: string;
-    trade?: string;
-  };
-
-  const name = body.name?.trim();
-  if (!name) {
-    return NextResponse.json({ error: "name required" }, { status: 400 });
+  const parsed = vendorCreateSchema.safeParse(
+    await request.json().catch(() => null),
+  );
+  if (!parsed.success) {
+    return NextResponse.json(
+      validationErrorBody(parsed.error, "name required"),
+      { status: 400 },
+    );
   }
+  const body = parsed.data;
 
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("vendors")
     .insert({
       org_id: session.orgId,
-      name,
+      name: body.name,
       email: body.email?.trim() || null,
       trade: body.trade?.trim() || null,
       status: "missing_docs",

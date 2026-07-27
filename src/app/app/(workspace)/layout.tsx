@@ -28,7 +28,7 @@ export default async function WorkspaceLayout({
         session ? { email: session.email, role: session.role } : null
       }
     >
-      {live ? <RealtimeRefresh /> : null}
+      {live ? <RealtimeRefresh scope={session?.orgId ?? null} /> : null}
       {children}
     </AppShell>
   );

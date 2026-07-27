@@ -3,6 +3,10 @@ import { canWriteOrgData } from "@/lib/auth/roles";
 import { isSupabaseConfigured } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { insertAuditEvent } from "@/lib/audit/write";
+import {
+  smsOptInSchema,
+  validationErrorBody,
+} from "@/lib/validation/schemas";
 import { NextResponse } from "next/server";
 
 export async function POST(
@@ -29,20 +33,18 @@ export async function POST(
     );
   }
 
-  const body = (await request.json()) as {
-    phone?: string;
-    opt_in?: boolean;
-  };
-
-  const phone = body.phone?.trim() || null;
-  const optIn = Boolean(body.opt_in);
-
-  if (optIn && !phone) {
+  const parsed = smsOptInSchema.safeParse(
+    await request.json().catch(() => null),
+  );
+  if (!parsed.success) {
     return NextResponse.json(
-      { error: "Phone required for SMS opt-in" },
+      validationErrorBody(parsed.error, "Phone required for SMS opt-in"),
       { status: 400 },
     );
   }
+
+  const phone = parsed.data.phone?.trim() || null;
+  const optIn = Boolean(parsed.data.opt_in);
 
   const supabase = await createClient();
   const now = new Date().toISOString();

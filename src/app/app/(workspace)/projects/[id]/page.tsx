@@ -5,6 +5,7 @@ import {
   PageSecondary,
 } from "@/components/page-frame";
 import { Button } from "@/components/ui/button";
+import { canWriteOrgData } from "@/lib/auth/roles";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import type { RequirementRule } from "@/lib/requirements/engine";
@@ -98,6 +99,7 @@ export default async function ProjectDetailPage({
         rules={(reqSet?.rules as RequirementRule[]) ?? []}
         vendorIds={(links ?? []).map((l) => l.vendor_id)}
         vendors={(vendors ?? []) as { id: string; name: string }[]}
+        canEdit={canWriteOrgData(session.role)}
       />
 
       <PageSecondary>

@@ -2,27 +2,28 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   apiErrorMessage,
   notifyApiError,
   notifyCaughtError,
   notifyNotSent,
   notifySuccess,
 } from "@/lib/ui/toast";
-import { MailCheck } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+/**
+ * Sends the B8 request. The *result* is rendered by AgentConfirmationPanel,
+ * which is why this refreshes the route on success — otherwise the row lands
+ * in Postgres and the person who just clicked sees no change.
+ */
 export function RequestAgentConfirmButton({
   documentId,
+  hasPending = false,
 }: {
   documentId: string;
+  hasPending?: boolean;
 }) {
+  const router = useRouter();
   const [busy, setBusy] = useState(false);
 
   async function onClick() {
@@ -57,6 +58,7 @@ export function RequestAgentConfirmButton({
           ? "Confirmation email sent to the producer/agent"
           : "Agent confirmation requested",
       );
+      router.refresh();
     } catch (e) {
       notifyCaughtError(e, "Agent confirmation not sent");
     } finally {
@@ -65,29 +67,18 @@ export function RequestAgentConfirmButton({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MailCheck className="text-muted-foreground size-4" aria-hidden />
-          Agent confirmation (B8)
-        </CardTitle>
-        <CardDescription className="text-xs leading-relaxed">
-          Emails the producer: Confirm / Deny that this cert is valid &amp;
-          current. Mitigates mid-term cancellations — does not detect them
-          automatically.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={busy}
-          onClick={() => void onClick()}
-        >
-          {busy ? "Sending…" : "Request agent confirmation"}
-        </Button>
-      </CardContent>
-    </Card>
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      disabled={busy}
+      onClick={() => void onClick()}
+    >
+      {busy
+        ? "Sending…"
+        : hasPending
+          ? "Send another request"
+          : "Request agent confirmation"}
+    </Button>
   );
 }

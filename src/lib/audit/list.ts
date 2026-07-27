@@ -133,6 +133,16 @@ export async function listAuditEvents(opts?: {
   };
 }
 
+/**
+ * How many of a vendor's most recent documents contribute to its audit trail.
+ *
+ * Documents are read newest-first, so the trail always covers recent activity;
+ * an event on a document older than this window is still in `/app/audit`, which
+ * is the org-wide, unfiltered view of the same append-only table. Nothing is
+ * deleted or hidden — only this one per-vendor widget is bounded.
+ */
+const VENDOR_DOC_ID_LIMIT = 300;
+
 /** Events for a vendor: vendor entity + that vendor's documents. */
 export async function listVendorAuditTrail(
   vendorId: string,
@@ -152,22 +162,33 @@ export async function listVendorAuditTrail(
   const fullDetail = canViewFullAudit(session.role);
 
   const supabase = await createClient();
-  const { data: docs } = await supabase
-    .from("documents")
-    .select("id")
-    .eq("org_id", session.orgId)
-    .eq("vendor_id", vendorId);
+
+  // The vendor's own events do not depend on its document ids, so these two
+  // reads used to sit in a needless sequence — the page waited for a full
+  // round trip before even asking for the events it always needs.
+  const [{ data: docs }, { data: vendorEvents }] = await Promise.all([
+    supabase
+      .from("documents")
+      .select("id")
+      .eq("org_id", session.orgId)
+      .eq("vendor_id", vendorId)
+      // Bounded: this list only feeds the `.in(...)` filter below, and at most
+      // `limit` document events can survive the merge anyway. An unbounded
+      // read here shipped every document id a vendor had ever had, to build a
+      // filter whose result was then sliced to 80 rows.
+      .order("created_at", { ascending: false })
+      .limit(VENDOR_DOC_ID_LIMIT),
+    supabase
+      .from("audit_events")
+      .select(SELECT_COLS)
+      .eq("org_id", session.orgId)
+      .eq("entity_type", "vendor")
+      .eq("entity_id", vendorId)
+      .order("created_at", { ascending: false })
+      .limit(limit),
+  ]);
 
   const docIds = (docs ?? []).map((d) => d.id);
-
-  const { data: vendorEvents } = await supabase
-    .from("audit_events")
-    .select(SELECT_COLS)
-    .eq("org_id", session.orgId)
-    .eq("entity_type", "vendor")
-    .eq("entity_id", vendorId)
-    .order("created_at", { ascending: false })
-    .limit(limit);
 
   let docEvents: AuditEventRow[] = [];
   if (docIds.length) {

@@ -24,8 +24,15 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
+
+/**
+ * Supabase rate-limits auth email at 100/hour for the whole project. A
+ * spammable resend button burns that quota for every other customer, so the
+ * button is disabled between attempts and says why.
+ */
+const RESEND_COOLDOWN_SECONDS = 30;
 
 /** Google's brand mark — inlined so the button needs no external request. */
 function GoogleMark() {
@@ -51,14 +58,39 @@ function GoogleMark() {
   );
 }
 
+/** Only in-app relative paths — never bounce a signed-in user off-site. */
+function safeNext(raw: string | null): string {
+  if (!raw) return "/app";
+  const path = raw.startsWith("%2F") || raw.startsWith("%2f")
+    ? decodeURIComponent(raw)
+    : raw;
+  if (!path.startsWith("/") || path.startsWith("//")) return "/app";
+  return path;
+}
+
 function LoginForm() {
   const search = useSearchParams();
-  const next = search.get("next") ?? "/app";
+  const router = useRouter();
+  const next = safeNext(search.get("next"));
   const [email, setEmail] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
   const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
+
+  // Code step — shown only after an email actually went out.
+  const [sent, setSent] = useState(false);
+  const [code, setCode] = useState("");
+  const [codeBusy, setCodeBusy] = useState(false);
+  const [codeError, setCodeError] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
+  const codeInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setTimeout(() => setCooldown((n) => n - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [cooldown]);
 
   /** Both sign-in paths land on the same callback, so they share this. */
   function callbackUrl() {
@@ -108,11 +140,16 @@ function LoginForm() {
     }
   }
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  /**
+   * Sends the magic-link email. The template carries BOTH a link and a 6-digit
+   * code, so this is also what mints the code the second step asks for.
+   * `resend` only changes the wording — the request is identical.
+   */
+  async function sendLink(resend: boolean) {
     setBusy(true);
     setMsg(null);
     setOk(false);
+    setCodeError(null);
     try {
       const supabase = createClient();
       const redirectTo = callbackUrl();
@@ -125,12 +162,80 @@ function LoginForm() {
         setMsg(error.message);
       } else {
         setOk(true);
-        setMsg(`Check ${email} for your one-time link.`);
+        setSent(true);
+        setCode("");
+        setCooldown(RESEND_COOLDOWN_SECONDS);
+        setMsg(
+          resend
+            ? `New link and code sent to ${email}. The previous code no longer works.`
+            : `Check ${email} for your one-time link — or enter the 6-digit code from that email below.`,
+        );
+        // Only steal focus on a resend; the first send should let the user
+        // read the confirmation rather than jump the page.
+        if (resend) codeInputRef.current?.focus();
       }
     } catch (err) {
       setMsg(err instanceof Error ? err.message : "Login failed");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    await sendLink(false);
+  }
+
+  /**
+   * Code path — the same one-time token as the link, typed by hand. Useful on
+   * mobile and when the link opens in a browser without the session. On
+   * success we land on the same `next` the link flow would have reached.
+   */
+  async function onVerifyCode(e: React.FormEvent) {
+    e.preventDefault();
+    const token = code.replace(/\D/g, "");
+    if (token.length !== 6) {
+      setCodeError("Enter the 6-digit code from your email.");
+      return;
+    }
+    setCodeBusy(true);
+    setCodeError(null);
+    try {
+      const supabase = createClient();
+      // Supabase picks the template by whether the account exists: returning
+      // users get "Magic link" (verifies as `email`), first-timers get
+      // "Confirm signup" (verifies as `signup`). The user cannot know which
+      // they got, so try the common case and fall back rather than telling a
+      // brand-new customer their perfectly good code is invalid.
+      let { error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: "email",
+      });
+      if (error) {
+        const signup = await supabase.auth.verifyOtp({
+          email,
+          token,
+          type: "signup",
+        });
+        if (!signup.error) error = null;
+      }
+      if (error) {
+        // Never claim success on a failed verify — the user still has no session.
+        setCodeError(
+          /expired|invalid|token/i.test(error.message)
+            ? "That code is expired or incorrect. Request a new link and try the newest code."
+            : error.message,
+        );
+        setCodeBusy(false);
+        return;
+      }
+      router.push(next);
+      router.refresh();
+      // Leave the button busy: navigation is in flight.
+    } catch (err) {
+      setCodeError(err instanceof Error ? err.message : "Could not verify code");
+      setCodeBusy(false);
     }
   }
 
@@ -144,8 +249,8 @@ function LoginForm() {
         </p>
         <h1 className="text-xl font-semibold tracking-tight">Sign in</h1>
         <p className="text-muted-foreground text-sm leading-relaxed">
-          Enter your work email. We&apos;ll send a one-time magic link — no
-          password.
+          Enter your work email. We&apos;ll send a one-time link and a 6-digit
+          code — no password. Either one signs you in.
         </p>
       </CardHeader>
 
@@ -200,10 +305,16 @@ function LoginForm() {
               type="submit"
               size="lg"
               className="bg-brand text-brand-foreground hover:bg-brand/90 h-11 w-full rounded-lg text-sm font-semibold shadow-[0_0_0_1px_rgba(0,184,132,0.25),0_10px_28px_-10px_rgba(0,184,132,0.55)]"
-              disabled={busy}
+              disabled={busy || cooldown > 0}
             >
-              {busy ? "Sending…" : "Send magic link"}
-              {!busy ? (
+              {busy
+                ? "Sending…"
+                : cooldown > 0
+                  ? `Send again in ${cooldown}s`
+                  : sent
+                    ? "Send a new link"
+                    : "Send magic link"}
+              {!busy && cooldown === 0 ? (
                 <ArrowRight
                   data-icon="inline-end"
                   className="size-4"
@@ -228,6 +339,84 @@ function LoginForm() {
             </Alert>
           ) : null}
         </form>
+
+        {/*
+          Code step. The same email carries a 6-digit code alongside the link,
+          which is the only way in when the link opens in the wrong browser or
+          a corporate scanner burns it. Shown only once an email actually went
+          out, so it can never imply a code exists when none was sent.
+        */}
+        {sent ? (
+          <form
+            onSubmit={onVerifyCode}
+            className="mt-6 space-y-4 border-t border-border/70 pt-6"
+          >
+            <Field>
+              <FieldLabel htmlFor="otp" className="text-sm font-medium">
+                Have the code instead?
+              </FieldLabel>
+              <Input
+                id="otp"
+                ref={codeInputRef}
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                pattern="[0-9]{6}"
+                maxLength={6}
+                value={code}
+                onChange={(e) =>
+                  setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+                }
+                placeholder="000000"
+                aria-describedby="otp-hint"
+                aria-invalid={codeError ? true : undefined}
+                className="h-11 rounded-lg text-center font-mono text-lg tracking-[0.4em]"
+              />
+              <p id="otp-hint" className="text-muted-foreground text-xs">
+                The 6-digit code in the same email. Expires in one hour, one use.
+              </p>
+            </Field>
+
+            <Button
+              type="submit"
+              variant="outline"
+              size="lg"
+              className="h-11 w-full rounded-lg text-sm font-medium"
+              disabled={codeBusy || code.length !== 6}
+            >
+              {codeBusy ? "Verifying…" : "Verify code and sign in"}
+            </Button>
+
+            {codeError ? (
+              <Alert variant="destructive">
+                <CircleAlert />
+                <AlertDescription>{codeError}</AlertDescription>
+              </Alert>
+            ) : null}
+
+            <p className="text-muted-foreground text-center text-xs">
+              {cooldown > 0 ? (
+                <>
+                  Didn&apos;t get it? You can request another in {cooldown}s —
+                  sign-in emails are rate-limited to protect everyone&apos;s
+                  delivery.
+                </>
+              ) : (
+                <>
+                  Didn&apos;t get it?{" "}
+                  <button
+                    type="button"
+                    onClick={() => void sendLink(true)}
+                    disabled={busy}
+                    className="text-foreground hover:text-brand font-medium underline underline-offset-4 disabled:opacity-60"
+                  >
+                    {busy ? "Sending…" : "Resend code"}
+                  </button>
+                </>
+              )}
+            </p>
+          </form>
+        ) : null}
       </CardContent>
 
       <CardFooter className="flex-col items-stretch gap-4 border-t border-border/70 bg-muted/30 px-6 py-5">

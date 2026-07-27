@@ -4,6 +4,10 @@ import { isSupabaseConfigured } from "@/lib/config";
 import { templateById } from "@/lib/requirements/templates";
 import { createClient } from "@/lib/supabase/server";
 import { insertAuditEvent } from "@/lib/audit/write";
+import {
+  onboardingStepSchema,
+  validationErrorBody,
+} from "@/lib/validation/schemas";
 import { NextResponse } from "next/server";
 
 function parseVendorCsv(raw: string): Array<{
@@ -31,14 +35,16 @@ function parseVendorCsv(raw: string): Array<{
 }
 
 export async function POST(request: Request) {
-  const body = (await request.json()) as {
-    step?: string;
-    companyName?: string;
-    templateIds?: string[];
-    vendorsCsv?: string;
-    vendors?: Array<{ name: string; email?: string; trade?: string }>;
-    complete?: boolean;
-  };
+  const parsed = onboardingStepSchema.safeParse(
+    await request.json().catch(() => null),
+  );
+  if (!parsed.success) {
+    return NextResponse.json(
+      validationErrorBody(parsed.error, "Unknown step"),
+      { status: 400 },
+    );
+  }
+  const body = parsed.data;
 
   if (!isSupabaseConfigured()) {
     return NextResponse.json({

@@ -4,21 +4,11 @@ import { isSupabaseConfigured } from "@/lib/config";
 import type { RequirementRule } from "@/lib/requirements/engine";
 import { createClient } from "@/lib/supabase/server";
 import { insertAuditEvent } from "@/lib/audit/write";
+import {
+  projectUpdateSchema,
+  validationErrorBody,
+} from "@/lib/validation/schemas";
 import { NextResponse } from "next/server";
-import { z } from "zod";
-
-const patchSchema = z.object({
-  name: z.string().min(1).max(200).optional(),
-  property_id: z.string().uuid().optional().nullable(),
-  start_date: z.string().max(12).optional().nullable(),
-  end_date: z.string().max(12).optional().nullable(),
-  status: z.enum(["active", "closeout", "closed"]).optional(),
-  certificate_holder_name: z.string().max(300).optional().nullable(),
-  additional_insured_wording: z.string().max(1000).optional().nullable(),
-  notes: z.string().max(2000).optional().nullable(),
-  rules: z.array(z.record(z.string(), z.unknown())).optional(),
-  vendorIds: z.array(z.string().uuid()).optional(),
-});
 
 export async function GET(
   _request: Request,
@@ -99,9 +89,14 @@ export async function PATCH(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const parsed = patchSchema.safeParse(await request.json());
+  const parsed = projectUpdateSchema.safeParse(
+    await request.json().catch(() => null),
+  );
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid patch" }, { status: 400 });
+    return NextResponse.json(
+      validationErrorBody(parsed.error, "Invalid patch"),
+      { status: 400 },
+    );
   }
 
   const supabase = await createClient();

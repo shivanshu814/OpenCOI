@@ -7,6 +7,10 @@ import { renderTeamInviteEmail } from "@/lib/email/team-invite";
 import { createClient } from "@/lib/supabase/server";
 import { appBaseUrl } from "@/lib/app-url";
 import { insertAuditEvent } from "@/lib/audit/write";
+import {
+  teamSettingsSchema,
+  validationErrorBody,
+} from "@/lib/validation/schemas";
 import { NextResponse } from "next/server";
 
 const ORG_SETTINGS_COLS = [
@@ -95,40 +99,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Admin only" }, { status: 403 });
   }
 
-  const body = (await request.json()) as {
-    action?:
-      | "invite"
-      | "update_branding"
-      | "update_member_role"
-      | "update_profile"
-      | "update_notifications";
-    email?: string;
-    role?: "admin" | "member" | "viewer";
-    member_id?: string;
-    from_email?: string | null;
-    reply_to_email?: string | null;
-    brand_primary_color?: string | null;
-    logo_url?: string | null;
-    chase_notify_email?: string | null;
-    // Organization profile
-    name?: string | null;
-    legal_name?: string | null;
-    address_line?: string | null;
-    city?: string | null;
-    state?: string | null;
-    postal_code?: string | null;
-    phone?: string | null;
-    website?: string | null;
-    timezone?: string | null;
-    // Notification preferences
-    digest_email?: string | null;
-    digest_enabled?: boolean;
-    notify_email_enabled?: boolean;
-  };
+  // One discriminated union covers every action this route accepts, so an
+  // unknown action or a malformed field is rejected before it reaches a table.
+  const parsed = teamSettingsSchema.safeParse(
+    await request.json().catch(() => null),
+  );
+  if (!parsed.success) {
+    return NextResponse.json(
+      validationErrorBody(parsed.error, "Unknown action"),
+      { status: 400 },
+    );
+  }
+  const body = parsed.data;
 
   const supabase = await createClient();
 
-  if (body.action === "invite" && body.email) {
+  if (body.action === "invite") {
     const role = body.role ?? "member";
     const { data, error } = await supabase
       .from("org_invites")
@@ -201,7 +187,7 @@ export async function POST(request: Request) {
     });
   }
 
-  if (body.action === "update_member_role" && body.member_id && body.role) {
+  if (body.action === "update_member_role") {
     const { error } = await supabase
       .from("org_members")
       .update({ role: body.role })

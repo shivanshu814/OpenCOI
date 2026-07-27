@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import {
@@ -8,6 +9,7 @@ import {
 import type { Extraction } from "@/lib/extraction/schema";
 import type { CheckLine, Verdict } from "@/lib/requirements/engine";
 import { createClient } from "@/lib/supabase/server";
+import { type CappedList, capped, firstByKey } from "./join";
 import type { DocumentRow, Vendor, VendorStatus } from "./types";
 
 function mapVendor(row: {
@@ -28,10 +30,28 @@ function mapVendor(row: {
   };
 }
 
-export async function listVendors(): Promise<Vendor[]> {
-  const { vendors } = await queryVendors({ limit: VENDOR_PICKER_LIMIT });
+/**
+ * The vendor roster for pickers and name lookups.
+ *
+ * Memoized with React `cache()`, which is **request-scoped**: the dashboard,
+ * the review queue and the review detail page each resolve the roster once per
+ * render even when several components ask for it. Deliberately not a
+ * cross-request cache — this data is org-scoped and feeds status badges, and a
+ * roster held over from an earlier request could show a vendor as compliant
+ * after their certificate lapsed. Outside a request scope `cache()` is a no-op,
+ * so background jobs still read live rows.
+ */
+export const listVendors = cache(async function listVendors(): Promise<
+  Vendor[]
+> {
+  // `withCount: false` — picker callers throw the total away, and an exact
+  // count makes Postgres count every matching row on top of returning the page.
+  const { vendors } = await queryVendors({
+    limit: VENDOR_PICKER_LIMIT,
+    withCount: false,
+  });
   return vendors;
-}
+});
 
 /** Rows per vendors-page view. */
 export const VENDOR_PAGE_SIZE = 50;
@@ -50,12 +70,28 @@ export type VendorQuery = {
   status?: VendorStatus | null;
   limit?: number;
   offset?: number;
+  /**
+   * Ask Postgres for the exact total matching row count (default true).
+   *
+   * The count is a second aggregate over the whole matching set on top of
+   * returning the page, and under RLS every counted row re-evaluates
+   * `is_org_member`. Callers that only want "a list of vendors" — the upload,
+   * review and dashboard pickers — should pass `false`; `total` then reports
+   * the number of rows actually returned rather than the set size.
+   */
+  withCount?: boolean;
 };
 
 export type VendorQueryResult = {
   vendors: Vendor[];
-  /** Total matching rows before paging — drives "N of M" and page count. */
+  /**
+   * Total matching rows before paging — drives "N of M" and page count.
+   * When the query ran with `withCount: false` this is the returned row count,
+   * not the size of the matching set.
+   */
   total: number;
+  /** Whether `total` is the true matching-set size or just `vendors.length`. */
+  totalIsExact: boolean;
 };
 
 /**
@@ -71,6 +107,7 @@ export async function queryVendors(
   const limit = query.limit ?? VENDOR_PAGE_SIZE;
   const offset = query.offset ?? 0;
   const search = query.search?.trim().toLowerCase() ?? "";
+  const withCount = query.withCount ?? true;
 
   if (!isSupabaseConfigured()) {
     const all = DEMO_VENDORS.map((v) => ({
@@ -86,16 +123,23 @@ export async function queryVendors(
         .filter(Boolean)
         .some((field) => field!.toLowerCase().includes(search));
     });
-    return { vendors: all.slice(offset, offset + limit), total: all.length };
+    return {
+      vendors: all.slice(offset, offset + limit),
+      total: all.length,
+      totalIsExact: true,
+    };
   }
 
   const session = await getSessionOrg();
-  if (!session) return { vendors: [], total: 0 };
+  if (!session) return { vendors: [], total: 0, totalIsExact: true };
 
   const supabase = await createClient();
   let q = supabase
     .from("vendors")
-    .select("id, org_id, name, email, trade, status", { count: "exact" })
+    .select(
+      "id, org_id, name, email, trade, status",
+      withCount ? { count: "exact" } : undefined,
+    )
     .eq("org_id", session.orgId);
 
   if (query.status) q = q.eq("status", query.status);
@@ -116,9 +160,14 @@ export async function queryVendors(
 
   if (error) {
     console.error("queryVendors", error);
-    return { vendors: [], total: 0 };
+    return { vendors: [], total: 0, totalIsExact: true };
   }
-  return { vendors: (data ?? []).map(mapVendor), total: count ?? 0 };
+  const vendors = (data ?? []).map(mapVendor);
+  return {
+    vendors,
+    total: withCount ? (count ?? 0) : vendors.length,
+    totalIsExact: withCount,
+  };
 }
 
 /** Per-status vendor counts for the whole org (head-only count queries). */
@@ -176,15 +225,32 @@ export async function vendorStatusCounts(): Promise<
   return counts;
 }
 
-export async function listReviewQueue(): Promise<DocumentRow[]> {
+/**
+ * Ceiling on a single queue render.
+ *
+ * The queues used to be unbounded, which meant the dashboard's cost grew with
+ * the customer's backlog and PostgREST's own 1000-row ceiling would eventually
+ * cut the list off with nobody told. The cap is explicit and surfaced through
+ * `CappedList.truncated` so the page can say "showing the first 200" instead of
+ * implying an empty remainder.
+ */
+export const REVIEW_QUEUE_LIMIT = 200;
+
+/** Ceiling on one vendor's document history (vendor detail page). */
+export const VENDOR_DOCUMENTS_LIMIT = 200;
+
+export async function listReviewQueue(): Promise<CappedList<DocumentRow>> {
   if (!isSupabaseConfigured()) {
-    return DEMO_DOCUMENTS.filter((d) => d.status === "in_internal_review").map(
-      demoDocToRow,
+    return capped(
+      DEMO_DOCUMENTS.filter((d) => d.status === "in_internal_review").map(
+        demoDocToRow,
+      ),
+      REVIEW_QUEUE_LIMIT,
     );
   }
 
   const session = await getSessionOrg();
-  if (!session) return [];
+  if (!session) return capped([], REVIEW_QUEUE_LIMIT);
 
   const supabase = await createClient();
   const { data: docs, error } = await supabase
@@ -193,26 +259,35 @@ export async function listReviewQueue(): Promise<DocumentRow[]> {
     .eq("org_id", session.orgId)
     .eq("status", "in_internal_review")
     // FIFO — the UI tells reviewers to clear the oldest item first.
-    .order("created_at", { ascending: true });
+    // Ascending reads `documents_org_status_created_idx` (019) backwards, which
+    // Postgres does at no extra cost, so no separate ascending index is needed.
+    .order("created_at", { ascending: true })
+    .limit(REVIEW_QUEUE_LIMIT);
 
   if (error || !docs?.length) {
     if (error) console.error("listReviewQueue", error);
-    return [];
+    return capped([], REVIEW_QUEUE_LIMIT);
   }
 
-  return Promise.all(docs.map((d) => hydrateDocument(d)));
+  return capped(
+    await hydrateDocuments(supabase, session.orgId, docs),
+    REVIEW_QUEUE_LIMIT,
+  );
 }
 
 /** Published verdicts awaiting customer accept / override (Appendix B). */
-export async function listAwaitingCustomerDecision(): Promise<DocumentRow[]> {
+export async function listAwaitingCustomerDecision(): Promise<
+  CappedList<DocumentRow>
+> {
   if (!isSupabaseConfigured()) {
-    return DEMO_DOCUMENTS.filter((d) => d.status === "published").map(
-      demoDocToRow,
+    return capped(
+      DEMO_DOCUMENTS.filter((d) => d.status === "published").map(demoDocToRow),
+      REVIEW_QUEUE_LIMIT,
     );
   }
 
   const session = await getSessionOrg();
-  if (!session) return [];
+  if (!session) return capped([], REVIEW_QUEUE_LIMIT);
 
   const supabase = await createClient();
   const { data: docs, error } = await supabase
@@ -220,14 +295,18 @@ export async function listAwaitingCustomerDecision(): Promise<DocumentRow[]> {
     .select("id, org_id, vendor_id, file_name, storage_path, status")
     .eq("org_id", session.orgId)
     .eq("status", "published")
-    .order("updated_at", { ascending: false });
+    .order("updated_at", { ascending: false })
+    .limit(REVIEW_QUEUE_LIMIT);
 
   if (error || !docs?.length) {
     if (error) console.error("listAwaitingCustomerDecision", error);
-    return [];
+    return capped([], REVIEW_QUEUE_LIMIT);
   }
 
-  return Promise.all(docs.map((d) => hydrateDocument(d)));
+  return capped(
+    await hydrateDocuments(supabase, session.orgId, docs),
+    REVIEW_QUEUE_LIMIT,
+  );
 }
 
 /** Lightweight per-vendor document history for the vendor detail page. */
@@ -242,20 +321,23 @@ export type VendorDocumentSummary = {
 
 export async function listVendorDocuments(
   vendorId: string,
-): Promise<VendorDocumentSummary[]> {
+): Promise<CappedList<VendorDocumentSummary>> {
   if (!isSupabaseConfigured()) {
-    return DEMO_DOCUMENTS.filter((d) => d.vendor_id === vendorId).map((d) => ({
-      id: d.id,
-      file_name: d.file_name,
-      status: d.status,
-      created_at: null,
-      overall_verdict: d.overall_verdict,
-      customer_decision: d.customer_decision ?? null,
-    }));
+    return capped(
+      DEMO_DOCUMENTS.filter((d) => d.vendor_id === vendorId).map((d) => ({
+        id: d.id,
+        file_name: d.file_name,
+        status: d.status,
+        created_at: null,
+        overall_verdict: d.overall_verdict,
+        customer_decision: d.customer_decision ?? null,
+      })),
+      VENDOR_DOCUMENTS_LIMIT,
+    );
   }
 
   const session = await getSessionOrg();
-  if (!session) return [];
+  if (!session) return capped([], VENDOR_DOCUMENTS_LIMIT);
 
   const supabase = await createClient();
   const { data: docs, error } = await supabase
@@ -263,34 +345,30 @@ export async function listVendorDocuments(
     .select("id, file_name, status, created_at")
     .eq("org_id", session.orgId)
     .eq("vendor_id", vendorId)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(VENDOR_DOCUMENTS_LIMIT);
 
   if (error || !docs?.length) {
     if (error) console.error("listVendorDocuments", error);
-    return [];
+    return capped([], VENDOR_DOCUMENTS_LIMIT);
   }
 
   const { data: checks } = await supabase
     .from("compliance_checks")
     .select("document_id, overall_verdict, customer_decision, created_at")
+    // org_id is redundant under RLS but lets the planner use
+    // compliance_checks_document_created_idx without a tenant re-check per row.
+    .eq("org_id", session.orgId)
     .in(
       "document_id",
       docs.map((d) => d.id),
     )
     .order("created_at", { ascending: false });
 
-  // Latest check per document (rows are newest-first).
-  const latestByDoc = new Map<
-    string,
-    { overall_verdict: string | null; customer_decision: string | null }
-  >();
-  for (const check of checks ?? []) {
-    if (!latestByDoc.has(check.document_id)) {
-      latestByDoc.set(check.document_id, check);
-    }
-  }
+  // Latest check per document — rows arrive newest-first, so first-seen wins.
+  const latestByDoc = firstByKey(checks ?? [], (c) => c.document_id as string);
 
-  return docs.map((d) => {
+  const rows = docs.map((d) => {
     const check = latestByDoc.get(d.id);
     return {
       id: d.id,
@@ -302,6 +380,8 @@ export async function listVendorDocuments(
         (check?.customer_decision as DocumentRow["customer_decision"]) ?? null,
     };
   });
+
+  return capped(rows, VENDOR_DOCUMENTS_LIMIT);
 }
 
 export async function getDocument(id: string): Promise<DocumentRow | null> {
@@ -326,10 +406,11 @@ export async function getDocument(id: string): Promise<DocumentRow | null> {
     return null;
   }
 
-  return hydrateDocument(doc);
+  const [row] = await hydrateDocuments(supabase, session.orgId, [doc]);
+  return row ?? null;
 }
 
-async function hydrateDocument(doc: {
+type RawDocument = {
   id: string;
   org_id: string;
   vendor_id: string;
@@ -338,27 +419,73 @@ async function hydrateDocument(doc: {
   status: string;
   created_at?: string | null;
   fraud_signals?: DocumentRow["fraud_signals"];
-}): Promise<DocumentRow> {
-  const supabase = await createClient();
+};
 
-  const [{ data: extraction }, { data: check }] = await Promise.all([
+/**
+ * Attach the latest extraction and compliance check to a batch of documents in
+ * **two queries total**, regardless of how many documents were passed.
+ *
+ * This replaces a per-document `hydrateDocument()` that issued two queries and
+ * constructed a fresh Supabase client for every row. A 200-item review queue
+ * therefore cost 401 round trips; the dashboard paid that twice (review queue
+ * plus awaiting-decision) on every single render. That is the single largest
+ * source of the "loading states everywhere" the product was showing.
+ *
+ * Correctness note: the batched reads are ordered newest-first and reduced with
+ * `firstByKey`, which reproduces the old `.order(created_at desc).limit(1)`
+ * exactly. A document that has been re-extracted keeps showing its most recent
+ * verdict — attaching a superseded check would put a stale PASS in front of a
+ * customer, which is precisely the failure this product exists to prevent.
+ */
+async function hydrateDocuments(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  orgId: string,
+  docs: readonly RawDocument[],
+): Promise<DocumentRow[]> {
+  if (docs.length === 0) return [];
+  const ids = docs.map((d) => d.id);
+
+  const [{ data: extractions }, { data: checks }] = await Promise.all([
     supabase
       .from("extractions")
-      .select("payload")
-      .eq("document_id", doc.id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+      .select("document_id, payload")
+      .eq("org_id", orgId)
+      .in("document_id", ids)
+      .order("created_at", { ascending: false }),
     supabase
       .from("compliance_checks")
       .select(
-        "lines, overall_verdict, customer_decision, customer_decision_reason",
+        "document_id, lines, overall_verdict, customer_decision, customer_decision_reason",
       )
-      .eq("document_id", doc.id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+      .eq("org_id", orgId)
+      .in("document_id", ids)
+      .order("created_at", { ascending: false }),
   ]);
+
+  const latestExtraction = firstByKey(
+    extractions ?? [],
+    (e) => e.document_id as string,
+  );
+  const latestCheck = firstByKey(checks ?? [], (c) => c.document_id as string);
+
+  return docs.map((doc) => hydrateOne(doc, latestExtraction, latestCheck));
+}
+
+function hydrateOne(
+  doc: RawDocument,
+  latestExtraction: Map<string, { payload: unknown }>,
+  latestCheck: Map<
+    string,
+    {
+      lines: unknown;
+      overall_verdict: string | null;
+      customer_decision: string | null;
+      customer_decision_reason: string | null;
+    }
+  >,
+): DocumentRow {
+  const extraction = latestExtraction.get(doc.id);
+  const check = latestCheck.get(doc.id);
 
   return {
     id: doc.id,

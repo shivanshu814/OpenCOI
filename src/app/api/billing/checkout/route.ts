@@ -2,12 +2,24 @@ import { getSessionOrg } from "@/lib/auth/session";
 import { canAdminSensitive } from "@/lib/auth/roles";
 import { resolveCheckoutPlan } from "@/lib/billing/checkout";
 import { isSupabaseConfigured } from "@/lib/config";
+import {
+  billingCheckoutSchema,
+  validationErrorBody,
+} from "@/lib/validation/schemas";
 import { NextResponse } from "next/server";
 
 /** Returns checkout payload for Paddle.js overlay (custom_data includes org_id). */
 export async function POST(request: Request) {
-  const body = (await request.json()) as { planId?: string };
-  const planId = body.planId?.trim() ?? "";
+  const parsed = billingCheckoutSchema.safeParse(
+    await request.json().catch(() => null),
+  );
+  if (!parsed.success) {
+    return NextResponse.json(
+      validationErrorBody(parsed.error, "Unknown plan"),
+      { status: 400 },
+    );
+  }
+  const planId = parsed.data.planId?.trim() ?? "";
   const resolved = resolveCheckoutPlan(planId);
   if (!resolved.ok) {
     return NextResponse.json({ error: resolved.error }, { status: 400 });

@@ -1,3 +1,9 @@
+import {
+  countByKey,
+  firstByKey,
+  groupByKey,
+  uniqueKeys,
+} from "@/lib/data/join";
 import type { VendorStatus } from "@/lib/data/types";
 import {
   escapeHtml,
@@ -123,55 +129,70 @@ export async function sendMonthlyOwnerReportsForOrg(orgId: string): Promise<{
   let skipped = 0;
   let failed = 0;
 
-  for (const property of properties ?? []) {
+  const propertyRows = properties ?? [];
+
+  // Previously this loop issued three queries **per property**: links, vendors,
+  // then documents. An org with 40 buildings paid 120 round trips before the
+  // first email left. Everything the loop needs is org-scoped, so it is read
+  // once up front and joined in memory per property below.
+  const [{ data: allLinks }, { data: allVendors }, { data: allDocs }] =
+    await Promise.all([
+      supabase
+        .from("property_vendors")
+        .select("property_id, vendor_id")
+        .eq("org_id", orgId),
+      supabase
+        .from("vendors")
+        .select("id, name, trade, status")
+        .eq("org_id", orgId),
+      supabase
+        .from("documents")
+        // Counting only — `id` was fetched and thrown away.
+        .select("vendor_id")
+        .eq("org_id", orgId),
+    ]);
+
+  const linksByProperty = groupByKey(
+    allLinks ?? [],
+    (l) => l.property_id as string,
+  );
+  const vendorById = firstByKey(allVendors ?? [], (v) => v.id as string);
+  const docCountByVendor = countByKey(
+    allDocs ?? [],
+    (d) => d.vendor_id as string,
+  );
+
+  for (const property of propertyRows) {
     const to = (property.owner_report_email as string | null)?.trim();
     if (!to) {
       skipped += 1;
       continue;
     }
 
-    const { data: links } = await supabase
-      .from("property_vendors")
-      .select("vendor_id")
-      .eq("property_id", property.id)
-      .eq("org_id", orgId);
+    const vendorIds = uniqueKeys(
+      linksByProperty.get(property.id as string) ?? [],
+      (l) => l.vendor_id as string,
+    );
 
-    const vendorIds = (links ?? []).map((l) => l.vendor_id as string);
-    let vendors: {
+    const vendors: {
       id: string;
       name: string;
       trade: string | null;
       status: VendorStatus;
       documents_on_file: number;
-    }[] = [];
-
-    if (vendorIds.length) {
-      const { data: vendorRows } = await supabase
-        .from("vendors")
-        .select("id, name, trade, status")
-        .eq("org_id", orgId)
-        .in("id", vendorIds);
-
-      const { data: docs } = await supabase
-        .from("documents")
-        .select("id, vendor_id")
-        .eq("org_id", orgId)
-        .in("vendor_id", vendorIds);
-
-      const docCountByVendor = new Map<string, number>();
-      for (const d of docs ?? []) {
-        const vid = d.vendor_id as string;
-        docCountByVendor.set(vid, (docCountByVendor.get(vid) ?? 0) + 1);
-      }
-
-      vendors = (vendorRows ?? []).map((v) => ({
-        id: v.id,
-        name: v.name,
-        trade: v.trade,
+    }[] = vendorIds.flatMap((vid) => {
+      const v = vendorById.get(vid);
+      // A link whose vendor row is gone is skipped rather than reported as an
+      // unnamed vendor — an owner report must not invent a roster entry.
+      if (!v) return [];
+      return [{
+        id: v.id as string,
+        name: v.name as string,
+        trade: v.trade as string | null,
         status: v.status as VendorStatus,
-        documents_on_file: docCountByVendor.get(v.id) ?? 0,
-      }));
-    }
+        documents_on_file: docCountByVendor.get(vid) ?? 0,
+      }];
+    });
 
     const report = buildOwnerReport({
       orgName: org.name,

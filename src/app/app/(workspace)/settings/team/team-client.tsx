@@ -46,6 +46,13 @@ import {
   notifySuccess,
   notifyWarning,
 } from "@/lib/ui/toast";
+import {
+  orgBrandingSchema,
+  orgNotificationsSchema,
+  orgProfileSchema,
+  teamInviteSchema,
+} from "@/lib/validation/schemas";
+import { useZodForm } from "@/lib/validation/use-zod-form";
 import { cn } from "@/lib/utils";
 import {
   Building2,
@@ -64,8 +71,6 @@ const ROLE_ITEMS: ReadonlyArray<{
   { label: "Manager", value: "member" },
   { label: "Read-only", value: "viewer" },
 ];
-
-const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
 type PropertyOption = { id: string; name: string };
 
@@ -270,6 +275,41 @@ export function TeamSettingsClient() {
     void loadScopes();
   }, [load, loadScopes]);
 
+  // Each Save button owns its own slice of the settings object, so each gets
+  // its own validation against the exact schema its API action uses.
+  const profileForm = useZodForm(orgProfileSchema, {
+    action: "update_profile",
+    name: settings.name,
+    legal_name: settings.legal_name,
+    address_line: settings.address_line,
+    city: settings.city,
+    state: settings.state,
+    postal_code: settings.postal_code,
+    phone: settings.phone,
+    website: settings.website,
+    timezone: settings.timezone,
+  });
+  const brandingForm = useZodForm(orgBrandingSchema, {
+    action: "update_branding",
+    from_email: settings.from_email,
+    reply_to_email: settings.reply_to_email,
+    brand_primary_color: settings.brand_primary_color,
+    logo_url: settings.logo_url,
+    chase_notify_email: settings.chase_notify_email,
+  });
+  const notificationsForm = useZodForm(orgNotificationsSchema, {
+    action: "update_notifications",
+    notify_email_enabled: settings.notify_email_enabled,
+    chase_notify_email: settings.chase_notify_email,
+    digest_email: settings.digest_email,
+    digest_enabled: settings.digest_enabled,
+  });
+  const inviteForm = useZodForm(teamInviteSchema, {
+    action: "invite",
+    email,
+    role,
+  });
+
   async function post(body: Record<string, unknown>, successMessage: string) {
     setBusy(true);
     try {
@@ -306,10 +346,10 @@ export function TeamSettingsClient() {
   );
   const detectedZone = useMemo(() => detectTimezone(), []);
 
-  const colorValid =
-    !settings.brand_primary_color || HEX_RE.test(settings.brand_primary_color);
-  const logoValid =
-    !settings.logo_url || /^https:\/\//i.test(settings.logo_url.trim());
+  // The live preview must not inline an unvalidated color/URL, so it reuses
+  // the same verdict the field error does.
+  const colorValid = !brandingForm.errorForAlways("brand_primary_color");
+  const logoValid = !brandingForm.errorForAlways("logo_url");
 
   if (loading) {
     return (
@@ -389,13 +429,14 @@ export function TeamSettingsClient() {
               <Input
                 id="org-name"
                 value={settings.name}
+                onBlur={() => profileForm.markTouched("name")}
                 onChange={(e) => set("name", e.target.value)}
                 placeholder="Riverside Property Management"
                 aria-invalid={!settings.name.trim() || undefined}
               />
-              {!settings.name.trim() ? (
+              {profileForm.errorForAlways("name") ? (
                 <p className="text-destructive text-xs">
-                  A company name is required — it appears on every report.
+                  {profileForm.errorForAlways("name")}
                 </p>
               ) : null}
             </div>
@@ -404,9 +445,18 @@ export function TeamSettingsClient() {
               <Input
                 id="org-legal"
                 value={settings.legal_name}
+                aria-invalid={
+                  Boolean(profileForm.errorFor("legal_name")) || undefined
+                }
+                onBlur={() => profileForm.markTouched("legal_name")}
                 onChange={(e) => set("legal_name", e.target.value)}
                 placeholder="Riverside PM LLC"
               />
+              {profileForm.errorFor("legal_name") ? (
+                <p className="text-destructive text-xs" role="alert">
+                  {profileForm.errorFor("legal_name")}
+                </p>
+              ) : null}
               <p className="text-muted-foreground text-xs">
                 Optional. Used where a certificate holder must match your
                 entity exactly.
@@ -421,10 +471,34 @@ export function TeamSettingsClient() {
                   state: settings.state,
                   postal_code: settings.postal_code,
                 }}
-                onChange={(addr) =>
-                  setSettings((prev) => ({ ...prev, ...addr }))
-                }
+                onChange={(addr) => {
+                  profileForm.markTouched("state");
+                  profileForm.markTouched("postal_code");
+                  setSettings((prev) => ({ ...prev, ...addr }));
+                }}
               />
+              <div className="mt-1 space-y-1">
+                {profileForm.errorFor("postal_code") ? (
+                  <p className="text-destructive text-xs" role="alert">
+                    {profileForm.errorFor("postal_code")}
+                  </p>
+                ) : null}
+                {profileForm.errorFor("state") ? (
+                  <p className="text-destructive text-xs" role="alert">
+                    {profileForm.errorFor("state")}
+                  </p>
+                ) : null}
+                {profileForm.errorFor("city") ? (
+                  <p className="text-destructive text-xs" role="alert">
+                    {profileForm.errorFor("city")}
+                  </p>
+                ) : null}
+                {profileForm.errorFor("address_line") ? (
+                  <p className="text-destructive text-xs" role="alert">
+                    {profileForm.errorFor("address_line")}
+                  </p>
+                ) : null}
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="org-phone">Phone</Label>
@@ -432,18 +506,36 @@ export function TeamSettingsClient() {
                 id="org-phone"
                 type="tel"
                 value={settings.phone}
+                aria-invalid={
+                  Boolean(profileForm.errorFor("phone")) || undefined
+                }
+                onBlur={() => profileForm.markTouched("phone")}
                 onChange={(e) => set("phone", e.target.value)}
                 placeholder="(215) 555-0142"
               />
+              {profileForm.errorFor("phone") ? (
+                <p className="text-destructive text-xs" role="alert">
+                  {profileForm.errorFor("phone")}
+                </p>
+              ) : null}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="org-website">Website</Label>
               <Input
                 id="org-website"
                 value={settings.website}
+                aria-invalid={
+                  Boolean(profileForm.errorFor("website")) || undefined
+                }
+                onBlur={() => profileForm.markTouched("website")}
                 onChange={(e) => set("website", e.target.value)}
                 placeholder="https://riversidepm.com"
               />
+              {profileForm.errorFor("website") ? (
+                <p className="text-destructive text-xs" role="alert">
+                  {profileForm.errorFor("website")}
+                </p>
+              ) : null}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="org-tz">Time zone</Label>
@@ -483,13 +575,15 @@ export function TeamSettingsClient() {
           </div>
           <Button
             size="sm"
-            disabled={busy || !settings.name.trim()}
-            onClick={() =>
+            disabled={busy || !profileForm.valid}
+            onClick={() => {
+              profileForm.markSubmitted();
+              if (!profileForm.valid) return;
               void post(
                 { action: "update_profile", ...settings },
                 "Company profile saved",
-              )
-            }
+              );
+            }}
           >
             Save company profile
           </Button>
@@ -528,6 +622,7 @@ export function TeamSettingsClient() {
                   <Input
                     id="color"
                     value={settings.brand_primary_color}
+                    onBlur={() => brandingForm.markTouched("brand_primary_color")}
                     onChange={(e) =>
                       set("brand_primary_color", e.target.value)
                     }
@@ -535,9 +630,9 @@ export function TeamSettingsClient() {
                     aria-invalid={!colorValid || undefined}
                   />
                 </div>
-                {!colorValid ? (
+                {brandingForm.errorForAlways("brand_primary_color") ? (
                   <p className="text-destructive text-xs">
-                    Enter a hex color such as #0F766E.
+                    {brandingForm.errorForAlways("brand_primary_color")}
                   </p>
                 ) : null}
               </div>
@@ -546,13 +641,14 @@ export function TeamSettingsClient() {
                 <Input
                   id="logo"
                   value={settings.logo_url}
+                  onBlur={() => brandingForm.markTouched("logo_url")}
                   onChange={(e) => set("logo_url", e.target.value)}
                   placeholder="https://yourpm.com/logo.png"
                   aria-invalid={!logoValid || undefined}
                 />
-                {!logoValid ? (
+                {brandingForm.errorForAlways("logo_url") ? (
                   <p className="text-destructive text-xs">
-                    The logo must be served over https.
+                    {brandingForm.errorForAlways("logo_url")}
                   </p>
                 ) : null}
               </div>
@@ -562,9 +658,18 @@ export function TeamSettingsClient() {
                   id="from"
                   type="email"
                   value={settings.from_email}
+                  aria-invalid={
+                    Boolean(brandingForm.errorFor("from_email")) || undefined
+                  }
+                  onBlur={() => brandingForm.markTouched("from_email")}
                   onChange={(e) => set("from_email", e.target.value)}
                   placeholder="compliance@yourpm.com"
                 />
+                {brandingForm.errorFor("from_email") ? (
+                  <p className="text-destructive text-xs" role="alert">
+                    {brandingForm.errorFor("from_email")}
+                  </p>
+                ) : null}
                 <p className="text-muted-foreground text-xs">
                   A custom from-address requires DKIM on your domain in Resend.
                 </p>
@@ -575,9 +680,19 @@ export function TeamSettingsClient() {
                   id="reply"
                   type="email"
                   value={settings.reply_to_email}
+                  aria-invalid={
+                    Boolean(brandingForm.errorFor("reply_to_email")) ||
+                    undefined
+                  }
+                  onBlur={() => brandingForm.markTouched("reply_to_email")}
                   onChange={(e) => set("reply_to_email", e.target.value)}
                   placeholder="you@yourpm.com"
                 />
+                {brandingForm.errorFor("reply_to_email") ? (
+                  <p className="text-destructive text-xs" role="alert">
+                    {brandingForm.errorFor("reply_to_email")}
+                  </p>
+                ) : null}
               </div>
             </div>
 
@@ -628,8 +743,10 @@ export function TeamSettingsClient() {
           <Button
             size="sm"
             variant="outline"
-            disabled={busy || !colorValid || !logoValid}
-            onClick={() =>
+            disabled={busy || !brandingForm.valid}
+            onClick={() => {
+              brandingForm.markSubmitted();
+              if (!brandingForm.valid) return;
               void post(
                 {
                   action: "update_branding",
@@ -640,8 +757,8 @@ export function TeamSettingsClient() {
                   chase_notify_email: settings.chase_notify_email,
                 },
                 "Branding saved",
-              )
-            }
+              );
+            }}
           >
             Save branding
           </Button>
@@ -685,10 +802,22 @@ export function TeamSettingsClient() {
                 id="notify-email"
                 type="email"
                 value={settings.chase_notify_email}
+                aria-invalid={
+                  Boolean(notificationsForm.errorFor("chase_notify_email")) ||
+                  undefined
+                }
+                onBlur={() =>
+                  notificationsForm.markTouched("chase_notify_email")
+                }
                 onChange={(e) => set("chase_notify_email", e.target.value)}
                 placeholder="compliance@yourpm.com"
                 disabled={!settings.notify_email_enabled}
               />
+              {notificationsForm.errorFor("chase_notify_email") ? (
+                <p className="text-destructive text-xs" role="alert">
+                  {notificationsForm.errorFor("chase_notify_email")}
+                </p>
+              ) : null}
               <p className="text-muted-foreground text-xs">
                 Vendor replies and failed checks land here.
               </p>
@@ -699,12 +828,22 @@ export function TeamSettingsClient() {
                 id="digest-email"
                 type="email"
                 value={settings.digest_email}
+                aria-invalid={
+                  Boolean(notificationsForm.errorFor("digest_email")) ||
+                  undefined
+                }
+                onBlur={() => notificationsForm.markTouched("digest_email")}
                 onChange={(e) => set("digest_email", e.target.value)}
                 placeholder="you@yourpm.com"
                 disabled={
                   !settings.notify_email_enabled || !settings.digest_enabled
                 }
               />
+              {notificationsForm.errorFor("digest_email") ? (
+                <p className="text-destructive text-xs" role="alert">
+                  {notificationsForm.errorFor("digest_email")}
+                </p>
+              ) : null}
               <div className="flex items-center gap-2 pt-0.5">
                 <Switch
                   id="digest-enabled"
@@ -740,8 +879,10 @@ export function TeamSettingsClient() {
 
           <Button
             size="sm"
-            disabled={busy}
-            onClick={() =>
+            disabled={busy || !notificationsForm.valid}
+            onClick={() => {
+              notificationsForm.markSubmitted();
+              if (!notificationsForm.valid) return;
               void post(
                 {
                   action: "update_notifications",
@@ -751,8 +892,8 @@ export function TeamSettingsClient() {
                   digest_enabled: settings.digest_enabled,
                 },
                 "Notification settings saved",
-              )
-            }
+              );
+            }}
           >
             Save notifications
           </Button>
@@ -815,9 +956,18 @@ export function TeamSettingsClient() {
                 id="invite-email"
                 type="email"
                 value={email}
+                aria-invalid={
+                  Boolean(inviteForm.errorFor("email")) || undefined
+                }
+                onBlur={() => inviteForm.markTouched("email")}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="teammate@yourpm.com"
               />
+              {inviteForm.errorFor("email") ? (
+                <p className="text-destructive text-xs" role="alert">
+                  {inviteForm.errorFor("email")}
+                </p>
+              ) : null}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="invite-role">Role</Label>
@@ -843,13 +993,15 @@ export function TeamSettingsClient() {
           </div>
           <Button
             size="sm"
-            disabled={busy || !email.trim()}
-            onClick={() =>
+            disabled={busy || !email.trim() || !inviteForm.valid}
+            onClick={() => {
+              inviteForm.markSubmitted();
+              if (!inviteForm.valid) return;
               void post(
                 { action: "invite", email, role },
                 `Invite emailed to ${email.trim()}`,
-              )
-            }
+              );
+            }}
           >
             Invite
           </Button>

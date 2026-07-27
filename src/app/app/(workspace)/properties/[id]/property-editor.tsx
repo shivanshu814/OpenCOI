@@ -1,5 +1,6 @@
 "use client";
 
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,6 +22,8 @@ import {
   notifyCaughtError,
   notifySuccess,
 } from "@/lib/ui/toast";
+import { propertyEditorFormSchema } from "@/lib/validation/schemas";
+import { useZodForm } from "@/lib/validation/use-zod-form";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -44,6 +47,11 @@ type Props = {
   rules: RequirementRule[];
   vendorIds: string[];
   vendors: VendorOpt[];
+  /**
+   * False for Read-only members. PATCH /api/properties/[id] enforces the same
+   * rule — this only stops them filling in a form that would 403 on submit.
+   */
+  canEdit: boolean;
 };
 
 function SectionHeading({ title, hint }: { title: string; hint?: string }) {
@@ -57,12 +65,22 @@ function SectionHeading({ title, hint }: { title: string; hint?: string }) {
   );
 }
 
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return (
+    <p className="text-destructive text-xs" role="alert">
+      {message}
+    </p>
+  );
+}
+
 export function PropertyEditor({
   propertyId,
   initial,
   rules,
   vendorIds,
   vendors,
+  canEdit,
 }: Props) {
   const router = useRouter();
   const [form, setForm] = useState(initial);
@@ -76,6 +94,19 @@ export function PropertyEditor({
   });
   const [busy, setBusy] = useState(false);
 
+  const validation = useZodForm(propertyEditorFormSchema, {
+    name: form.name,
+    address_line: form.address_line,
+    city: form.city,
+    state: form.state,
+    postal_code: form.postal_code,
+    certificate_holder_name: form.certificate_holder_name,
+    additional_insured_wording: form.additional_insured_wording,
+    owner_report_email: form.owner_report_email,
+    owner_report_enabled: ownerReportEnabled,
+    gl_min_amount: glMin,
+  });
+
   function toggleVendor(id: string) {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -87,6 +118,8 @@ export function PropertyEditor({
 
   async function onSave(e: React.FormEvent) {
     e.preventDefault();
+    validation.markSubmitted();
+    if (!canEdit || !validation.valid) return;
     setBusy(true);
     try {
       const min = Number(glMin.replace(/,/g, ""));
@@ -152,184 +185,244 @@ export function PropertyEditor({
 
   return (
     <form onSubmit={onSave} className="space-y-6">
-      <section className="space-y-4">
-        <SectionHeading title="Property details" />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field className="sm:col-span-2">
-            <FieldLabel htmlFor="name">Name</FieldLabel>
-            <Input
-              id="name"
-              required
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
+      {!canEdit ? (
+        <Alert>
+          <AlertDescription>
+            Read-only role — property details, certificate-holder wording, and
+            requirement overrides are managed by a Manager or Admin.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      <fieldset
+        disabled={!canEdit}
+        className="m-0 min-w-0 space-y-6 border-0 p-0"
+      >
+        <section className="space-y-4">
+          <SectionHeading title="Property details" />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field className="sm:col-span-2">
+              <FieldLabel htmlFor="name">Name</FieldLabel>
+              <Input
+                id="name"
+                required
+                value={form.name}
+                aria-invalid={Boolean(validation.errorFor("name")) || undefined}
+                onBlur={() => validation.markTouched("name")}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+              <FieldError message={validation.errorFor("name")} />
+            </Field>
+            <UsAddressFields
+              className="sm:col-span-2"
+              idPrefix="prop-addr"
+              streetLabel="Address"
+              value={{
+                address_line: form.address_line,
+                city: form.city,
+                state: form.state,
+                postal_code: form.postal_code,
+              }}
+              onChange={(next) => {
+                validation.markTouched("postal_code");
+                validation.markTouched("state");
+                setForm({ ...form, ...next });
+              }}
             />
-          </Field>
-          <UsAddressFields
-            className="sm:col-span-2"
-            idPrefix="prop-addr"
-            streetLabel="Address"
-            value={{
-              address_line: form.address_line,
-              city: form.city,
-              state: form.state,
-              postal_code: form.postal_code,
-            }}
-            onChange={(next) => setForm({ ...form, ...next })}
+            <div className="space-y-1 sm:col-span-2">
+              <FieldError message={validation.errorFor("postal_code")} />
+              <FieldError message={validation.errorFor("state")} />
+              <FieldError message={validation.errorFor("address_line")} />
+              <FieldError message={validation.errorFor("city")} />
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-4 border-t pt-6">
+          <SectionHeading
+            title="Certificate holder & wording"
+            hint="What must appear on every COI for this property."
           />
-        </div>
-      </section>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field className="sm:col-span-2">
+              <FieldLabel htmlFor="holder">Certificate holder name</FieldLabel>
+              <Input
+                id="holder"
+                value={form.certificate_holder_name}
+                aria-invalid={
+                  Boolean(validation.errorFor("certificate_holder_name")) ||
+                  undefined
+                }
+                onBlur={() => validation.markTouched("certificate_holder_name")}
+                onChange={(e) =>
+                  setForm({ ...form, certificate_holder_name: e.target.value })
+                }
+              />
+              <FieldError
+                message={validation.errorFor("certificate_holder_name")}
+              />
+            </Field>
+            <Field className="sm:col-span-2">
+              <FieldLabel htmlFor="ai">Additional insured wording</FieldLabel>
+              <Textarea
+                id="ai"
+                rows={3}
+                value={form.additional_insured_wording}
+                aria-invalid={
+                  Boolean(validation.errorFor("additional_insured_wording")) ||
+                  undefined
+                }
+                onBlur={() =>
+                  validation.markTouched("additional_insured_wording")
+                }
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    additional_insured_wording: e.target.value,
+                  })
+                }
+                placeholder="…including Oak Street LLC as additional insured…"
+              />
+              <FieldError
+                message={validation.errorFor("additional_insured_wording")}
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="llcs">
+                Owner LLCs (comma-separated)
+              </FieldLabel>
+              <Input
+                id="llcs"
+                value={form.owner_llc_names}
+                onChange={(e) =>
+                  setForm({ ...form, owner_llc_names: e.target.value })
+                }
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="lenders">
+                Lenders (comma-separated)
+              </FieldLabel>
+              <Input
+                id="lenders"
+                value={form.lender_names}
+                onChange={(e) =>
+                  setForm({ ...form, lender_names: e.target.value })
+                }
+              />
+            </Field>
+          </div>
+        </section>
 
-      <section className="space-y-4 border-t pt-6">
-        <SectionHeading
-          title="Certificate holder & wording"
-          hint="What must appear on every COI for this property."
-        />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field className="sm:col-span-2">
-            <FieldLabel htmlFor="holder">Certificate holder name</FieldLabel>
-            <Input
-              id="holder"
-              value={form.certificate_holder_name}
-              onChange={(e) =>
-                setForm({ ...form, certificate_holder_name: e.target.value })
-              }
-            />
-          </Field>
-          <Field className="sm:col-span-2">
-            <FieldLabel htmlFor="ai">Additional insured wording</FieldLabel>
-            <Textarea
-              id="ai"
-              rows={3}
-              value={form.additional_insured_wording}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  additional_insured_wording: e.target.value,
-                })
-              }
-              placeholder="…including Oak Street LLC as additional insured…"
-            />
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="llcs">
-              Owner LLCs (comma-separated)
-            </FieldLabel>
-            <Input
-              id="llcs"
-              value={form.owner_llc_names}
-              onChange={(e) =>
-                setForm({ ...form, owner_llc_names: e.target.value })
-              }
-            />
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="lenders">Lenders (comma-separated)</FieldLabel>
-            <Input
-              id="lenders"
-              value={form.lender_names}
-              onChange={(e) =>
-                setForm({ ...form, lender_names: e.target.value })
-              }
-            />
-          </Field>
-        </div>
-      </section>
-
-      <section className="space-y-4 border-t pt-6">
-        <SectionHeading
-          title="Owner report (D3)"
-          hint="A monthly compliance summary for the building owner."
-        />
-        <div className="max-w-md space-y-1.5">
-          <Field>
-            <FieldLabel htmlFor="owner-email">Owner report email</FieldLabel>
-            <Input
-              id="owner-email"
-              type="email"
-              placeholder="owner@building.example"
-              value={form.owner_report_email}
-              onChange={(e) =>
-                setForm({ ...form, owner_report_email: e.target.value })
-              }
-            />
-          </Field>
-          <label
-            htmlFor="owner-report-enabled"
-            className="mt-2 flex cursor-pointer items-center gap-2 text-sm"
-          >
-            <Checkbox
-              id="owner-report-enabled"
-              checked={ownerReportEnabled}
-              onCheckedChange={(checked) => setOwnerReportEnabled(checked)}
-            />
-            Email monthly owner report automatically
-          </label>
-        </div>
-      </section>
-
-      <Card className="gap-0 py-0">
-        <CardHeader className="py-3">
-          <CardTitle className="text-sm font-semibold">
-            Requirement override
-          </CardTitle>
-          <CardDescription className="text-xs">
-            Merges over global + trade rules for documents tied to this
-            property.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="border-t py-4">
-          <Field className="max-w-xs">
-            <FieldLabel htmlFor="gl">GL each-occurrence minimum ($)</FieldLabel>
-            <Input
-              id="gl"
-              className="tabular-nums"
-              value={glMin}
-              onChange={(e) => setGlMin(e.target.value)}
-            />
-          </Field>
-        </CardContent>
-      </Card>
-
-      <Card className="gap-0 py-0">
-        <CardHeader className="py-3">
-          <CardTitle className="text-sm font-semibold">
-            Vendors on this property
-          </CardTitle>
-          <CardDescription className="text-xs">
-            Checked vendors are tracked against this property’s requirements.
-          </CardDescription>
-          <CardAction className="text-muted-foreground self-center text-xs tabular-nums">
-            {selected.size}/{vendors.length}
-          </CardAction>
-        </CardHeader>
-        <CardContent className="divide-y border-t px-0">
-          {vendors.map((v) => (
+        <section className="space-y-4 border-t pt-6">
+          <SectionHeading
+            title="Owner report (D3)"
+            hint="A monthly compliance summary for the building owner."
+          />
+          <div className="max-w-md space-y-1.5">
+            <Field>
+              <FieldLabel htmlFor="owner-email">Owner report email</FieldLabel>
+              <Input
+                id="owner-email"
+                type="email"
+                placeholder="owner@building.example"
+                value={form.owner_report_email}
+                aria-invalid={
+                  Boolean(validation.errorFor("owner_report_email")) ||
+                  undefined
+                }
+                onBlur={() => validation.markTouched("owner_report_email")}
+                onChange={(e) =>
+                  setForm({ ...form, owner_report_email: e.target.value })
+                }
+              />
+              <FieldError message={validation.errorFor("owner_report_email")} />
+            </Field>
             <label
-              key={v.id}
-              htmlFor={`v-${v.id}`}
-              className="hover:bg-muted/40 flex cursor-pointer items-center gap-2.5 px-4 py-2.5 text-sm"
+              htmlFor="owner-report-enabled"
+              className="mt-2 flex cursor-pointer items-center gap-2 text-sm"
             >
               <Checkbox
-                id={`v-${v.id}`}
-                checked={selected.has(v.id)}
-                onCheckedChange={() => toggleVendor(v.id)}
+                id="owner-report-enabled"
+                checked={ownerReportEnabled}
+                onCheckedChange={(checked) => setOwnerReportEnabled(checked)}
               />
-              {v.name}
+              Email monthly owner report automatically
             </label>
-          ))}
-          {vendors.length === 0 ? (
-            <p className="text-muted-foreground px-4 py-6 text-center text-sm">
-              No vendors yet — add vendors first, then attach them here.
-            </p>
-          ) : null}
-        </CardContent>
-      </Card>
+          </div>
+        </section>
 
-      <div className="flex items-center gap-3">
-        <Button type="submit" disabled={busy}>
-          {busy ? "Saving…" : "Save property"}
-        </Button>
-      </div>
+        <Card className="gap-0 py-0">
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm font-semibold">
+              Requirement override
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Merges over global + trade rules for documents tied to this
+              property.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="border-t py-4">
+            <Field className="max-w-xs">
+              <FieldLabel htmlFor="gl">
+                GL each-occurrence minimum ($)
+              </FieldLabel>
+              <Input
+                id="gl"
+                className="tabular-nums"
+                value={glMin}
+                aria-invalid={
+                  Boolean(validation.errorFor("gl_min_amount")) || undefined
+                }
+                onBlur={() => validation.markTouched("gl_min_amount")}
+                onChange={(e) => setGlMin(e.target.value)}
+              />
+              <FieldError message={validation.errorFor("gl_min_amount")} />
+            </Field>
+          </CardContent>
+        </Card>
+
+        <Card className="gap-0 py-0">
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm font-semibold">
+              Vendors on this property
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Checked vendors are tracked against this property’s requirements.
+            </CardDescription>
+            <CardAction className="text-muted-foreground self-center text-xs tabular-nums">
+              {selected.size}/{vendors.length}
+            </CardAction>
+          </CardHeader>
+          <CardContent className="divide-y border-t px-0">
+            {vendors.map((v) => (
+              <label
+                key={v.id}
+                htmlFor={`v-${v.id}`}
+                className="hover:bg-muted/40 flex cursor-pointer items-center gap-2.5 px-4 py-2.5 text-sm"
+              >
+                <Checkbox
+                  id={`v-${v.id}`}
+                  checked={selected.has(v.id)}
+                  onCheckedChange={() => toggleVendor(v.id)}
+                />
+                {v.name}
+              </label>
+            ))}
+            {vendors.length === 0 ? (
+              <p className="text-muted-foreground px-4 py-6 text-center text-sm">
+                No vendors yet — add vendors first, then attach them here.
+              </p>
+            ) : null}
+          </CardContent>
+        </Card>
+
+        <div className="flex items-center gap-3">
+          <Button type="submit" disabled={busy || !validation.valid}>
+            {busy ? "Saving…" : "Save property"}
+          </Button>
+        </div>
+      </fieldset>
     </form>
   );
 }

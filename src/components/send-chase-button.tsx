@@ -8,6 +8,7 @@ import {
   notifyNotSent,
   notifySuccess,
 } from "@/lib/ui/toast";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export function SendChaseButton({
@@ -17,6 +18,7 @@ export function SendChaseButton({
   vendorId: string;
   vendorName: string;
 }) {
+  const router = useRouter();
   const [busy, setBusy] = useState(false);
 
   async function send(locale: "en" | "es") {
@@ -60,6 +62,10 @@ export function SendChaseButton({
       notifySuccess(
         `Chase email sent to ${vendorName} (${locale.toUpperCase()})`,
       );
+      // The send advances the chase cadence and appends to the vendor's
+      // message thread. Without this the toast was the only evidence — the
+      // timeline underneath it still showed the pre-send state until reload.
+      router.refresh();
     } catch {
       notifyApiError(null, "Network error — chase not sent");
     } finally {

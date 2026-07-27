@@ -3,6 +3,10 @@ import { canAdminSensitive } from "@/lib/auth/roles";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
+import {
+  propertyAccessSchema,
+  validationErrorBody,
+} from "@/lib/validation/schemas";
 import { NextResponse } from "next/server";
 
 /**
@@ -62,19 +66,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Admin only" }, { status: 403 });
   }
 
-  const body = (await request.json()) as {
-    user_id?: string;
-    /** Full replacement set. Empty array = restore org-wide access. */
-    property_ids?: string[];
-  };
-
-  const userId = body.user_id?.trim();
-  if (!userId) {
-    return NextResponse.json({ error: "user_id is required." }, { status: 400 });
+  const parsed = propertyAccessSchema.safeParse(
+    await request.json().catch(() => null),
+  );
+  if (!parsed.success) {
+    return NextResponse.json(
+      validationErrorBody(parsed.error, "user_id is required."),
+      { status: 400 },
+    );
   }
-  const propertyIds = Array.isArray(body.property_ids)
-    ? [...new Set(body.property_ids.filter((id) => typeof id === "string"))]
-    : [];
+
+  const userId = parsed.data.user_id;
+  const propertyIds = [...new Set(parsed.data.property_ids ?? [])];
 
   const supabase = await createClient();
 

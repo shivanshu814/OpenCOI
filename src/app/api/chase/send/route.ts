@@ -10,36 +10,19 @@ import { canWriteOrgData } from "@/lib/auth/roles";
 import { DEMO_VENDORS } from "@/lib/demo/store";
 import { inngest } from "@/inngest/client";
 import { isInngestConfigured } from "@/lib/config";
+import {
+  chaseSendSchema,
+  validationErrorBody,
+} from "@/lib/validation/schemas";
 import { NextResponse } from "next/server";
-import { z } from "zod";
-
-const bodySchema = z.object({
-  vendorId: z.string().min(1),
-  templateKey: z
-    .enum([
-      "doc_request",
-      "expiry_30",
-      "expiry_14",
-      "expiry_7",
-      "expiry_1",
-      "post_expiry_weekly",
-      "thanks_compliant",
-      "escalation_customer",
-    ])
-    .optional(),
-  locale: z.enum(["en", "es"]).optional(),
-  previewOnly: z.boolean().optional(),
-  async: z.boolean().optional(),
-});
 
 export async function POST(request: Request) {
   const json = await request.json().catch(() => null);
-  const parsed = bodySchema.safeParse(json);
+  const parsed = chaseSendSchema.safeParse(json);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Invalid body", details: parsed.error.flatten() },
-      { status: 400 },
-    );
+    return NextResponse.json(validationErrorBody(parsed.error, "Invalid body"), {
+      status: 400,
+    });
   }
 
   const { vendorId, templateKey, locale, previewOnly, async: useAsync } =

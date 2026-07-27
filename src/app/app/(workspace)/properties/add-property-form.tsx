@@ -14,6 +14,8 @@ import {
   notifyApiError,
   notifyCaughtError,
 } from "@/lib/ui/toast";
+import { propertyCreateSchema } from "@/lib/validation/schemas";
+import { useZodForm } from "@/lib/validation/use-zod-form";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -24,8 +26,15 @@ export function AddPropertyForm() {
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
+  const validation = useZodForm(propertyCreateSchema, {
+    name,
+    certificate_holder_name: holder,
+  });
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    validation.markSubmitted();
+    if (!validation.valid) return;
     setBusy(true);
     setFormError(null);
     try {
@@ -55,6 +64,7 @@ export function AddPropertyForm() {
       }
       setName("");
       setHolder("");
+      validation.reset();
       router.refresh();
     } catch (err) {
       notifyCaughtError(err, "Could not create property");
@@ -80,9 +90,16 @@ export function AddPropertyForm() {
               id="prop-name"
               required
               value={name}
+              aria-invalid={Boolean(validation.errorFor("name")) || undefined}
+              onBlur={() => validation.markTouched("name")}
               onChange={(e) => setName(e.target.value)}
               placeholder="Oak Street Apartments"
             />
+            {validation.errorFor("name") ? (
+              <p className="text-destructive text-xs" role="alert">
+                {validation.errorFor("name")}
+              </p>
+            ) : null}
           </Field>
           <Field>
             <FieldLabel htmlFor="holder">
@@ -91,12 +108,22 @@ export function AddPropertyForm() {
             <Input
               id="holder"
               value={holder}
+              aria-invalid={
+                Boolean(validation.errorFor("certificate_holder_name")) ||
+                undefined
+              }
+              onBlur={() => validation.markTouched("certificate_holder_name")}
               onChange={(e) => setHolder(e.target.value)}
               placeholder="Oak Street LLC c/o …"
             />
+            {validation.errorFor("certificate_holder_name") ? (
+              <p className="text-destructive text-xs" role="alert">
+                {validation.errorFor("certificate_holder_name")}
+              </p>
+            ) : null}
           </Field>
           <div className="flex items-center gap-3 sm:col-span-2">
-            <Button type="submit" disabled={busy}>
+            <Button type="submit" disabled={busy || !validation.valid}>
               {busy ? "Saving…" : "Add property"}
             </Button>
             {formError ? (

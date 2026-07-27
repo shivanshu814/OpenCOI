@@ -4,6 +4,10 @@ import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { insertAuditEvent } from "@/lib/audit/write";
+import {
+  integrationsSchema,
+  validationErrorBody,
+} from "@/lib/validation/schemas";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -49,15 +53,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Admin only" }, { status: 403 });
   }
 
-  const body = (await request.json()) as {
-    action?: "create_key" | "revoke_key" | "create_webhook" | "toggle_webhook";
-    name?: string;
-    key_id?: string;
-    url?: string;
-    events?: string[];
-    webhook_id?: string;
-    active?: boolean;
-  };
+  const parsed = integrationsSchema.safeParse(
+    await request.json().catch(() => null),
+  );
+  if (!parsed.success) {
+    return NextResponse.json(
+      validationErrorBody(parsed.error, "Unknown action"),
+      { status: 400 },
+    );
+  }
+  const body = parsed.data;
 
   const supabase = await createClient();
 
@@ -95,7 +100,7 @@ export async function POST(request: Request) {
     });
   }
 
-  if (body.action === "revoke_key" && body.key_id) {
+  if (body.action === "revoke_key") {
     const { error } = await supabase
       .from("api_keys")
       .update({ revoked_at: new Date().toISOString() })
@@ -107,7 +112,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  if (body.action === "create_webhook" && body.url) {
+  if (body.action === "create_webhook") {
     const secret = `whsec_${crypto.randomUUID().replace(/-/g, "")}`;
     const { data, error } = await supabase
       .from("outbound_webhooks")
@@ -133,7 +138,7 @@ export async function POST(request: Request) {
     });
   }
 
-  if (body.action === "toggle_webhook" && body.webhook_id) {
+  if (body.action === "toggle_webhook") {
     const { error } = await supabase
       .from("outbound_webhooks")
       .update({

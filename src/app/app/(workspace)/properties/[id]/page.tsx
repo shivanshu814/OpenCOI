@@ -8,6 +8,7 @@ import {
 import { RoleGate } from "@/components/role-gate";
 import { SendOwnerReportButton } from "@/components/send-owner-report-button";
 import { Button } from "@/components/ui/button";
+import { canWriteOrgData } from "@/lib/auth/roles";
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
 import type { RequirementRule } from "@/lib/requirements/engine";
@@ -122,6 +123,7 @@ export default async function PropertyDetailPage({
         rules={(reqSet?.rules as RequirementRule[]) ?? []}
         vendorIds={(links ?? []).map((l) => l.vendor_id)}
         vendors={(vendors ?? []) as { id: string; name: string }[]}
+        canEdit={canWriteOrgData(session.role)}
       />
 
       <PageSecondary>

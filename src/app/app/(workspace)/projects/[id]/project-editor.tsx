@@ -1,5 +1,6 @@
 "use client";
 
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -29,6 +30,8 @@ import {
   notifyCaughtError,
   notifySuccess,
 } from "@/lib/ui/toast";
+import { projectEditorFormSchema } from "@/lib/validation/schemas";
+import { useZodForm } from "@/lib/validation/use-zod-form";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -48,6 +51,11 @@ type Props = {
   rules: RequirementRule[];
   vendorIds: string[];
   vendors: VendorOpt[];
+  /**
+   * False for Read-only members. PATCH /api/projects/[id] enforces the same
+   * rule — this only stops them filling in a form that would 403 on submit.
+   */
+  canEdit: boolean;
 };
 
 const STATUS_ITEMS: ReadonlyArray<{ label: string; value: ProjectStatus }> = [
@@ -67,12 +75,22 @@ function SectionHeading({ title, hint }: { title: string; hint?: string }) {
   );
 }
 
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return (
+    <p className="text-destructive text-xs" role="alert">
+      {message}
+    </p>
+  );
+}
+
 export function ProjectEditor({
   projectId,
   initial,
   rules,
   vendorIds,
   vendors,
+  canEdit,
 }: Props) {
   const router = useRouter();
   const [form, setForm] = useState(initial);
@@ -82,6 +100,17 @@ export function ProjectEditor({
     return String(r?.min_amount ?? 2_000_000);
   });
   const [busy, setBusy] = useState(false);
+
+  const validation = useZodForm(projectEditorFormSchema, {
+    name: form.name,
+    start_date: form.start_date,
+    end_date: form.end_date,
+    status: form.status,
+    certificate_holder_name: form.certificate_holder_name,
+    additional_insured_wording: form.additional_insured_wording,
+    notes: form.notes,
+    gl_min_amount: glMin,
+  });
 
   function toggleVendor(id: string) {
     setSelected((prev) => {
@@ -94,6 +123,8 @@ export function ProjectEditor({
 
   async function onSave(e: React.FormEvent) {
     e.preventDefault();
+    validation.markSubmitted();
+    if (!canEdit || !validation.valid) return;
     setBusy(true);
     try {
       const min = Number(glMin.replace(/,/g, ""));
@@ -149,6 +180,19 @@ export function ProjectEditor({
 
   return (
     <form onSubmit={onSave} className="space-y-6">
+      {!canEdit ? (
+        <Alert>
+          <AlertDescription>
+            Read-only role — job details, certificate-holder wording, and
+            requirement overrides are managed by a Manager or Admin.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      <fieldset
+        disabled={!canEdit}
+        className="m-0 min-w-0 space-y-6 border-0 p-0"
+      >
       <section className="space-y-4">
         <SectionHeading title="Project details" />
         <div className="grid gap-4 sm:grid-cols-2">
@@ -158,8 +202,11 @@ export function ProjectEditor({
               id="name"
               required
               value={form.name}
+              aria-invalid={Boolean(validation.errorFor("name")) || undefined}
+              onBlur={() => validation.markTouched("name")}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
+            <FieldError message={validation.errorFor("name")} />
           </Field>
           <Field>
             <FieldLabel htmlFor="start">Start date</FieldLabel>
@@ -167,8 +214,12 @@ export function ProjectEditor({
               id="start"
               placeholder="Start date"
               value={form.start_date}
-              onChange={(iso) => setForm({ ...form, start_date: iso })}
+              onChange={(iso) => {
+                validation.markTouched("start_date");
+                setForm({ ...form, start_date: iso });
+              }}
             />
+            <FieldError message={validation.errorFor("start_date")} />
           </Field>
           <Field>
             <FieldLabel htmlFor="end">End date</FieldLabel>
@@ -176,8 +227,12 @@ export function ProjectEditor({
               id="end"
               placeholder="End date"
               value={form.end_date}
-              onChange={(iso) => setForm({ ...form, end_date: iso })}
+              onChange={(iso) => {
+                validation.markTouched("end_date");
+                setForm({ ...form, end_date: iso });
+              }}
             />
+            <FieldError message={validation.errorFor("end_date")} />
           </Field>
           <Field>
             <FieldLabel htmlFor="status">Status</FieldLabel>
@@ -206,8 +261,11 @@ export function ProjectEditor({
               id="notes"
               rows={2}
               value={form.notes}
+              aria-invalid={Boolean(validation.errorFor("notes")) || undefined}
+              onBlur={() => validation.markTouched("notes")}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
             />
+            <FieldError message={validation.errorFor("notes")} />
           </Field>
         </div>
       </section>
@@ -223,9 +281,17 @@ export function ProjectEditor({
             <Input
               id="holder"
               value={form.certificate_holder_name}
+              aria-invalid={
+                Boolean(validation.errorFor("certificate_holder_name")) ||
+                undefined
+              }
+              onBlur={() => validation.markTouched("certificate_holder_name")}
               onChange={(e) =>
                 setForm({ ...form, certificate_holder_name: e.target.value })
               }
+            />
+            <FieldError
+              message={validation.errorFor("certificate_holder_name")}
             />
           </Field>
           <Field className="sm:col-span-2">
@@ -234,12 +300,22 @@ export function ProjectEditor({
               id="ai"
               rows={3}
               value={form.additional_insured_wording}
+              aria-invalid={
+                Boolean(validation.errorFor("additional_insured_wording")) ||
+                undefined
+              }
+              onBlur={() =>
+                validation.markTouched("additional_insured_wording")
+              }
               onChange={(e) =>
                 setForm({
                   ...form,
                   additional_insured_wording: e.target.value,
                 })
               }
+            />
+            <FieldError
+              message={validation.errorFor("additional_insured_wording")}
             />
           </Field>
         </div>
@@ -262,8 +338,13 @@ export function ProjectEditor({
               id="gl"
               className="tabular-nums"
               value={glMin}
+              aria-invalid={
+                Boolean(validation.errorFor("gl_min_amount")) || undefined
+              }
+              onBlur={() => validation.markTouched("gl_min_amount")}
               onChange={(e) => setGlMin(e.target.value)}
             />
+            <FieldError message={validation.errorFor("gl_min_amount")} />
           </Field>
         </CardContent>
       </Card>
@@ -304,10 +385,11 @@ export function ProjectEditor({
       </Card>
 
       <div className="flex items-center gap-3">
-        <Button type="submit" disabled={busy}>
+        <Button type="submit" disabled={busy || !validation.valid}>
           {busy ? "Saving…" : "Save project"}
         </Button>
       </div>
+      </fieldset>
     </form>
   );
 }

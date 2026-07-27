@@ -4,18 +4,11 @@ import { isSupabaseConfigured } from "@/lib/config";
 import { DEFAULT_GLOBAL_RULES } from "@/lib/requirements/engine";
 import { createClient } from "@/lib/supabase/server";
 import { insertAuditEvent } from "@/lib/audit/write";
+import {
+  projectCreateSchema,
+  validationErrorBody,
+} from "@/lib/validation/schemas";
 import { NextResponse } from "next/server";
-import { z } from "zod";
-
-const createSchema = z.object({
-  name: z.string().min(1).max(200),
-  property_id: z.string().uuid().optional().nullable(),
-  start_date: z.string().max(12).optional().nullable(),
-  end_date: z.string().max(12).optional().nullable(),
-  certificate_holder_name: z.string().max(300).optional().nullable(),
-  additional_insured_wording: z.string().max(1000).optional().nullable(),
-  notes: z.string().max(2000).optional().nullable(),
-});
 
 export async function GET() {
   if (!isSupabaseConfigured()) {
@@ -72,9 +65,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const parsed = createSchema.safeParse(await request.json());
+  const parsed = projectCreateSchema.safeParse(
+    await request.json().catch(() => null),
+  );
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid project" }, { status: 400 });
+    return NextResponse.json(
+      validationErrorBody(parsed.error, "Invalid project"),
+      { status: 400 },
+    );
   }
 
   const supabase = await createClient();

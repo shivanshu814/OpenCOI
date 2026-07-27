@@ -44,6 +44,7 @@ import {
   productRoleLabel,
   toProductRole,
 } from "@/lib/auth/roles";
+import { clearAllCache } from "@/lib/live/idb";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import {
@@ -61,7 +62,6 @@ import {
   SlidersHorizontal,
   Upload,
   UserRound,
-  Users,
   Wrench,
 } from "lucide-react";
 import Link from "next/link";
@@ -302,6 +302,11 @@ function AppHeader({
     } catch {
       // Cookie may already be gone — fall through to /login either way.
     }
+    // Cached panel data lives in IndexedDB, which outlives the session and is
+    // shared by every account on this browser profile. Signing out has to take
+    // it with you, or the next person to sign in on a shared office machine
+    // could paint the previous org's data before their first fetch lands.
+    await clearAllCache();
     router.push("/login");
     router.refresh();
   }

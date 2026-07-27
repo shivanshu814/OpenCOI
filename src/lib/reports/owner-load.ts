@@ -1,5 +1,6 @@
 import { getSessionOrg } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/config";
+import { countByKey, groupByKey, uniqueKeys } from "@/lib/data/join";
 import type { VendorStatus } from "@/lib/data/types";
 import { DEMO_DOCUMENTS, DEMO_VENDORS } from "@/lib/demo/store";
 import { propertyCompliancePercent } from "@/lib/scores/compute";
@@ -20,6 +21,13 @@ export type OwnerReportListRow = {
   risks_flagged: number;
   vendor_count: number;
 };
+
+/**
+ * Properties rendered on `/app/reports` in one pass. Well past any customer's
+ * real portfolio (the Business plan targets multi-site managers, not thousands
+ * of buildings), but explicit rather than relying on PostgREST's silent 1000.
+ */
+const OWNER_REPORT_PROPERTY_LIMIT = 500;
 
 const DEMO_PROPERTY = {
   id: "prop_demo_1",
@@ -44,24 +52,28 @@ export async function loadOwnerReport(
   if (!session) return null;
 
   const supabase = await createClient();
-  const { data: property, error } = await supabase
-    .from("properties")
-    .select(
-      "id, name, address_line, city, state, postal_code, owner_llc_names, certificate_holder_name",
-    )
-    .eq("id", propertyId)
-    .eq("org_id", session.orgId)
-    .maybeSingle();
+
+  // The vendor links are keyed on (org_id, property_id) — both known up front —
+  // so waiting for the property row first bought nothing but a round trip.
+  const [{ data: property, error }, { data: links }] = await Promise.all([
+    supabase
+      .from("properties")
+      .select(
+        "id, name, address_line, city, state, postal_code, owner_llc_names, certificate_holder_name",
+      )
+      .eq("id", propertyId)
+      .eq("org_id", session.orgId)
+      .maybeSingle(),
+    supabase
+      .from("property_vendors")
+      .select("vendor_id")
+      .eq("org_id", session.orgId)
+      .eq("property_id", propertyId),
+  ]);
 
   if (error || !property) return null;
 
-  const { data: links } = await supabase
-    .from("property_vendors")
-    .select("vendor_id")
-    .eq("property_id", propertyId)
-    .eq("org_id", session.orgId);
-
-  const vendorIds = (links ?? []).map((l) => l.vendor_id as string);
+  const vendorIds = uniqueKeys(links ?? [], (l) => l.vendor_id as string);
   if (vendorIds.length === 0) {
     return buildOwnerReport({
       orgName: session.orgName,
@@ -75,23 +87,22 @@ export async function loadOwnerReport(
     });
   }
 
-  const { data: vendors } = await supabase
-    .from("vendors")
-    .select("id, name, trade, status")
-    .eq("org_id", session.orgId)
-    .in("id", vendorIds);
+  // These two are independent of each other; they were awaited in sequence.
+  const [{ data: vendors }, { data: docs }] = await Promise.all([
+    supabase
+      .from("vendors")
+      .select("id, name, trade, status")
+      .eq("org_id", session.orgId)
+      .in("id", vendorIds),
+    supabase
+      .from("documents")
+      // Only vendor_id is counted — `id` was fetched and discarded.
+      .select("vendor_id")
+      .eq("org_id", session.orgId)
+      .in("vendor_id", vendorIds),
+  ]);
 
-  const { data: docs } = await supabase
-    .from("documents")
-    .select("id, vendor_id")
-    .eq("org_id", session.orgId)
-    .in("vendor_id", vendorIds);
-
-  const docCountByVendor = new Map<string, number>();
-  for (const d of docs ?? []) {
-    const vid = d.vendor_id as string;
-    docCountByVendor.set(vid, (docCountByVendor.get(vid) ?? 0) + 1);
-  }
+  const docCountByVendor = countByKey(docs ?? [], (d) => d.vendor_id as string);
 
   return buildOwnerReport({
     orgName: session.orgName,
@@ -164,13 +175,23 @@ export async function listOwnerReportRows(): Promise<OwnerReportListRow[]> {
   if (!session) return [];
 
   const supabase = await createClient();
-  const { data: properties } = await supabase
-    .from("properties")
-    .select(
-      "id, name, city, state, owner_report_email, owner_report_enabled",
-    )
-    .eq("org_id", session.orgId)
-    .order("name");
+
+  // The links read used to be `.in("property_id", <every property in the org>)`,
+  // which is the same set of rows as `.eq("org_id", …)` — an `in` filter
+  // enumerating the org's whole property list, and a round trip spent waiting
+  // to build it. Filtering by org directly lets both reads start together.
+  const [{ data: properties }, { data: links }] = await Promise.all([
+    supabase
+      .from("properties")
+      .select("id, name, city, state, owner_report_email, owner_report_enabled")
+      .eq("org_id", session.orgId)
+      .order("name")
+      .limit(OWNER_REPORT_PROPERTY_LIMIT),
+    supabase
+      .from("property_vendors")
+      .select("property_id, vendor_id")
+      .eq("org_id", session.orgId),
+  ]);
 
   const rows = (properties ?? []) as {
     id: string;
@@ -183,54 +204,39 @@ export async function listOwnerReportRows(): Promise<OwnerReportListRow[]> {
 
   if (rows.length === 0) return [];
 
-  const propertyIds = rows.map((p) => p.id);
-
-  const { data: links } = await supabase
-    .from("property_vendors")
-    .select("property_id, vendor_id")
-    .eq("org_id", session.orgId)
-    .in("property_id", propertyIds);
-
-  const vendorIdsByProperty = new Map<string, string[]>();
-  const allVendorIds = new Set<string>();
-  for (const link of links ?? []) {
-    const pid = link.property_id as string;
-    const vid = link.vendor_id as string;
-    const list = vendorIdsByProperty.get(pid) ?? [];
-    list.push(vid);
-    vendorIdsByProperty.set(pid, list);
-    allVendorIds.add(vid);
-  }
+  const linkedByProperty = groupByKey(
+    links ?? [],
+    (l) => l.property_id as string,
+  );
+  const allVendorIds = uniqueKeys(links ?? [], (l) => l.vendor_id as string);
 
   const vendorStatus = new Map<string, VendorStatus>();
-  const docCountByVendor = new Map<string, number>();
+  let docCountByVendor = new Map<string, number>();
 
-  if (allVendorIds.size > 0) {
-    const ids = [...allVendorIds];
+  if (allVendorIds.length > 0) {
     const [{ data: vendors }, { data: docs }] = await Promise.all([
       supabase
         .from("vendors")
         .select("id, status")
         .eq("org_id", session.orgId)
-        .in("id", ids),
+        .in("id", allVendorIds),
       supabase
         .from("documents")
         .select("vendor_id")
         .eq("org_id", session.orgId)
-        .in("vendor_id", ids),
+        .in("vendor_id", allVendorIds),
     ]);
 
     for (const v of vendors ?? []) {
       vendorStatus.set(v.id as string, v.status as VendorStatus);
     }
-    for (const d of docs ?? []) {
-      const vid = d.vendor_id as string;
-      docCountByVendor.set(vid, (docCountByVendor.get(vid) ?? 0) + 1);
-    }
+    docCountByVendor = countByKey(docs ?? [], (d) => d.vendor_id as string);
   }
 
   return rows.map((p) => {
-    const vids = vendorIdsByProperty.get(p.id) ?? [];
+    const vids = (linkedByProperty.get(p.id) ?? []).map(
+      (l) => l.vendor_id as string,
+    );
     const statuses = vids
       .map((id) => vendorStatus.get(id))
       .filter((s): s is VendorStatus => s != null);

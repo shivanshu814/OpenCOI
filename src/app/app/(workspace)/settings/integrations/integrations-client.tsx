@@ -39,6 +39,11 @@ import {
   notifySuccess,
   notifyWarning,
 } from "@/lib/ui/toast";
+import {
+  apiKeyCreateSchema,
+  webhookCreateSchema,
+} from "@/lib/validation/schemas";
+import { useZodForm } from "@/lib/validation/use-zod-form";
 import { useCallback, useEffect, useState } from "react";
 
 export function IntegrationsClient() {
@@ -80,6 +85,15 @@ export function IntegrationsClient() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const keyForm = useZodForm(apiKeyCreateSchema, {
+    action: "create_key",
+    name,
+  });
+  const webhookForm = useZodForm(webhookCreateSchema, {
+    action: "create_webhook",
+    url,
+  });
 
   async function post(body: Record<string, unknown>) {
     setBusy(true);
@@ -174,14 +188,25 @@ export function IntegrationsClient() {
                 id="key-name"
                 className="max-w-xs"
                 value={name}
+                aria-invalid={Boolean(keyForm.errorFor("name")) || undefined}
+                onBlur={() => keyForm.markTouched("name")}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Key name"
               />
+              {keyForm.errorFor("name") ? (
+                <p className="text-destructive text-xs" role="alert">
+                  {keyForm.errorFor("name")}
+                </p>
+              ) : null}
             </div>
             <Button
               size="sm"
-              disabled={busy}
-              onClick={() => void post({ action: "create_key", name })}
+              disabled={busy || !keyForm.valid}
+              onClick={() => {
+                keyForm.markSubmitted();
+                if (!keyForm.valid) return;
+                void post({ action: "create_key", name });
+              }}
             >
               Create key
             </Button>
@@ -313,15 +338,26 @@ export function IntegrationsClient() {
             <Input
               id="wh-url"
               value={url}
+              aria-invalid={Boolean(webhookForm.errorFor("url")) || undefined}
+              onBlur={() => webhookForm.markTouched("url")}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://hooks.zapier.com/…"
             />
+            {webhookForm.errorFor("url") ? (
+              <p className="text-destructive text-xs" role="alert">
+                {webhookForm.errorFor("url")}
+              </p>
+            ) : null}
           </div>
           <Button
             size="sm"
             variant="outline"
-            disabled={busy || !url.trim()}
-            onClick={() => void post({ action: "create_webhook", url })}
+            disabled={busy || !url.trim() || !webhookForm.valid}
+            onClick={() => {
+              webhookForm.markSubmitted();
+              if (!webhookForm.valid) return;
+              void post({ action: "create_webhook", url });
+            }}
           >
             Add webhook
           </Button>

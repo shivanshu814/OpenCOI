@@ -3,9 +3,16 @@ import {
   PageHeader,
   PageSecondary,
 } from "@/components/page-frame";
+import { canAdminSensitive } from "@/lib/auth/roles";
+import { getSessionOrg } from "@/lib/auth/session";
+import { AgreementTemplateCard } from "./agreement-template-card";
 import { TeamSettingsClient } from "./team-client";
 
-export default function TeamSettingsPage() {
+export default async function TeamSettingsPage() {
+  const session = await getSessionOrg();
+  // Demo mode has no session — keep the page explorable.
+  const canManage = session ? canAdminSensitive(session.role) : true;
+
   return (
     <PageFrame>
       <PageHeader
@@ -17,6 +24,10 @@ export default function TeamSettingsPage() {
         live
       />
       <TeamSettingsClient />
+      <AgreementTemplateCard
+        orgId={session?.orgId ?? null}
+        canManage={canManage}
+      />
       <PageSecondary>
         Settings apply to your whole organization. Document review assistance —
         not legal, insurance, or professional advice.

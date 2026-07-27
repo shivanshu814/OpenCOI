@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
 import { Check, Clock, Minus, TriangleAlert, X } from "lucide-react";
 import { notFound } from "next/navigation";
-import { RequestAgentConfirmButton } from "./request-agent-confirm";
+import { AgentConfirmationPanel } from "./agent-confirmation-panel";
 import { ReviewActions } from "./review-actions";
 import { RunExtractionButton } from "./run-extraction-button";
 
@@ -413,9 +413,7 @@ export default async function ReviewDocumentPage({
             </Alert>
           ) : null}
 
-          <RoleGate require="write">
-            <RequestAgentConfirmButton documentId={doc.id} />
-          </RoleGate>
+          <AgentConfirmationPanel documentId={doc.id} />
 
           <ReviewActions
             documentId={doc.id}

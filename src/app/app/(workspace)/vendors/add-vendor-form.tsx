@@ -15,6 +15,8 @@ import {
   notifySuccess,
   notifyWarning,
 } from "@/lib/ui/toast";
+import { vendorCreateSchema } from "@/lib/validation/schemas";
+import { useZodForm } from "@/lib/validation/use-zod-form";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -26,8 +28,12 @@ export function AddVendorForm() {
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  const validation = useZodForm(vendorCreateSchema, { name, email, trade });
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    validation.markSubmitted();
+    if (!validation.valid) return;
     setBusy(true);
     setFieldError(null);
     try {
@@ -61,6 +67,7 @@ export function AddVendorForm() {
       setName("");
       setEmail("");
       setTrade("");
+      validation.reset();
       router.refresh();
     } catch (err) {
       notifyCaughtError(err, "Could not add vendor");
@@ -86,10 +93,17 @@ export function AddVendorForm() {
           <Input
             id="name"
             value={name}
+            aria-invalid={Boolean(validation.errorFor("name")) || undefined}
+            onBlur={() => validation.markTouched("name")}
             onChange={(e) => setName(e.target.value)}
             required
             placeholder="Vendor LLC"
           />
+          {validation.errorFor("name") ? (
+            <p className="text-destructive text-xs" role="alert">
+              {validation.errorFor("name")}
+            </p>
+          ) : null}
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="email">Email</Label>
@@ -97,21 +111,35 @@ export function AddVendorForm() {
             id="email"
             type="email"
             value={email}
+            aria-invalid={Boolean(validation.errorFor("email")) || undefined}
+            onBlur={() => validation.markTouched("email")}
             onChange={(e) => setEmail(e.target.value)}
             required
             placeholder="ops@vendor.com"
           />
+          {validation.errorFor("email") ? (
+            <p className="text-destructive text-xs" role="alert">
+              {validation.errorFor("email")}
+            </p>
+          ) : null}
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="trade">Trade</Label>
           <Input
             id="trade"
             value={trade}
+            aria-invalid={Boolean(validation.errorFor("trade")) || undefined}
+            onBlur={() => validation.markTouched("trade")}
             onChange={(e) => setTrade(e.target.value)}
             placeholder="Roofer"
           />
+          {validation.errorFor("trade") ? (
+            <p className="text-destructive text-xs" role="alert">
+              {validation.errorFor("trade")}
+            </p>
+          ) : null}
         </div>
-        <Button type="submit" disabled={busy}>
+        <Button type="submit" disabled={busy || !validation.valid}>
           {busy ? "Saving…" : "Add vendor"}
         </Button>
         {fieldError ? (

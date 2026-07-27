@@ -14,6 +14,10 @@ import {
 } from "@/lib/requirements/merge";
 import { createClient } from "@/lib/supabase/server";
 import { insertAuditEvent } from "@/lib/audit/write";
+import {
+  documentCorrectionSchema,
+  validationErrorBody,
+} from "@/lib/validation/schemas";
 import { NextResponse } from "next/server";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -22,11 +26,19 @@ type Ctx = { params: Promise<{ id: string }> };
 export async function POST(request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
 
-  const body = (await request.json()) as {
-    field_path?: string;
-    after_value?: unknown;
-    corrected_extraction?: Extraction;
-  };
+  const parsedBody = documentCorrectionSchema.safeParse(
+    await request.json().catch(() => null),
+  );
+  if (!parsedBody.success) {
+    return NextResponse.json(
+      validationErrorBody(
+        parsedBody.error,
+        "Provide field_path or corrected_extraction",
+      ),
+      { status: 400 },
+    );
+  }
+  const body = parsedBody.data;
 
   if (!isSupabaseConfigured()) {
     return NextResponse.json({

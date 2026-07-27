@@ -15,6 +15,8 @@ const ACTION_LABELS: Record<string, string> = {
   chase_email_sent: "Chase email sent",
   chase_sms_sent: "Chase SMS sent",
   agent_confirmation_requested: "Agent confirmation requested",
+  agreement_template_uploaded: "Agreement template uploaded",
+  agreement_template_removed: "Agreement template removed",
   agent_confirmation_confirmed: "Agent confirmed coverage",
   agent_confirmation_denied: "Agent denied coverage",
   portal_link_issued: "Portal link issued",

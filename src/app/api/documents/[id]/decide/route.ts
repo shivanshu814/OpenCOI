@@ -3,13 +3,14 @@ import { canCustomerDecide } from "@/lib/auth/roles";
 import { isSupabaseConfigured } from "@/lib/config";
 import { demoCustomerDecide, getDemoDocument } from "@/lib/demo/store";
 import type { Verdict } from "@/lib/requirements/engine";
-import {
-  isOverrideReasonCode,
-  resolveCustomerDecision,
-  type OverrideReasonCode,
-} from "@/lib/verdicts/customer-decision";
+import { resolveCustomerDecision } from "@/lib/verdicts/customer-decision";
 import { createClient } from "@/lib/supabase/server";
 import { insertAuditEvent } from "@/lib/audit/write";
+import {
+  customerDecisionSchema,
+  validationErrorBody,
+  type CustomerDecisionInput,
+} from "@/lib/validation/schemas";
 import { NextResponse } from "next/server";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -18,7 +19,9 @@ type Body =
   | { action: "accept" }
   | {
       action: "override";
-      reason_code: OverrideReasonCode;
+      reason_code: NonNullable<
+        Extract<CustomerDecisionInput, { action: "override" }>["reason_code"]
+      >;
       reason_text?: string;
     };
 
@@ -28,28 +31,28 @@ type Body =
  */
 export async function POST(request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
-  let body: Body;
-  try {
-    body = (await request.json()) as Body;
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
-
-  if (body.action !== "accept" && body.action !== "override") {
+  const parsedBody = customerDecisionSchema.safeParse(
+    await request.json().catch(() => null),
+  );
+  if (!parsedBody.success) {
     return NextResponse.json(
-      { error: "action must be accept or override" },
+      validationErrorBody(
+        parsedBody.error,
+        "action must be accept or override",
+      ),
       { status: 400 },
     );
   }
-
-  if (body.action === "override") {
-    if (!isOverrideReasonCode(body.reason_code)) {
-      return NextResponse.json(
-        { error: "Invalid reason_code" },
-        { status: 400 },
-      );
-    }
-  }
+  // `reason_text` is nullable in the schema (a blank textarea posts ""/null);
+  // the demo store and resolver both take `string | undefined`.
+  const body: Body =
+    parsedBody.data.action === "override"
+      ? {
+          action: "override",
+          reason_code: parsedBody.data.reason_code,
+          reason_text: parsedBody.data.reason_text ?? undefined,
+        }
+      : { action: "accept" };
 
   if (!isSupabaseConfigured()) {
     const demo = getDemoDocument(id);

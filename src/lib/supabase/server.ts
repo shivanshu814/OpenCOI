@@ -1,7 +1,25 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { cache } from "react";
 
-export async function createClient() {
+/**
+ * One Supabase client per request, not per call site.
+ *
+ * `createServerClient` is not free — it reads the cookie store and builds the
+ * auth, postgrest, storage and realtime sub-clients — and a single page render
+ * calls this from the session lookup, the data layer, the report loader and
+ * every server action it touches. React's `cache()` scopes the memo to one
+ * request, so two orgs can never share an instance and a mutation is never
+ * served a client holding pre-mutation cookies.
+ *
+ * Outside a request scope (scripts, background jobs) React's `cache` simply
+ * does not memoize and every caller gets a fresh client — identical to the
+ * previous behaviour, so nothing depends on the optimization being available.
+ *
+ * This is request-scoped memoization, NOT response caching: see the `no-store`
+ * note below, which still applies to every query made through the client.
+ */
+export const createClient = cache(async function createClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) {
@@ -44,4 +62,4 @@ export async function createClient() {
       },
     },
   });
-}
+});

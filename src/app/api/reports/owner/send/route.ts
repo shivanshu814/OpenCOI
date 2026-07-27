@@ -8,22 +8,24 @@ import {
 import { sendOwnerReportEmail } from "@/lib/reports/owner-send";
 import { createClient } from "@/lib/supabase/server";
 import { insertAuditEvent } from "@/lib/audit/write";
+import {
+  ownerReportSendSchema,
+  validationErrorBody,
+} from "@/lib/validation/schemas";
 import { NextResponse } from "next/server";
-import { z } from "zod";
-
-const bodySchema = z.object({
-  propertyId: z.string().min(1),
-  to: z.string().email().optional(),
-});
 
 /**
  * POST /api/reports/owner/send
  * Manual send of D3 owner report email (PDF summary in body).
  */
 export async function POST(request: Request) {
-  const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+  const parsed = ownerReportSendSchema.safeParse(
+    await request.json().catch(() => null),
+  );
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+    return NextResponse.json(validationErrorBody(parsed.error, "Invalid body"), {
+      status: 400,
+    });
   }
 
   const { propertyId } = parsed.data;

@@ -15,6 +15,8 @@ import {
   notifyApiError,
   notifyCaughtError,
 } from "@/lib/ui/toast";
+import { projectCreateSchema } from "@/lib/validation/schemas";
+import { useZodForm } from "@/lib/validation/use-zod-form";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -26,8 +28,16 @@ export function AddProjectForm() {
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
+  const validation = useZodForm(projectCreateSchema, {
+    name,
+    start_date: startDate,
+    end_date: endDate,
+  });
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    validation.markSubmitted();
+    if (!validation.valid) return;
     setBusy(true);
     setFormError(null);
     try {
@@ -53,6 +63,7 @@ export function AddProjectForm() {
       setName("");
       setStartDate("");
       setEndDate("");
+      validation.reset();
       if (data.project?.id) {
         router.push(`/app/projects/${data.project.id}`);
         router.refresh();
@@ -86,8 +97,15 @@ export function AddProjectForm() {
               required
               placeholder="Roof Replace — Building A"
               value={name}
+              aria-invalid={Boolean(validation.errorFor("name")) || undefined}
+              onBlur={() => validation.markTouched("name")}
               onChange={(e) => setName(e.target.value)}
             />
+            {validation.errorFor("name") ? (
+              <p className="text-destructive text-xs" role="alert">
+                {validation.errorFor("name")}
+              </p>
+            ) : null}
           </Field>
           <Field>
             <FieldLabel htmlFor="start">Start</FieldLabel>
@@ -95,8 +113,16 @@ export function AddProjectForm() {
               id="start"
               placeholder="Start date"
               value={startDate}
-              onChange={setStartDate}
+              onChange={(iso) => {
+                validation.markTouched("start_date");
+                setStartDate(iso);
+              }}
             />
+            {validation.errorFor("start_date") ? (
+              <p className="text-destructive text-xs" role="alert">
+                {validation.errorFor("start_date")}
+              </p>
+            ) : null}
           </Field>
           <Field>
             <FieldLabel htmlFor="end">End</FieldLabel>
@@ -104,11 +130,19 @@ export function AddProjectForm() {
               id="end"
               placeholder="End date"
               value={endDate}
-              onChange={setEndDate}
+              onChange={(iso) => {
+                validation.markTouched("end_date");
+                setEndDate(iso);
+              }}
             />
+            {validation.errorFor("end_date") ? (
+              <p className="text-destructive text-xs" role="alert">
+                {validation.errorFor("end_date")}
+              </p>
+            ) : null}
           </Field>
           <div className="flex items-center gap-3 sm:col-span-4">
-            <Button type="submit" disabled={busy}>
+            <Button type="submit" disabled={busy || !validation.valid}>
               {busy ? "Creating…" : "Create project"}
             </Button>
             {formError ? (
