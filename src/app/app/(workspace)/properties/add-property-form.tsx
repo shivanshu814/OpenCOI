@@ -18,8 +18,6 @@ import { propertyCreateSchema } from "@/lib/validation/schemas";
 import { useZodForm } from "@/lib/validation/use-zod-form";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Building2 } from "lucide-react";
-
 export function AddPropertyForm() {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -127,7 +125,7 @@ export function AddPropertyForm() {
             <Button
               type="submit"
               pending={busy}
-              pendingIcon={Building2}
+              pendingGlyph="building"
               disabled={busy || !validation.valid}
             >
               {busy ? "Saving…" : "Add property"}

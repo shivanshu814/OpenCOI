@@ -8,8 +8,6 @@ import {
   notifySuccess,
 } from "@/lib/ui/toast";
 import { useState } from "react";
-import { Globe } from "lucide-react";
-
 export function IssuePortalLinkButton({ vendorId }: { vendorId: string }) {
   const [busy, setBusy] = useState(false);
   const [url, setUrl] = useState<string | null>(null);
@@ -57,8 +55,7 @@ export function IssuePortalLinkButton({ vendorId }: { vendorId: string }) {
         variant="outline"
         size="sm"
         pending={busy}
-        pendingIcon={Globe}
-        pendingMotion="orbit"
+        pendingGlyph="globe"
         disabled={busy}
         onClick={onClick}
       >

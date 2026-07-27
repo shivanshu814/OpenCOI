@@ -10,8 +10,6 @@ import {
 } from "@/lib/ui/toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { MailCheck } from "lucide-react";
-
 /**
  * Sends the B8 request. The *result* is rendered by AgentConfirmationPanel,
  * which is why this refreshes the route on success — otherwise the row lands
@@ -73,8 +71,7 @@ export function RequestAgentConfirmButton({
       variant="outline"
       size="sm"
       pending={busy}
-      pendingIcon={MailCheck}
-      pendingMotion="fly"
+      pendingGlyph="mail"
       disabled={busy}
       onClick={() => void onClick()}
     >

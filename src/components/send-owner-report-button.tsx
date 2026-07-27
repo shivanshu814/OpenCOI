@@ -1,14 +1,14 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import {
   notifyApiError,
   notifyCaughtError,
   notifyNotSent,
   notifySuccess,
 } from "@/lib/ui/toast";
-import { Mail, Send } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Mail } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -78,8 +78,7 @@ export function SendOwnerReportButton({
       variant={variant === "primary" ? "default" : "outline"}
       size="sm"
       pending={busy}
-      pendingIcon={Send}
-      pendingMotion="fly"
+      pendingGlyph="mail"
       disabled={busy}
       onClick={onSend}
       title={toHint ? `Send to ${toHint}` : "Set owner email on property first"}

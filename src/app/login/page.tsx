@@ -20,9 +20,7 @@ import {
   ArrowRight,
   CheckCircle2,
   CircleAlert,
-  KeyRound,
   Lock,
-  LogIn,
   Mail,
   ShieldCheck,
 } from "lucide-react";
@@ -264,7 +262,7 @@ function LoginForm() {
           size="lg"
           onClick={() => void onGoogle()}
           pending={googleBusy}
-          pendingIcon={LogIn}
+          pendingGlyph="key"
           disabled={busy || googleBusy}
           className="h-11 w-full rounded-lg text-sm font-medium"
         >
@@ -311,8 +309,7 @@ function LoginForm() {
               size="lg"
               className="bg-brand text-brand-foreground hover:bg-brand/90 h-11 w-full rounded-lg text-sm font-semibold shadow-[0_0_0_1px_rgba(0,184,132,0.25),0_10px_28px_-10px_rgba(0,184,132,0.55)]"
               pending={busy}
-              pendingIcon={Mail}
-              pendingMotion="fly"
+              pendingGlyph="mail"
               disabled={busy || cooldown > 0}
             >
               {busy
@@ -391,8 +388,7 @@ function LoginForm() {
               size="lg"
               className="h-11 w-full rounded-lg text-sm font-medium"
               pending={codeBusy}
-              pendingIcon={KeyRound}
-              pendingMotion="orbit"
+              pendingGlyph="key"
               disabled={codeBusy || code.length !== 6}
             >
               {codeBusy ? "Verifying…" : "Verify code and sign in"}

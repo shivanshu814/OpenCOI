@@ -240,8 +240,7 @@ export function PortalSupportChat({
             type="submit"
             className="h-11 shrink-0 sm:w-28"
             pending={busy}
-            pendingIcon={Sparkles}
-            pendingMotion="twinkle"
+            pendingGlyph="spark"
             disabled={busy || draft.trim().length === 0}
           >
             <Send className="size-4" aria-hidden />

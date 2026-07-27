@@ -169,8 +169,7 @@ export function AgreementTemplateCard({
               size="sm"
               variant="outline"
               pending={busy}
-              pendingIcon={FileSignature}
-              pendingMotion="lift"
+              pendingGlyph="pen"
               disabled={busy}
               onClick={() => inputRef.current?.click()}
             >

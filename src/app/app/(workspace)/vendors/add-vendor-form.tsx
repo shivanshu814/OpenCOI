@@ -19,8 +19,6 @@ import { vendorCreateSchema } from "@/lib/validation/schemas";
 import { useZodForm } from "@/lib/validation/use-zod-form";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { UserPlus } from "lucide-react";
-
 export function AddVendorForm() {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -143,7 +141,7 @@ export function AddVendorForm() {
         <Button
           type="submit"
           pending={busy}
-          pendingIcon={UserPlus}
+          pendingGlyph="user"
           disabled={busy || !validation.valid}
         >
           {busy ? "Saving…" : "Add vendor"}

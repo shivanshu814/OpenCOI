@@ -32,23 +32,15 @@ import {
 } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  ChevronDown,
-  KeyRound,
-  Webhook,
-} from "lucide-react";
 import { CACHE_POLICIES } from "@/lib/live/policy";
 import { useCachedResource } from "@/lib/live/use-live";
-import {
-  notifyApiError,
-  notifySuccess,
-  notifyWarning,
-} from "@/lib/ui/toast";
+import { notifyApiError, notifySuccess, notifyWarning } from "@/lib/ui/toast";
 import {
   apiKeyCreateSchema,
   webhookCreateSchema,
 } from "@/lib/validation/schemas";
 import { useZodForm } from "@/lib/validation/use-zod-form";
+import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 
 type ApiKeyRow = {
@@ -167,9 +159,10 @@ export function IntegrationsClient({ orgId }: { orgId: string | null }) {
           </li>
         </ul>
         <p className="text-muted-foreground text-xs leading-relaxed">
-          Most property managers never need this page — skip it unless you&apos;re
-          on Business or connecting custom tooling. Native AppFolio/Buildium
-          connectors are not live yet; Zapier + REST is the path today.
+          Most property managers never need this page — skip it unless
+          you&apos;re on Business or connecting custom tooling. Native
+          AppFolio/Buildium connectors are not live yet; Zapier + REST is the
+          path today.
         </p>
       </div>
 
@@ -211,8 +204,7 @@ export function IntegrationsClient({ orgId }: { orgId: string | null }) {
             <Button
               size="sm"
               pending={busy}
-              pendingIcon={KeyRound}
-              pendingMotion="orbit"
+              pendingGlyph="key"
               disabled={busy || !keyForm.valid}
               onClick={() => {
                 keyForm.markSubmitted();
@@ -245,9 +237,8 @@ export function IntegrationsClient({ orgId }: { orgId: string | null }) {
                 <code className="text-foreground">
                   Authorization: Bearer cs_live_…
                 </code>{" "}
-                to{" "}
-                <code className="text-foreground">/api/v1/vendors</code>. Revoke
-                a key immediately if it leaks.
+                to <code className="text-foreground">/api/v1/vendors</code>.
+                Revoke a key immediately if it leaks.
               </p>
             </CollapsibleContent>
           </Collapsible>
@@ -321,8 +312,8 @@ export function IntegrationsClient({ orgId }: { orgId: string | null }) {
           ))}
           {keys.length === 0 ? (
             <li className="text-muted-foreground px-4 py-6 text-center text-sm">
-              No API keys yet — create one only when you&apos;re ready to connect
-              Zapier or your own tooling.
+              No API keys yet — create one only when you&apos;re ready to
+              connect Zapier or your own tooling.
             </li>
           ) : null}
         </ul>
@@ -336,8 +327,8 @@ export function IntegrationsClient({ orgId }: { orgId: string | null }) {
             <LiveBadge label="Live" tone="info" />
           </CardTitle>
           <CardDescription className="text-xs">
-            Paste a Zapier (or other) hook URL to get notified when vendor status
-            changes — no need to poll CertShield.
+            Paste a Zapier (or other) hook URL to get notified when vendor
+            status changes — no need to poll CertShield.
           </CardDescription>
           <CardAction className="self-center">
             <LiveCount value={webhooks.length} />
@@ -365,8 +356,7 @@ export function IntegrationsClient({ orgId }: { orgId: string | null }) {
             size="sm"
             variant="outline"
             pending={busy}
-            pendingIcon={Webhook}
-            pendingMotion="orbit"
+            pendingGlyph="link"
             disabled={busy || !url.trim() || !webhookForm.valid}
             onClick={() => {
               webhookForm.markSubmitted();
@@ -413,7 +403,9 @@ export function IntegrationsClient({ orgId }: { orgId: string | null }) {
             >
               <span
                 className={`size-1.5 shrink-0 rounded-full ${
-                  w.active ? "bg-[var(--status-ok)]" : "bg-[var(--status-neutral)]"
+                  w.active
+                    ? "bg-[var(--status-ok)]"
+                    : "bg-[var(--status-neutral)]"
                 }`}
               />
               <span className="min-w-0 truncate font-mono text-xs">

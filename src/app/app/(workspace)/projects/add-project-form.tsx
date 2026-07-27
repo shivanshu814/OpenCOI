@@ -19,8 +19,6 @@ import { projectCreateSchema } from "@/lib/validation/schemas";
 import { useZodForm } from "@/lib/validation/use-zod-form";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { FolderKanban } from "lucide-react";
-
 export function AddProjectForm() {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -146,7 +144,7 @@ export function AddProjectForm() {
             <Button
               type="submit"
               pending={busy}
-              pendingIcon={FolderKanban}
+              pendingGlyph="folder"
               disabled={busy || !validation.valid}
             >
               {busy ? "Creating…" : "Create project"}

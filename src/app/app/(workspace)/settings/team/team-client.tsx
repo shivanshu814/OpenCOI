@@ -60,7 +60,6 @@ import {
   Mail,
   MessageSquare,
   Palette,
-  UserPlus,
   UserRound,
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
@@ -594,7 +593,7 @@ export function TeamSettingsClient({ orgId }: { orgId: string | null }) {
           <Button
             size="sm"
             pending={busy}
-            pendingIcon={Building2}
+            pendingGlyph="building"
             disabled={busy || !profileForm.valid}
             onClick={() => {
               profileForm.markSubmitted();
@@ -764,7 +763,7 @@ export function TeamSettingsClient({ orgId }: { orgId: string | null }) {
             size="sm"
             variant="outline"
             pending={busy}
-            pendingIcon={Palette}
+            pendingGlyph="spark"
             disabled={busy || !brandingForm.valid}
             onClick={() => {
               brandingForm.markSubmitted();
@@ -902,8 +901,7 @@ export function TeamSettingsClient({ orgId }: { orgId: string | null }) {
           <Button
             size="sm"
             pending={busy}
-            pendingIcon={Mail}
-            pendingMotion="fly"
+            pendingGlyph="mail"
             disabled={busy || !notificationsForm.valid}
             onClick={() => {
               notificationsForm.markSubmitted();
@@ -1019,7 +1017,7 @@ export function TeamSettingsClient({ orgId }: { orgId: string | null }) {
           <Button
             size="sm"
             pending={busy}
-            pendingIcon={UserPlus}
+            pendingGlyph="user"
             disabled={busy || !email.trim() || !inviteForm.valid}
             onClick={() => {
               inviteForm.markSubmitted();
@@ -1101,7 +1099,6 @@ function ChannelRow({
     </div>
   );
 }
-
 
 /**
  * One teammate, with their per-property scope (G1).

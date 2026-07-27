@@ -34,8 +34,6 @@ import { projectEditorFormSchema } from "@/lib/validation/schemas";
 import { useZodForm } from "@/lib/validation/use-zod-form";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { FolderKanban } from "lucide-react";
-
 type VendorOpt = { id: string; name: string };
 
 type Props = {
@@ -389,7 +387,7 @@ export function ProjectEditor({
         <Button
           type="submit"
           pending={busy}
-          pendingIcon={FolderKanban}
+          pendingGlyph="folder"
           disabled={busy || !validation.valid}
         >
           {busy ? "Saving…" : "Save project"}

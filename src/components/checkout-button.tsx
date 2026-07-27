@@ -2,14 +2,14 @@
 
 import { Button } from "@/components/ui/button";
 import type { PlanId } from "@/lib/billing/plans";
-import { initializePaddle, type Paddle } from "@paddle/paddle-js";
-import { cn } from "@/lib/utils";
 import {
   notifyApiError,
   notifyCaughtError,
   notifyWarning,
 } from "@/lib/ui/toast";
-import { ArrowRight, CreditCard } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { initializePaddle, type Paddle } from "@paddle/paddle-js";
+import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -120,13 +120,12 @@ export function CheckoutButton({
       size={size}
       className={cn(className, className?.includes("w-full") && "w-full")}
       pending={busy}
-      pendingIcon={CreditCard}
-      pendingMotion="swipe"
+      pendingGlyph="card"
       disabled={busy}
       onClick={onClick}
     >
       {busy ? (
-        // The arc comes from Button's `pending` — one spinner, not two.
+        // PendingGlyph on the button — no second spinner here.
         "Opening…"
       ) : (
         <>

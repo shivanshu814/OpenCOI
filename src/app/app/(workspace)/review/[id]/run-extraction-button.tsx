@@ -1,11 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  notifyApiError,
-  notifyCaughtError,
-  notifyInfo,
-} from "@/lib/ui/toast";
+import { notifyApiError, notifyCaughtError, notifyInfo } from "@/lib/ui/toast";
 import { Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -48,13 +44,11 @@ export function RunExtractionButton({ documentId }: { documentId: string }) {
       type="button"
       onClick={run}
       pending={busy}
-      pendingIcon={Sparkles}
-      pendingMotion="twinkle"
+      pendingGlyph="spark"
       disabled={busy}
       className="w-full"
     >
-      {/* The pending arc comes from the Button itself, so only the idle icon
-          is rendered here — one spinner in the product, not two. */}
+      {/* Idle Lucide only — pending uses PendingGlyph, not a second spinner. */}
       {busy ? null : <Sparkles className="size-4" />}
       {busy ? "Reading certificate…" : "Run extraction now"}
     </Button>

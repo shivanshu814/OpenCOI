@@ -14,7 +14,7 @@ import {
 import { FileDropzone } from "@/components/ui/file-dropzone";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, CircleAlert, Mail, Upload } from "lucide-react";
+import { CheckCircle2, CircleAlert, Mail } from "lucide-react";
 import { useState } from "react";
 
 type Props = {
@@ -28,7 +28,8 @@ const copy = {
     uploadTitle: "Upload your COI (PDF)",
     uploadHint: "ACORD 25 preferred. Max 20MB.",
     choose: "Tap to choose a PDF",
-    wrongType: "That file is not a PDF. Please upload the certificate as a PDF.",
+    wrongType:
+      "That file is not a PDF. Please upload the certificate as a PDF.",
     tooLarge: (mb: number) =>
       `That file is larger than ${mb} MB. Please upload a smaller scan.`,
     submit: "Upload PDF",
@@ -147,7 +148,9 @@ export function PortalActions({ token, locale, agentEmail }: Props) {
             <CardTitle className="text-sm font-semibold">
               {t.uploadTitle}
             </CardTitle>
-            <CardDescription className="text-xs">{t.uploadHint}</CardDescription>
+            <CardDescription className="text-xs">
+              {t.uploadHint}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 py-4">
             <FileDropzone
@@ -178,8 +181,7 @@ export function PortalActions({ token, locale, agentEmail }: Props) {
               type="submit"
               className="h-11 w-full text-sm font-medium"
               pending={busy}
-              pendingIcon={Upload}
-              pendingMotion="lift"
+              pendingGlyph="upload"
               disabled={busy || !file}
             >
               {busy ? t.uploading : t.submit}

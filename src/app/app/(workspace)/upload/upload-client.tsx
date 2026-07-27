@@ -4,6 +4,7 @@ import { CardLiveAccent, LiveBadge, LiveDot } from "@/components/live-activity";
 import { SampleCoiPicker } from "@/components/sample-coi-picker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { FileDropzone } from "@/components/ui/file-dropzone";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -12,7 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FileDropzone } from "@/components/ui/file-dropzone";
 import type { Vendor } from "@/lib/data/types";
 import {
   notifyApiError,
@@ -20,7 +20,7 @@ import {
   notifyInfo,
   notifyWarning,
 } from "@/lib/ui/toast";
-import { ArrowRight, Upload } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -58,7 +58,9 @@ export default function UploadPage({ vendors }: { vendors: Vendor[] }) {
     e.preventDefault();
     if (!file || !vendorId) {
       setFormError(
-        !vendorId ? "Select a vendor before uploading." : "Choose a certificate file.",
+        !vendorId
+          ? "Select a vendor before uploading."
+          : "Choose a certificate file.",
       );
       return;
     }
@@ -104,7 +106,9 @@ export default function UploadPage({ vendors }: { vendors: Vendor[] }) {
       // Upload stored but AI extraction failed — say so honestly (never a
       // success toast) and land on the review page, which has the retry.
       if (data.extractionError) {
-        notifyWarning(`Uploaded, but AI extraction failed. ${data.extractionError}`);
+        notifyWarning(
+          `Uploaded, but AI extraction failed. ${data.extractionError}`,
+        );
         if (data.reviewPath) {
           router.push(data.reviewPath);
           router.refresh();
@@ -205,14 +209,16 @@ export default function UploadPage({ vendors }: { vendors: Vendor[] }) {
               type="submit"
               className="w-full"
               pending={busy}
-              pendingIcon={Upload}
-              pendingMotion="lift"
+              pendingGlyph="upload"
               disabled={busy || !file || !vendorId}
             >
               {busy ? "Uploading…" : "Queue extraction"}
             </Button>
             {formError ? (
-              <p className="text-destructive text-xs leading-relaxed" role="alert">
+              <p
+                className="text-destructive text-xs leading-relaxed"
+                role="alert"
+              >
                 {formError}
               </p>
             ) : null}

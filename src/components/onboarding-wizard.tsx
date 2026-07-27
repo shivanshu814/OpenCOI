@@ -10,7 +10,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { DISCLAIMER } from "@/lib/extraction/schema";
 import { TRADE_TEMPLATES } from "@/lib/requirements/templates";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, ArrowRight, Check, LoaderCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+} from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 
@@ -388,7 +392,7 @@ function OnboardingWizardInner({
                 type="button"
                 size="lg"
                 pending={busy}
-                pendingIcon={Check}
+                pendingGlyph="check"
                 disabled={busy || (step === "company" && !companyName.trim())}
                 onClick={next}
                 className="min-w-40"

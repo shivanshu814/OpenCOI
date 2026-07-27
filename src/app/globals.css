@@ -617,146 +617,266 @@
     transform: scale(1);
   }
 }
-/* ── Glyph motion vocabulary ────────────────────────────────────────────
- * The icon at the centre of a spinner acts out its own verb: a globe turns,
- * a document travels, a spark twinkles, a pen writes. The arc keeps time at
- * 0.85s while these run on their own longer periods, so the two never lock
- * into one rhythm and the indicator reads as alive rather than as a single
- * looping asset.
- *
- * All transform/opacity only, so they stay on the compositor, and all
- * amplitudes are small — the glyph is ~8px inside a button, where a big
- * swing looks like a rendering fault rather than motion. Every class is in
- * the reduced-motion guard below. */
-@keyframes cs-glyph-pulse {
+/* ── Pending glyphs (no outer ring) ─────────────────────────────────────
+ * Each busy button draws its own verb as a custom SVG and moves that
+ * geometry — meridians sweep, a page climbs, a check draws on. No Lucide
+ * parked inside a spinning arc: at 16px the ring read as noise outside the
+ * icon. Motion is transform / opacity / stroke-dashoffset only. Amplitudes
+ * stay small because these render at button-icon size. Reduced-motion below. */
+
+/* Globe: vertical meridians flatten and swell out of phase — the sphere turns. */
+@keyframes cs-g-meridian {
   0%,
   100% {
-    opacity: 0.62;
-    transform: scale(0.9);
+    transform: scaleX(1);
+    opacity: 0.95;
   }
   50% {
-    opacity: 1;
-    transform: scale(1.06);
+    transform: scaleX(0.12);
+    opacity: 0.55;
   }
 }
-/* A globe or a key: turning on its own axis. */
-@keyframes cs-glyph-orbit {
-  to {
-    transform: rotate(360deg);
-  }
+.cs-g-meridian-a,
+.cs-g-meridian-b {
+  transform-box: fill-box;
+  transform-origin: center;
 }
-/* Mail leaving: enters from behind, crosses, and is gone. */
-@keyframes cs-glyph-fly {
+.cs-g-meridian-a {
+  animation: cs-g-meridian 2.2s var(--cs-ease-quart) infinite;
+}
+.cs-g-meridian-b {
+  animation: cs-g-meridian 2.2s var(--cs-ease-quart) infinite;
+  animation-delay: -1.1s;
+}
+
+/* Mail plane: crosses the frame; faint trails blink behind it. */
+@keyframes cs-g-cross {
   0% {
-    transform: translateX(-42%);
+    transform: translate(-5px, 4px);
     opacity: 0;
   }
-  22% {
-    opacity: 1;
-  }
-  70% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(46%);
-    opacity: 0;
-  }
-}
-/* A document going from here to there — the upload/e-sign sense. */
-@keyframes cs-glyph-lift {
-  0% {
-    transform: translateY(46%);
-    opacity: 0;
-  }
-  22% {
-    opacity: 1;
-  }
-  70% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(-46%);
-    opacity: 0;
-  }
-}
-/* AI at work: a spark catching light. */
-@keyframes cs-glyph-twinkle {
-  0%,
-  100% {
-    transform: scale(0.78) rotate(-10deg);
-    opacity: 0.6;
-  }
-  50% {
-    transform: scale(1.14) rotate(10deg);
-    opacity: 1;
-  }
-}
-/* A pen mid-stroke. */
-@keyframes cs-glyph-write {
-  0%,
-  100% {
-    transform: translateX(-13%) rotate(-7deg);
-  }
-  50% {
-    transform: translateX(13%) rotate(5deg);
-  }
-}
-/* A card going through the reader. */
-@keyframes cs-glyph-swipe {
-  0% {
-    transform: translateX(-48%);
-    opacity: 0;
-  }
-  28% {
+  18% {
     opacity: 1;
   }
   72% {
     opacity: 1;
   }
   100% {
-    transform: translateX(48%);
+    transform: translate(5px, -4px);
     opacity: 0;
   }
 }
+@keyframes cs-g-trail {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  35% {
+    opacity: 0.55;
+  }
+  70% {
+    opacity: 0;
+    transform: translateX(3px);
+  }
+}
+.cs-g-cross {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: cs-g-cross 1.45s var(--cs-ease-quart) infinite;
+}
+.cs-g-trail-a,
+.cs-g-trail-b {
+  animation: cs-g-trail 1.45s var(--cs-ease-quart) infinite;
+}
+.cs-g-trail-b {
+  animation-delay: 0.18s;
+}
 
-.cs-glyph-pulse,
-.cs-glyph-orbit,
-.cs-glyph-fly,
-.cs-glyph-lift,
-.cs-glyph-twinkle,
-.cs-glyph-write,
-.cs-glyph-swipe {
+/* Thinking dots in a chat bubble / neutral fallback. */
+@keyframes cs-g-dot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.28;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-1.2px);
+  }
+}
+.cs-g-dot-a,
+.cs-g-dot-b,
+.cs-g-dot-c {
+  transform-box: fill-box;
   transform-origin: center;
 }
-.cs-glyph-pulse {
-  animation: cs-glyph-pulse 1.4s var(--cs-ease-quart) infinite;
+.cs-g-dot-a {
+  animation: cs-g-dot 1.05s var(--cs-ease-quart) infinite;
 }
-.cs-glyph-orbit {
-  animation: cs-glyph-orbit 2.6s linear infinite;
+.cs-g-dot-b {
+  animation: cs-g-dot 1.05s var(--cs-ease-quart) infinite;
+  animation-delay: 0.14s;
 }
-.cs-glyph-fly {
-  animation: cs-glyph-fly 1.5s var(--cs-ease-quart) infinite;
+.cs-g-dot-c {
+  animation: cs-g-dot 1.05s var(--cs-ease-quart) infinite;
+  animation-delay: 0.28s;
 }
-.cs-glyph-lift {
-  animation: cs-glyph-lift 1.5s var(--cs-ease-quart) infinite;
+
+/* Upload arrow / document: climbs out; the next cycle reads as the next page. */
+@keyframes cs-g-rise {
+  0% {
+    transform: translateY(5px);
+    opacity: 0;
+  }
+  22% {
+    opacity: 1;
+  }
+  68% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-6px);
+    opacity: 0;
+  }
 }
-.cs-glyph-twinkle {
-  animation: cs-glyph-twinkle 1.3s var(--cs-ease-quart) infinite;
+.cs-g-rise {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: cs-g-rise 1.4s var(--cs-ease-quart) infinite;
 }
-.cs-glyph-write {
-  animation: cs-glyph-write 0.9s var(--cs-ease-quart) infinite;
+
+/* Sparks catching light in turn. */
+@keyframes cs-g-twinkle {
+  0%,
+  100% {
+    transform: scale(0.82);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
 }
-.cs-glyph-swipe {
-  animation: cs-glyph-swipe 1.6s var(--cs-ease-quart) infinite;
+.cs-g-twinkle-a,
+.cs-g-twinkle-b {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.cs-g-twinkle-a {
+  animation: cs-g-twinkle 1.25s var(--cs-ease-quart) infinite;
+}
+.cs-g-twinkle-b {
+  animation: cs-g-twinkle 1.25s var(--cs-ease-quart) infinite;
+  animation-delay: 0.55s;
+}
+
+/* Key / chain links: a slow turn on the glyph's own centre. */
+@keyframes cs-g-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.cs-g-turn {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: cs-g-turn 2.4s linear infinite;
+}
+
+/* Card sliding through a reader. */
+@keyframes cs-g-swipe {
+  0% {
+    transform: translateX(-4px);
+    opacity: 0;
+  }
+  22% {
+    opacity: 1;
+  }
+  72% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(4px);
+    opacity: 0;
+  }
+}
+.cs-g-swipe {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: cs-g-swipe 1.55s var(--cs-ease-quart) infinite;
+}
+
+/* Pen nib rocking while the stroke draws underneath. */
+@keyframes cs-g-nib {
+  0%,
+  100% {
+    transform: translate(1.2px, -1px) rotate(-4deg);
+  }
+  50% {
+    transform: translate(-1px, 1px) rotate(3deg);
+  }
+}
+.cs-g-nib {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: cs-g-nib 0.95s var(--cs-ease-quart) infinite;
+}
+
+/* Check / shield mark / pen stroke: path draws on, holds, resets. */
+@keyframes cs-g-draw {
+  0% {
+    stroke-dashoffset: 28;
+    opacity: 0.35;
+  }
+  45% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  75% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: -4;
+    opacity: 0.35;
+  }
+}
+.cs-g-draw {
+  stroke-dasharray: 28;
+  stroke-dashoffset: 28;
+  animation: cs-g-draw 1.35s var(--cs-ease-quart) infinite;
+}
+
+/* Soft attention / plus-user throb — no shake. */
+@keyframes cs-g-throb {
+  0%,
+  100% {
+    transform: scale(0.94);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+}
+.cs-g-throb {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: cs-g-throb 1.3s var(--cs-ease-quart) infinite;
 }
 .cs-arc-spin {
   animation: cs-arc-spin 0.85s linear infinite;
-  filter: drop-shadow(0 0 5px color-mix(in oklab, var(--brand) 32%, transparent));
+  filter: drop-shadow(
+    0 0 5px color-mix(in oklab, var(--brand) 32%, transparent)
+  );
   transform-origin: center;
 }
 .cs-arc-spin-reverse {
   animation: cs-arc-spin-reverse 1.65s linear infinite;
-  filter: drop-shadow(0 0 4px color-mix(in oklab, var(--brand) 22%, transparent));
+  filter: drop-shadow(
+    0 0 4px color-mix(in oklab, var(--brand) 22%, transparent)
+  );
   transform-origin: center;
 }
 .cs-loader-arrive {
@@ -1208,13 +1328,22 @@
   .cs-loader-arrive,
   .cs-loader-ring,
   .cs-breathe,
-  .cs-glyph-pulse,
-  .cs-glyph-orbit,
-  .cs-glyph-fly,
-  .cs-glyph-lift,
-  .cs-glyph-twinkle,
-  .cs-glyph-write,
-  .cs-glyph-swipe,
+  .cs-g-meridian-a,
+  .cs-g-meridian-b,
+  .cs-g-cross,
+  .cs-g-trail-a,
+  .cs-g-trail-b,
+  .cs-g-dot-a,
+  .cs-g-dot-b,
+  .cs-g-dot-c,
+  .cs-g-rise,
+  .cs-g-twinkle-a,
+  .cs-g-twinkle-b,
+  .cs-g-turn,
+  .cs-g-swipe,
+  .cs-g-nib,
+  .cs-g-draw,
+  .cs-g-throb,
   .cs-toast-in,
   .cs-scan-sweep,
   .cs-glow-pulse,
@@ -1260,13 +1389,22 @@
   /* Never leave revealed content invisible when motion is off. */
   .cs-page > *,
   .cs-breathe,
-  .cs-glyph-pulse,
-  .cs-glyph-orbit,
-  .cs-glyph-fly,
-  .cs-glyph-lift,
-  .cs-glyph-twinkle,
-  .cs-glyph-write,
-  .cs-glyph-swipe,
+  .cs-g-meridian-a,
+  .cs-g-meridian-b,
+  .cs-g-cross,
+  .cs-g-trail-a,
+  .cs-g-trail-b,
+  .cs-g-dot-a,
+  .cs-g-dot-b,
+  .cs-g-dot-c,
+  .cs-g-rise,
+  .cs-g-twinkle-a,
+  .cs-g-twinkle-b,
+  .cs-g-turn,
+  .cs-g-swipe,
+  .cs-g-nib,
+  .cs-g-draw,
+  .cs-g-throb,
   .cs-reveal,
   .cs-reveal-in,
   .cs-word-in,
@@ -1286,6 +1424,9 @@
     opacity: 1 !important;
     transform: none !important;
     filter: none !important;
+  }
+  .cs-g-draw {
+    stroke-dashoffset: 0 !important;
   }
   /* Pointer-tracked and sweeping effects have no static equivalent worth
      keeping — remove them outright rather than freezing them mid-state. */
