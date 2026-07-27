@@ -60,9 +60,10 @@ import {
   Mail,
   MessageSquare,
   Palette,
+  UserPlus,
   UserRound,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 const ROLE_ITEMS: ReadonlyArray<{
   label: string;
@@ -592,6 +593,8 @@ export function TeamSettingsClient({ orgId }: { orgId: string | null }) {
           </div>
           <Button
             size="sm"
+            pending={busy}
+            pendingIcon={Building2}
             disabled={busy || !profileForm.valid}
             onClick={() => {
               profileForm.markSubmitted();
@@ -760,6 +763,8 @@ export function TeamSettingsClient({ orgId }: { orgId: string | null }) {
           <Button
             size="sm"
             variant="outline"
+            pending={busy}
+            pendingIcon={Palette}
             disabled={busy || !brandingForm.valid}
             onClick={() => {
               brandingForm.markSubmitted();
@@ -896,6 +901,8 @@ export function TeamSettingsClient({ orgId }: { orgId: string | null }) {
 
           <Button
             size="sm"
+            pending={busy}
+            pendingIcon={Mail}
             disabled={busy || !notificationsForm.valid}
             onClick={() => {
               notificationsForm.markSubmitted();
@@ -1010,6 +1017,8 @@ export function TeamSettingsClient({ orgId }: { orgId: string | null }) {
           </div>
           <Button
             size="sm"
+            pending={busy}
+            pendingIcon={UserPlus}
             disabled={busy || !email.trim() || !inviteForm.valid}
             onClick={() => {
               inviteForm.markSubmitted();

@@ -34,6 +34,7 @@ import { projectEditorFormSchema } from "@/lib/validation/schemas";
 import { useZodForm } from "@/lib/validation/use-zod-form";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { FolderKanban } from "lucide-react";
 
 type VendorOpt = { id: string; name: string };
 
@@ -385,7 +386,12 @@ export function ProjectEditor({
       </Card>
 
       <div className="flex items-center gap-3">
-        <Button type="submit" disabled={busy || !validation.valid}>
+        <Button
+          type="submit"
+          pending={busy}
+          pendingIcon={FolderKanban}
+          disabled={busy || !validation.valid}
+        >
           {busy ? "Saving…" : "Save project"}
         </Button>
       </div>

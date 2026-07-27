@@ -1,6 +1,7 @@
 import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cva, type VariantProps } from "class-variance-authority";
 
+import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
@@ -39,20 +40,48 @@ const buttonVariants = cva(
   },
 );
 
+/**
+ * `pending` is the product's single busy affordance. Putting it on the
+ * primitive rather than at each call site is what keeps every "Saving…",
+ * "Sending…" and "Publishing…" identical: same arc, same size, same
+ * placement, and the button is disabled and announced as busy for free.
+ * Call sites keep their own verb — the spinner never replaces the label,
+ * because "Saving…" and "Publishing…" say different things.
+ */
 function Button({
   className,
   variant = "default",
   size = "default",
+  pending = false,
+  pendingIcon,
+  children,
   ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+}: ButtonPrimitive.Props &
+  VariantProps<typeof buttonVariants> & {
+    pending?: boolean;
+    /**
+     * Glyph shown inside the arc while pending — say what is happening
+     * (Mail for a send, Sparkles for extraction, Globe for a link). Omit
+     * for a bare arc.
+     */
+    pendingIcon?: React.ComponentType<{
+      className?: string;
+      style?: React.CSSProperties;
+    }>;
+  }) {
   return (
     <ButtonPrimitive
       data-slot="button"
       // Links styled as buttons (via `render`) are not native <button> elements.
       nativeButton={props.render == null}
       className={cn(buttonVariants({ variant, size, className }))}
+      aria-busy={pending || undefined}
       {...props}
-    />
+      disabled={pending || props.disabled}
+    >
+      {pending ? <Spinner size={16} icon={pendingIcon} /> : null}
+      {children}
+    </ButtonPrimitive>
   );
 }
 

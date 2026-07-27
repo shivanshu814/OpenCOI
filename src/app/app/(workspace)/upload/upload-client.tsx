@@ -20,7 +20,7 @@ import {
   notifyInfo,
   notifyWarning,
 } from "@/lib/ui/toast";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Upload } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -204,6 +204,8 @@ export default function UploadPage({ vendors }: { vendors: Vendor[] }) {
             <Button
               type="submit"
               className="w-full"
+              pending={busy}
+              pendingIcon={Upload}
               disabled={busy || !file || !vendorId}
             >
               {busy ? "Uploading…" : "Queue extraction"}

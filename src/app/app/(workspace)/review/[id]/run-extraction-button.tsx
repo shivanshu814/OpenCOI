@@ -6,7 +6,7 @@ import {
   notifyCaughtError,
   notifyInfo,
 } from "@/lib/ui/toast";
-import { Loader2, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -44,12 +44,17 @@ export function RunExtractionButton({ documentId }: { documentId: string }) {
   }
 
   return (
-    <Button type="button" onClick={run} disabled={busy} className="w-full">
-      {busy ? (
-        <Loader2 className="size-4 animate-spin" />
-      ) : (
-        <Sparkles className="size-4" />
-      )}
+    <Button
+      type="button"
+      onClick={run}
+      pending={busy}
+      pendingIcon={Sparkles}
+      disabled={busy}
+      className="w-full"
+    >
+      {/* The pending arc comes from the Button itself, so only the idle icon
+          is rendered here — one spinner in the product, not two. */}
+      {busy ? null : <Sparkles className="size-4" />}
       {busy ? "Reading certificate…" : "Run extraction now"}
     </Button>
   );

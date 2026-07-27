@@ -8,7 +8,7 @@ import {
   notifyNotSent,
   notifySuccess,
 } from "@/lib/ui/toast";
-import { Mail } from "lucide-react";
+import { Mail, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -77,6 +77,8 @@ export function SendOwnerReportButton({
       type="button"
       variant={variant === "primary" ? "default" : "outline"}
       size="sm"
+      pending={busy}
+      pendingIcon={Send}
       disabled={busy}
       onClick={onSend}
       title={toHint ? `Send to ${toHint}` : "Set owner email on property first"}

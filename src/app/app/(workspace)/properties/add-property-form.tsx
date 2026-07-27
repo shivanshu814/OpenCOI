@@ -18,6 +18,7 @@ import { propertyCreateSchema } from "@/lib/validation/schemas";
 import { useZodForm } from "@/lib/validation/use-zod-form";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Building2 } from "lucide-react";
 
 export function AddPropertyForm() {
   const router = useRouter();
@@ -123,7 +124,12 @@ export function AddPropertyForm() {
             ) : null}
           </Field>
           <div className="flex items-center gap-3 sm:col-span-2">
-            <Button type="submit" disabled={busy || !validation.valid}>
+            <Button
+              type="submit"
+              pending={busy}
+              pendingIcon={Building2}
+              disabled={busy || !validation.valid}
+            >
               {busy ? "Saving…" : "Add property"}
             </Button>
             {formError ? (

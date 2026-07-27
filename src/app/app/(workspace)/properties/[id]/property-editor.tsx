@@ -26,6 +26,7 @@ import { propertyEditorFormSchema } from "@/lib/validation/schemas";
 import { useZodForm } from "@/lib/validation/use-zod-form";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Building2 } from "lucide-react";
 
 type VendorOpt = { id: string; name: string };
 
@@ -418,7 +419,12 @@ export function PropertyEditor({
         </Card>
 
         <div className="flex items-center gap-3">
-          <Button type="submit" disabled={busy || !validation.valid}>
+          <Button
+            type="submit"
+            pending={busy}
+            pendingIcon={Building2}
+            disabled={busy || !validation.valid}
+          >
             {busy ? "Saving…" : "Save property"}
           </Button>
         </div>

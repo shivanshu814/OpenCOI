@@ -32,7 +32,11 @@ import {
 } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ChevronDown } from "lucide-react";
+import {
+  ChevronDown,
+  KeyRound,
+  Webhook,
+} from "lucide-react";
 import { CACHE_POLICIES } from "@/lib/live/policy";
 import { useCachedResource } from "@/lib/live/use-live";
 import {
@@ -45,7 +49,7 @@ import {
   webhookCreateSchema,
 } from "@/lib/validation/schemas";
 import { useZodForm } from "@/lib/validation/use-zod-form";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 
 type ApiKeyRow = {
   id: string;
@@ -73,7 +77,6 @@ export function IntegrationsClient({ orgId }: { orgId: string | null }) {
   // re-served, so nothing secret can reach the cache.
   const {
     data,
-    loading,
     error: loadError,
     refetch: load,
   } = useCachedResource<IntegrationsData>(
@@ -207,6 +210,8 @@ export function IntegrationsClient({ orgId }: { orgId: string | null }) {
             </div>
             <Button
               size="sm"
+              pending={busy}
+              pendingIcon={KeyRound}
               disabled={busy || !keyForm.valid}
               onClick={() => {
                 keyForm.markSubmitted();
@@ -358,6 +363,8 @@ export function IntegrationsClient({ orgId }: { orgId: string | null }) {
           <Button
             size="sm"
             variant="outline"
+            pending={busy}
+            pendingIcon={Webhook}
             disabled={busy || !url.trim() || !webhookForm.valid}
             onClick={() => {
               webhookForm.markSubmitted();

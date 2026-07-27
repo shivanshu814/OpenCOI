@@ -18,7 +18,8 @@ import {
 import { CACHE_POLICIES } from "@/lib/live/policy";
 import { useCachedResource } from "@/lib/live/use-live";
 import { cn } from "@/lib/utils";
-import { Check, Loader2, MapPin } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
+import { Check, MapPin } from "lucide-react";
 import * as React from "react";
 
 /**
@@ -307,7 +308,7 @@ export function UsAddressFields({
             autoComplete="address-line1"
           />
           {addressStatus === "looking" ? (
-            <Loader2 className="text-muted-foreground absolute top-1/2 right-3 size-4 -translate-y-1/2 animate-spin" />
+            <Spinner size={16} className="text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2" />
           ) : null}
           {addressOpen && addressOptions.length ? (
             <div className="absolute z-40 mt-1 max-h-56 w-full overflow-auto rounded-lg border bg-popover p-1 text-popover-foreground shadow-lg ring-1 ring-foreground/5">
@@ -346,7 +347,7 @@ export function UsAddressFields({
         <Label htmlFor={`${idPrefix}-zip`} className="flex items-center gap-1.5">
           ZIP
           {status === "looking" ? (
-            <Loader2 className="text-muted-foreground size-3 animate-spin" />
+            <Spinner size={12} className="text-muted-foreground" />
           ) : null}
           {status === "filled" ? (
             <Check className="text-[var(--status-ok)] size-3" />
@@ -417,10 +418,10 @@ export function UsAddressFields({
         <Label htmlFor={`${idPrefix}-city`} className="flex items-center gap-1.5">
           City
           {cityStatus === "looking" ? (
-            <Loader2 className="text-muted-foreground size-3 animate-spin" />
+            <Spinner size={12} className="text-muted-foreground" />
           ) : null}
           {zipStatus === "looking" ? (
-            <Loader2 className="text-muted-foreground size-3 animate-spin" />
+            <Spinner size={12} className="text-muted-foreground" />
           ) : null}
         </Label>
         <div className="relative">

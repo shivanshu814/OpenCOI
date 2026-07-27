@@ -38,7 +38,12 @@ import {
   OVERRIDE_REASON_LABELS,
   type OverrideReasonCode,
 } from "@/lib/verdicts/customer-decision";
-import { TriangleAlert } from "lucide-react";
+import {
+  Check,
+  PenLine,
+  ShieldCheck,
+  TriangleAlert,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
@@ -396,6 +401,8 @@ export function ReviewActions({
         <CardContent className="space-y-5">
           <Button
             onClick={() => void decide("accept")}
+            pending={busy === "accept"}
+            pendingIcon={Check}
             disabled={busy !== null}
           >
             {busy === "accept" ? "Accepting…" : "Accept verdict"}
@@ -454,6 +461,8 @@ export function ReviewActions({
             <Button
               variant="outline"
               onClick={() => void decide("override")}
+              pending={busy === "override"}
+              pendingIcon={TriangleAlert}
               disabled={
                 busy !== null ||
                 (reasonCode === "other" && reasonText.trim() === "")
@@ -611,6 +620,8 @@ export function ReviewActions({
             variant={needsAttention ? "default" : "outline"}
             className="w-full sm:w-auto"
             onClick={() => void saveCorrection()}
+            pending={busy === "correct"}
+            pendingIcon={PenLine}
             disabled={!canSaveCorrection}
           >
             {busy === "correct"
@@ -638,6 +649,8 @@ export function ReviewActions({
             variant={needsAttention ? "outline" : "default"}
             className="w-full sm:w-auto"
             onClick={() => void publish()}
+            pending={busy === "publish"}
+            pendingIcon={ShieldCheck}
             disabled={busy !== null}
           >
             {busy === "publish"

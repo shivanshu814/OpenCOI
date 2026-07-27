@@ -307,7 +307,13 @@ function AuditEventRowView({
     <li className="relative pb-5 last:pb-0">
       <span
         className={cn(
-          "bg-background absolute top-2.5 -left-[31px] flex size-5 items-center justify-center rounded-full ring-2",
+          // Centre the marker ON the rail rather than guessing an offset:
+          // the rail is the <ol>'s 1px left border sitting just outside its
+          // pl-6 padding, so its centre is -(1.5rem + 0.5px) from the item's
+          // content edge. Anchoring there and pulling back half the marker's
+          // own width keeps the dot centred at any marker size — the previous
+          // fixed -31px left the line running 3.5px off-centre through it.
+          "bg-background absolute top-2.5 left-[calc(-1.5rem-0.5px)] flex size-5 -translate-x-1/2 items-center justify-center rounded-full ring-2",
           isLatest
             ? "ring-brand/35 text-brand"
             : "ring-border text-muted-foreground",

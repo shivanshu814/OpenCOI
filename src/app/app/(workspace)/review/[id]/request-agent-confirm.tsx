@@ -10,6 +10,7 @@ import {
 } from "@/lib/ui/toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { MailCheck } from "lucide-react";
 
 /**
  * Sends the B8 request. The *result* is rendered by AgentConfirmationPanel,
@@ -71,6 +72,8 @@ export function RequestAgentConfirmButton({
       type="button"
       variant="outline"
       size="sm"
+      pending={busy}
+      pendingIcon={MailCheck}
       disabled={busy}
       onClick={() => void onClick()}
     >

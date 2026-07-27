@@ -1,9 +1,9 @@
 "use client"
 
+import { Spinner } from "@/components/ui/spinner"
 import {
   CircleCheckIcon,
   InfoIcon,
-  Loader2Icon,
   OctagonXIcon,
   TriangleAlertIcon,
 } from "lucide-react"
@@ -40,7 +40,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
         info: <InfoIcon className="size-4 text-[var(--ink)]" />,
         warning: <TriangleAlertIcon className="size-4 text-amber-600" />,
         error: <OctagonXIcon className="size-4 text-destructive" />,
-        loading: <Loader2Icon className="size-4 animate-spin" />,
+        loading: <Spinner size={16} />,
       }}
       style={
         {

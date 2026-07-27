@@ -10,6 +10,7 @@ import {
 } from "@/lib/ui/toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Mail } from "lucide-react";
 
 export function SendChaseButton({
   vendorId,
@@ -79,6 +80,8 @@ export function SendChaseButton({
         type="button"
         variant="outline"
         size="sm"
+        pending={busy}
+        pendingIcon={Mail}
         disabled={busy}
         onClick={() => send("en")}
       >

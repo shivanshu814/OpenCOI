@@ -168,6 +168,8 @@ export function AgreementTemplateCard({
               type="button"
               size="sm"
               variant="outline"
+              pending={busy}
+              pendingIcon={FileSignature}
               disabled={busy}
               onClick={() => inputRef.current?.click()}
             >

@@ -22,6 +22,7 @@ import { smsOptInSchema } from "@/lib/validation/schemas";
 import { useZodForm } from "@/lib/validation/use-zod-form";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { MessageSquare } from "lucide-react";
 
 type Props = {
   vendorId: string;
@@ -148,6 +149,8 @@ export function VendorSmsOptIn({
             type="submit"
             size="sm"
             variant="outline"
+            pending={busy}
+            pendingIcon={MessageSquare}
             disabled={busy || !validation.valid}
           >
             {busy ? "Saving…" : "Save SMS settings"}

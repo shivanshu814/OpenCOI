@@ -14,7 +14,7 @@ import {
 import { FileDropzone } from "@/components/ui/file-dropzone";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, CircleAlert, Mail } from "lucide-react";
+import { CheckCircle2, CircleAlert, Mail, Upload } from "lucide-react";
 import { useState } from "react";
 
 type Props = {
@@ -177,6 +177,8 @@ export function PortalActions({ token, locale, agentEmail }: Props) {
             <Button
               type="submit"
               className="h-11 w-full text-sm font-medium"
+              pending={busy}
+              pendingIcon={Upload}
               disabled={busy || !file}
             >
               {busy ? t.uploading : t.submit}

@@ -387,15 +387,15 @@ function OnboardingWizardInner({
               <Button
                 type="button"
                 size="lg"
+                pending={busy}
+                pendingIcon={Check}
                 disabled={busy || (step === "company" && !companyName.trim())}
                 onClick={next}
                 className="min-w-40"
               >
                 {busy ? (
-                  <>
-                    <LoaderCircle className="size-4 animate-spin" />
-                    Saving…
-                  </>
+                  // Arc supplied by Button's `pending`.
+                  "Saving…"
                 ) : step === "intake" ? (
                   <>
                     Finish setup → Upload COI

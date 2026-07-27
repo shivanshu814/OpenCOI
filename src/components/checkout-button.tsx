@@ -9,7 +9,7 @@ import {
   notifyCaughtError,
   notifyWarning,
 } from "@/lib/ui/toast";
-import { ArrowRight, LoaderCircle } from "lucide-react";
+import { ArrowRight, CreditCard } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -119,17 +119,14 @@ export function CheckoutButton({
       variant={variant}
       size={size}
       className={cn(className, className?.includes("w-full") && "w-full")}
+      pending={busy}
+      pendingIcon={CreditCard}
       disabled={busy}
       onClick={onClick}
     >
       {busy ? (
-        <>
-          <LoaderCircle
-            data-icon="inline-start"
-            className="size-4 animate-spin"
-          />
-          Opening…
-        </>
+        // The arc comes from Button's `pending` — one spinner, not two.
+        "Opening…"
       ) : (
         <>
           {label}
