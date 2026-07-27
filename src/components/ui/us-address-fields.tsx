@@ -15,6 +15,8 @@ import {
   toStateItems,
   type UsState,
 } from "@/lib/geo/us-states";
+import { CACHE_POLICIES } from "@/lib/live/policy";
+import { useCachedResource } from "@/lib/live/use-live";
 import { cn } from "@/lib/utils";
 import { Check, Loader2 } from "lucide-react";
 import * as React from "react";
@@ -55,30 +57,24 @@ export function UsAddressFields({
   disabled?: boolean;
 }) {
   const [status, setStatus] = React.useState<Status>("idle");
-  // States come from /api/geo/states (public dataset, cached a day). The
-  // bundled list only renders until that lands, and stands in if it fails —
+
+  // The state list is public and effectively frozen, yet this component
+  // mounts on several forms and used to re-request it every single time.
+  // Cached under the `geoStates` policy (7 days, shared across orgs) and
+  // de-duplicated in flight, so it costs one request per week per browser.
+  // The bundled list still renders until it lands and stands in if it fails —
   // the picker is never empty.
-  const [states, setStates] = React.useState<readonly UsState[]>(
-    FALLBACK_US_STATES,
+  const { data: geo } = useCachedResource(CACHE_POLICIES.geoStates, async () => {
+    const res = await fetch("/api/geo/states");
+    const json = (await res.json()) as { states?: UsState[] };
+    if (!json.states?.length) throw new Error("No states returned");
+    return json.states;
+  });
+
+  const stateItems = React.useMemo(
+    () => toStateItems(geo ?? FALLBACK_US_STATES),
+    [geo],
   );
-
-  React.useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      try {
-        const res = await fetch("/api/geo/states");
-        const data = (await res.json()) as { states?: UsState[] };
-        if (!cancelled && data.states?.length) setStates(data.states);
-      } catch {
-        // Keep the bundled list.
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const stateItems = React.useMemo(() => toStateItems(states), [states]);
   const [message, setMessage] = React.useState<string | null>(null);
 
   // Guards against a slow lookup for an old ZIP overwriting a newer one.

@@ -33,9 +33,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ChevronDown } from "lucide-react";
+import { CACHE_POLICIES } from "@/lib/live/policy";
+import { useCachedResource } from "@/lib/live/use-live";
 import {
   notifyApiError,
-  notifyError,
   notifySuccess,
   notifyWarning,
 } from "@/lib/ui/toast";
@@ -46,45 +47,50 @@ import {
 import { useZodForm } from "@/lib/validation/use-zod-form";
 import { useCallback, useEffect, useState } from "react";
 
-export function IntegrationsClient() {
-  const [keys, setKeys] = useState<
-    {
-      id: string;
-      name: string;
-      key_prefix: string;
-      revoked_at: string | null;
-    }[]
-  >([]);
-  const [webhooks, setWebhooks] = useState<
-    { id: string; url: string; active: boolean; events: string[] }[]
-  >([]);
+type ApiKeyRow = {
+  id: string;
+  name: string;
+  key_prefix: string;
+  revoked_at: string | null;
+};
+type WebhookRow = {
+  id: string;
+  url: string;
+  active: boolean;
+  events: string[];
+};
+type IntegrationsData = { keys: ApiKeyRow[]; webhooks: WebhookRow[] };
+
+export function IntegrationsClient({ orgId }: { orgId: string | null }) {
   const [name, setName] = useState("Zapier");
   const [url, setUrl] = useState("");
   const [rawKey, setRawKey] = useState<string | null>(null);
   const [secret, setSecret] = useState<string | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const load = useCallback(async () => {
-    const res = await fetch("/api/settings/integrations");
-    const data = (await res.json()) as {
-      keys?: typeof keys;
-      webhooks?: typeof webhooks;
-      error?: string;
-    };
-    if (data.error) {
-      setLoadError(data.error);
-      notifyError(data.error);
-      return;
-    }
-    setLoadError(null);
-    setKeys(data.keys ?? []);
-    setWebhooks(data.webhooks ?? []);
-  }, []);
+  // Only key PREFIXES and webhook URLs come back here — the raw `cs_live_`
+  // key and the signing secret exist once in the POST response and are never
+  // re-served, so nothing secret can reach the cache.
+  const {
+    data,
+    loading,
+    error: loadError,
+    refetch: load,
+  } = useCachedResource<IntegrationsData>(
+    CACHE_POLICIES.integrations,
+    async () => {
+      const res = await fetch("/api/settings/integrations");
+      const json = (await res.json()) as Partial<IntegrationsData> & {
+        error?: string;
+      };
+      if (json.error) throw new Error(json.error);
+      return { keys: json.keys ?? [], webhooks: json.webhooks ?? [] };
+    },
+    { orgId },
+  );
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const keys = data?.keys ?? [];
+  const webhooks = data?.webhooks ?? [];
 
   const keyForm = useZodForm(apiKeyCreateSchema, {
     action: "create_key",

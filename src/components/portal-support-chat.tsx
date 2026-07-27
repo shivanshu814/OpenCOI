@@ -1,5 +1,6 @@
 "use client";
 
+import { CardLiveAccent, LiveBadge } from "@/components/live-activity";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -108,7 +109,10 @@ export function PortalSupportChat({
         setError(data.error ?? t.offline);
         return;
       }
-      setTurns((prev) => [...prev, { role: "assistant", content: data.answer! }]);
+      setTurns((prev) => [
+        ...prev,
+        { role: "assistant", content: data.answer! },
+      ]);
     } catch {
       setError(t.offline);
     } finally {
@@ -118,10 +122,11 @@ export function PortalSupportChat({
 
   if (!enabled) {
     return (
-      <Card className="gap-0 py-0">
+      <Card className="gap-0 overflow-hidden py-0">
+        <CardLiveAccent />
         <CardHeader className="border-b py-3 [.border-b]:pb-3">
           <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-            <Sparkles className="size-4" aria-hidden />
+            <Sparkles className="text-brand size-4" aria-hidden />
             {t.title}
           </CardTitle>
         </CardHeader>
@@ -135,21 +140,25 @@ export function PortalSupportChat({
   }
 
   return (
-    <Card className="gap-0 py-0">
+    <Card className="gap-0 overflow-hidden py-0">
+      <CardLiveAccent />
       <CardHeader className="border-b py-3 [.border-b]:pb-3">
-        <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-          <Sparkles className="size-4" aria-hidden />
-          {t.title}
-        </CardTitle>
+        <div className="flex flex-wrap items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+            <Sparkles className="text-brand size-4" aria-hidden />
+            {t.title}
+          </CardTitle>
+          <LiveBadge label="Assistant" tone="brand" />
+        </div>
         <CardDescription className="text-xs leading-relaxed">
           {t.description}
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-3 py-4">
+      <CardContent className="space-y-4 py-4">
         <div
           ref={listRef}
-          className="max-h-80 space-y-3 overflow-y-auto"
+          className="bg-muted/30 max-h-80 space-y-3 overflow-y-auto rounded-lg border p-3"
           aria-live="polite"
           aria-busy={busy}
         >
@@ -160,18 +169,20 @@ export function PortalSupportChat({
               <div
                 key={`${i}-${turn.role}`}
                 className={
-                  turn.role === "vendor" ? "flex justify-end" : "flex justify-start"
+                  turn.role === "vendor"
+                    ? "flex justify-end"
+                    : "flex justify-start"
                 }
               >
-                <div className="max-w-[85%] space-y-1">
-                  <p className="text-muted-foreground text-[11px] uppercase tracking-wide">
+                <div className="max-w-[min(100%,28rem)] space-y-1">
+                  <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
                     {turn.role === "vendor" ? t.you : t.assistant}
                   </p>
                   <div
                     className={`rounded-lg px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap ${
                       turn.role === "vendor"
                         ? "bg-primary text-primary-foreground"
-                        : "bg-muted"
+                        : "bg-card border shadow-xs"
                     }`}
                   >
                     {turn.content}
@@ -193,7 +204,7 @@ export function PortalSupportChat({
                 type="button"
                 onClick={() => void send(s)}
                 disabled={busy}
-                className="border-border hover:bg-muted disabled:opacity-50 rounded-full border px-3 py-1.5 text-left text-xs leading-snug transition-colors"
+                className="border-border bg-card hover:bg-muted disabled:opacity-50 rounded-lg border px-3 py-2 text-left text-xs leading-snug shadow-xs transition-colors"
               >
                 {s}
               </button>
@@ -206,7 +217,7 @@ export function PortalSupportChat({
             e.preventDefault();
             void send(draft);
           }}
-          className="space-y-2"
+          className="flex flex-col gap-2 sm:flex-row sm:items-end"
         >
           <Textarea
             value={draft}
@@ -222,13 +233,12 @@ export function PortalSupportChat({
             placeholder={t.placeholder}
             rows={2}
             maxLength={800}
-            className="min-h-16 text-base"
+            className="min-h-16 flex-1 text-base sm:text-sm"
             aria-label={t.title}
           />
           <Button
             type="submit"
-            variant="outline"
-            className="h-11 w-full"
+            className="h-11 shrink-0 sm:w-28"
             disabled={busy || draft.trim().length === 0}
           >
             <Send className="size-4" aria-hidden />
@@ -245,10 +255,10 @@ export function PortalSupportChat({
           </Alert>
         ) : null}
 
-        <p className="text-muted-foreground text-xs leading-relaxed">
-          {t.disclaimer}
-        </p>
-        <p className="text-muted-foreground text-xs leading-relaxed">{t.human}</p>
+        <div className="text-muted-foreground space-y-1 text-xs leading-relaxed">
+          <p>{t.disclaimer}</p>
+          <p>{t.human}</p>
+        </div>
       </CardContent>
     </Card>
   );

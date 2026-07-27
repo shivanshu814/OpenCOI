@@ -4,10 +4,14 @@ import {
   PageSecondary,
 } from "@/components/page-frame";
 import { RoleGate } from "@/components/role-gate";
+import { getSessionOrg } from "@/lib/auth/session";
 import Link from "next/link";
 import { IntegrationsClient } from "./integrations-client";
 
-export default function IntegrationsSettingsPage() {
+export default async function IntegrationsSettingsPage() {
+  // Namespaces this panel's cached copy to the workspace (see live/policy.ts).
+  const session = await getSessionOrg();
+
   return (
     <PageFrame>
       <PageHeader
@@ -51,7 +55,7 @@ export default function IntegrationsSettingsPage() {
           </div>
         }
       >
-        <IntegrationsClient />
+        <IntegrationsClient orgId={session?.orgId ?? null} />
       </RoleGate>
 
       <PageSecondary>

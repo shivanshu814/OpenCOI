@@ -1,5 +1,6 @@
 "use client";
 
+import { CardLiveAccent } from "@/components/live-activity";
 import { SampleCoiPicker } from "@/components/sample-coi-picker";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ import {
 import { FileDropzone } from "@/components/ui/file-dropzone";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, CircleAlert } from "lucide-react";
+import { CheckCircle2, CircleAlert, Mail } from "lucide-react";
 import { useState } from "react";
 
 type Props = {
@@ -140,16 +141,15 @@ export function PortalActions({ token, locale, agentEmail }: Props) {
   return (
     <div className="space-y-6">
       <form onSubmit={onUpload}>
-        <Card className="gap-0 py-0">
+        <Card className="gap-0 overflow-hidden py-0">
+          <CardLiveAccent />
           <CardHeader className="border-b py-3 [.border-b]:pb-3">
             <CardTitle className="text-sm font-semibold">
               {t.uploadTitle}
             </CardTitle>
-            <CardDescription className="text-xs">
-              {t.uploadHint}
-            </CardDescription>
+            <CardDescription className="text-xs">{t.uploadHint}</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 py-4">
+          <CardContent className="space-y-4 py-4">
             <FileDropzone
               id="coi-file"
               value={file}
@@ -176,7 +176,7 @@ export function PortalActions({ token, locale, agentEmail }: Props) {
             />
             <Button
               type="submit"
-              className="h-12 w-full text-base"
+              className="h-11 w-full text-sm font-medium"
               disabled={busy || !file}
             >
               {busy ? t.uploading : t.submit}
@@ -187,7 +187,7 @@ export function PortalActions({ token, locale, agentEmail }: Props) {
       </form>
 
       <div
-        className="text-muted-foreground flex items-center gap-3 text-xs uppercase tracking-wide"
+        className="text-muted-foreground flex items-center gap-3 text-[11px] font-medium tracking-wide uppercase"
         aria-hidden
       >
         <span className="bg-border h-px flex-1" />
@@ -196,12 +196,16 @@ export function PortalActions({ token, locale, agentEmail }: Props) {
       </div>
 
       <form onSubmit={onAgent}>
-        <Card className="gap-0 py-0">
+        <Card className="gap-0 overflow-hidden py-0">
+          <CardLiveAccent />
           <CardHeader className="border-b py-3 [.border-b]:pb-3">
-            <CardTitle className="text-sm font-semibold">
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+              <Mail className="text-brand size-4" aria-hidden />
               {t.agentTitle}
             </CardTitle>
-            <CardDescription className="text-xs">{t.agentHint}</CardDescription>
+            <CardDescription className="text-xs leading-relaxed">
+              {t.agentHint}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 py-4">
             <div className="space-y-1.5">
@@ -219,7 +223,7 @@ export function PortalActions({ token, locale, agentEmail }: Props) {
             <Button
               type="submit"
               variant="outline"
-              className="h-12 w-full text-base"
+              className="h-11 w-full text-sm font-medium"
               disabled={agentBusy}
             >
               {agentBusy ? t.agentSending : t.agentSubmit}

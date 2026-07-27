@@ -40,9 +40,10 @@ import {
   productRoleLabel,
   toProductRole,
 } from "@/lib/auth/roles";
+import { CACHE_POLICIES } from "@/lib/live/policy";
+import { useCachedResource } from "@/lib/live/use-live";
 import {
   notifyApiError,
-  notifyError,
   notifySuccess,
   notifyWarning,
 } from "@/lib/ui/toast";
@@ -138,37 +139,52 @@ function SectionTitle({
   );
 }
 
-export function TeamSettingsClient() {
-  const [members, setMembers] = useState<Member[]>([]);
-  const [invites, setInvites] = useState<
-    { id: string; email: string; role: string }[]
-  >([]);
+/** Normalises the org row into the flat, always-defined form state. */
+function toSettings(
+  org: Partial<Record<keyof OrgSettings, unknown>>,
+): OrgSettings {
+  return {
+    ...EMPTY_SETTINGS,
+    ...Object.fromEntries(
+      Object.keys(EMPTY_SETTINGS).map((key) => {
+        const k = key as keyof OrgSettings;
+        const value = org[k];
+        if (typeof EMPTY_SETTINGS[k] === "boolean") {
+          return [k, value === undefined ? EMPTY_SETTINGS[k] : Boolean(value)];
+        }
+        return [k, typeof value === "string" ? value : ""];
+      }),
+    ),
+  } as OrgSettings;
+}
+
+type TeamData = {
+  members: Member[];
+  invites: { id: string; email: string; role: string }[];
+  settings: OrgSettings;
+  me: { role: string | null; userId: string | null; email: string | null };
+};
+
+type ScopeData = {
+  properties: PropertyOption[];
+  grantsByUser: Record<string, string[]>;
+};
+
+export function TeamSettingsClient({ orgId }: { orgId: string | null }) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"admin" | "member" | "viewer">("member");
-  const [settings, setSettings] = useState<OrgSettings>(EMPTY_SETTINGS);
-  const [properties, setProperties] = useState<PropertyOption[]>([]);
-  const [grantsByUser, setGrantsByUser] = useState<Record<string, string[]>>({});
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [me, setMe] = useState<{
-    role: string | null;
-    userId: string | null;
-    email: string | null;
-  }>({ role: null, userId: null, email: null });
+  /** Local edits layer over the fetched copy until they are saved. */
+  const [draft, setDraft] = useState<OrgSettings | null>(null);
 
-  const set = useCallback(
-    <K extends keyof OrgSettings>(key: K, value: OrgSettings[K]) => {
-      setSettings((prev) => ({ ...prev, [key]: value }));
-    },
-    [],
-  );
-
-  const load = useCallback(async () => {
-    // Every exit path must clear `loading`. Without the finally, a network
-    // blip or a non-JSON response left the page stuck on skeletons forever —
-    // indistinguishable from "settings are gone".
-    try {
+  const {
+    data: team,
+    loading,
+    error: loadError,
+    refetch: load,
+  } = useCachedResource<TeamData>(
+    CACHE_POLICIES.orgSettings,
+    async () => {
       const res = await fetch("/api/settings/team");
       const data = (await res.json()) as {
         members?: Member[];
@@ -179,69 +195,72 @@ export function TeamSettingsClient() {
         your_email?: string | null;
         error?: string;
       };
-      if (data.error) {
-        setLoadError(data.error);
-        notifyError(data.error);
-        return;
-      }
-      setLoadError(null);
-      setMembers(data.members ?? []);
-      setInvites(data.invites ?? []);
-      setMe({
-        role: data.your_role ?? null,
-        userId: data.your_user_id ?? null,
-        email: data.your_email ?? null,
-      });
-
-      const org = data.branding ?? {};
-      setSettings({
-        ...EMPTY_SETTINGS,
-        ...Object.fromEntries(
-          Object.keys(EMPTY_SETTINGS).map((key) => {
-            const k = key as keyof OrgSettings;
-            const value = org[k];
-            if (typeof EMPTY_SETTINGS[k] === "boolean") {
-              return [
-                k,
-                value === undefined ? EMPTY_SETTINGS[k] : Boolean(value),
-              ];
-            }
-            return [k, typeof value === "string" ? value : ""];
-          }),
-        ),
-      } as OrgSettings);
-    } catch {
-      setLoadError(
-        "Could not load workspace settings. Check your connection and reload.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      if (data.error) throw new Error(data.error);
+      return {
+        members: data.members ?? [],
+        invites: data.invites ?? [],
+        settings: toSettings(data.branding ?? {}),
+        me: {
+          role: data.your_role ?? null,
+          userId: data.your_user_id ?? null,
+          email: data.your_email ?? null,
+        },
+      };
+    },
+    { orgId },
+  );
 
   /**
    * G1 grants live behind an admin-only route, so a Manager viewing this page
    * simply gets no scope data and the column stays quiet — no error, since the
    * feature is not theirs to manage.
    */
-  const loadScopes = useCallback(async () => {
-    try {
+  const { data: scopes, refetch: loadScopes } = useCachedResource<ScopeData>(
+    CACHE_POLICIES.propertyAccess,
+    async () => {
       const res = await fetch("/api/settings/property-access");
-      if (!res.ok) return;
+      if (!res.ok) return { properties: [], grantsByUser: {} };
       const data = (await res.json()) as {
         grants?: { user_id: string; property_id: string }[];
         properties?: PropertyOption[];
       };
-      setProperties(data.properties ?? []);
       const byUser: Record<string, string[]> = {};
       for (const g of data.grants ?? []) {
         (byUser[g.user_id] ??= []).push(g.property_id);
       }
-      setGrantsByUser(byUser);
-    } catch {
-      // Optional enhancement — leave the column empty.
-    }
-  }, []);
+      return { properties: data.properties ?? [], grantsByUser: byUser };
+    },
+    { orgId },
+  );
+
+  const members = team?.members ?? [];
+  const invites = team?.invites ?? [];
+  const me = team?.me ?? { role: null, userId: null, email: null };
+  const properties = scopes?.properties ?? [];
+  const grantsByUser = scopes?.grantsByUser ?? {};
+  // The saved copy is the source of truth; `draft` only exists while the
+  // admin is mid-edit, so a background revalidate cannot overwrite typing.
+  // Edits must branch from the SAVED values, not from an empty object, or the
+  // first keystroke would blank every field the user had not touched.
+  const savedSettings = team?.settings ?? EMPTY_SETTINGS;
+  const settings = draft ?? savedSettings;
+
+  const set = useCallback(
+    <K extends keyof OrgSettings>(key: K, value: OrgSettings[K]) => {
+      setDraft((prev) => ({ ...(prev ?? savedSettings), [key]: value }));
+    },
+    [savedSettings],
+  );
+
+  const setSettings = useCallback(
+    (next: OrgSettings | ((prev: OrgSettings) => OrgSettings)) => {
+      setDraft((prev) => {
+        const base = prev ?? savedSettings;
+        return typeof next === "function" ? next(base) : next;
+      });
+    },
+    [savedSettings],
+  );
 
   const saveScope = useCallback(
     async (userId: string, propertyIds: string[]) => {
@@ -269,11 +288,6 @@ export function TeamSettingsClient() {
     },
     [loadScopes],
   );
-
-  useEffect(() => {
-    void load();
-    void loadScopes();
-  }, [load, loadScopes]);
 
   // Each Save button owns its own slice of the settings object, so each gets
   // its own validation against the exact schema its API action uses.
@@ -331,6 +345,9 @@ export function TeamSettingsClient() {
       // e.g. an invite row saved but its email failed to send.
       if (data.note) notifyWarning(data.note);
       else notifySuccess(successMessage);
+      // The save landed, so the local draft is no longer newer than the
+      // server; drop it and let the refetched copy own the fields again.
+      setDraft(null);
       await load();
     } finally {
       setBusy(false);

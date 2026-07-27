@@ -24,6 +24,8 @@ import {
   type UsAddress,
 } from "@/components/ui/us-address-fields";
 import { FALLBACK_US_STATES, toStateItems } from "@/lib/geo/us-states";
+import { CACHE_POLICIES } from "@/lib/live/policy";
+import { useCachedResource } from "@/lib/live/use-live";
 import {
   notifyApiError,
   notifyCaughtError,
@@ -36,7 +38,7 @@ import {
   vendorTaxProfileSchema,
 } from "@/lib/validation/schemas";
 import { useZodForm } from "@/lib/validation/use-zod-form";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const TIN_TYPE_ITEMS: ReadonlyArray<{ label: string; value: "ein" | "ssn" }> = [
   { label: "EIN", value: "ein" },
@@ -52,8 +54,34 @@ const EMPTY_ADDRESS: UsAddress = {
   postal_code: "",
 };
 
+type OnboardingData = {
+  tax: {
+    tin_masked?: string;
+    legal_name?: string;
+    address_line?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postal_code?: string | null;
+  } | null;
+  licenses: {
+    id: string;
+    license_number: string | null;
+    state: string | null;
+    expires_on: string | null;
+    board_lookup_url: string | null;
+  }[];
+  agreements: {
+    id: string;
+    title: string;
+    status: string;
+    signing_url: string | null;
+  }[];
+};
+
 type Props = {
   vendorId: string;
+  /** Namespaces the cached copy to this workspace. */
+  orgId: string | null;
   /** Managers and Admins. Read-only members see the record, not the controls. */
   canWrite: boolean;
   /**
@@ -74,32 +102,55 @@ function FieldError({ message }: { message?: string }) {
 
 export function VendorOnboardingPanel({
   vendorId,
+  orgId,
   canWrite,
   canAdmin,
 }: Props) {
-  const [taxMasked, setTaxMasked] = useState<string | null>(null);
-  const [licenses, setLicenses] = useState<
-    {
-      id: string;
-      license_number: string | null;
-      state: string | null;
-      expires_on: string | null;
-      board_lookup_url: string | null;
-    }[]
-  >([]);
-  const [agreements, setAgreements] = useState<
-    { id: string; title: string; status: string; signing_url: string | null }[]
-  >([]);
   const [signingUrl, setSigningUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const [legalName, setLegalName] = useState("");
   const [tin, setTin] = useState("");
   const [tinType, setTinType] = useState<"ein" | "ssn">("ein");
-  const [taxAddress, setTaxAddress] = useState<UsAddress>(EMPTY_ADDRESS);
   const [licNum, setLicNum] = useState("");
   const [licState, setLicState] = useState("");
   const [licExp, setLicExp] = useState("");
+
+  // Drafts stay null until the admin actually types, so a background
+  // revalidate can never overwrite half-entered text.
+  const [legalNameDraft, setLegalName] = useState<string | null>(null);
+  const [taxAddressDraft, setTaxAddress] = useState<UsAddress | null>(null);
+
+  const { data, refetch: load } = useCachedResource<OnboardingData>(
+    CACHE_POLICIES.vendorOnboarding,
+    async () => {
+      const res = await fetch(`/api/vendors/${vendorId}/onboarding`);
+      const json = (await res.json()) as Partial<OnboardingData>;
+      return {
+        tax: json.tax ?? null,
+        licenses: json.licenses ?? [],
+        agreements: json.agreements ?? [],
+      };
+    },
+    { orgId, id: vendorId },
+  );
+
+  const licenses = data?.licenses ?? [];
+  const agreements = data?.agreements ?? [];
+  // `tax` is stripped before the cached copy hits disk (see policy.ts), so on
+  // a cache-first paint the W-9 block is briefly empty and fills on the
+  // revalidate. A masked tax id is not worth persisting for that half second.
+  const taxMasked = data?.tax?.tin_masked ?? null;
+  const legalName = legalNameDraft ?? data?.tax?.legal_name ?? "";
+  const taxAddress =
+    taxAddressDraft ??
+    (data?.tax
+      ? {
+          address_line: data.tax.address_line ?? "",
+          city: data.tax.city ?? "",
+          state: data.tax.state ?? "",
+          postal_code: data.tax.postal_code ?? "",
+        }
+      : EMPTY_ADDRESS);
 
   const taxForm = useZodForm(vendorTaxProfileSchema, {
     action: "upsert_tax",
@@ -120,39 +171,6 @@ export function VendorOnboardingPanel({
   const agreementForm = useZodForm(vendorAgreementSchema, {
     action: "create_agreement",
   });
-
-  async function load() {
-    const res = await fetch(`/api/vendors/${vendorId}/onboarding`);
-    const data = (await res.json()) as {
-      tax?: {
-        tin_masked?: string;
-        legal_name?: string;
-        address_line?: string | null;
-        city?: string | null;
-        state?: string | null;
-        postal_code?: string | null;
-      } | null;
-      licenses?: typeof licenses;
-      agreements?: typeof agreements;
-    };
-    setTaxMasked(data.tax?.tin_masked ?? null);
-    if (data.tax?.legal_name) setLegalName(data.tax.legal_name);
-    if (data.tax) {
-      setTaxAddress({
-        address_line: data.tax.address_line ?? "",
-        city: data.tax.city ?? "",
-        state: data.tax.state ?? "",
-        postal_code: data.tax.postal_code ?? "",
-      });
-    }
-    setLicenses(data.licenses ?? []);
-    setAgreements(data.agreements ?? []);
-  }
-
-  useEffect(() => {
-    void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vendorId]);
 
   async function post(body: Record<string, unknown>) {
     setBusy(true);

@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CACHE_POLICIES } from "@/lib/live/policy";
 import { useCachedResource } from "@/lib/live/use-live";
 import {
   notifyApiError,
@@ -48,13 +49,13 @@ export function AgreementTemplateCard({
 
   const { data, loading, refreshing, mutate, refetch } =
     useCachedResource<TemplateState>(
-      "agreement-template",
+      CACHE_POLICIES.agreementTemplate,
       async () => {
         const res = await fetch("/api/settings/agreement-template");
         if (!res.ok) throw new Error("Could not load the agreement template");
         return (await res.json()) as TemplateState;
       },
-      { scope: orgId, tables: ["orgs"] },
+      { orgId },
     );
 
   const template = data?.template ?? null;

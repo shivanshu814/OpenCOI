@@ -23,7 +23,7 @@ export default async function TeamSettingsPage() {
         help="Your company profile appears on owner reports and vendor-facing emails. Roles control who can upload, review, and change billing. Branding is presentation only — never a guarantee of compliance."
         live
       />
-      <TeamSettingsClient />
+      <TeamSettingsClient orgId={session?.orgId ?? null} />
       <AgreementTemplateCard
         orgId={session?.orgId ?? null}
         canManage={canManage}

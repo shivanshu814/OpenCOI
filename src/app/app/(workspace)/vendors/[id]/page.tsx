@@ -241,6 +241,7 @@ export default async function VendorDetailPage({
 
           <VendorOnboardingPanel
             vendorId={vendor.id}
+            orgId={session.orgId}
             canWrite={canWrite}
             canAdmin={canAdmin}
           />

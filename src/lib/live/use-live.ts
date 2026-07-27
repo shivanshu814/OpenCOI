@@ -2,6 +2,7 @@
 
 import { onLiveEvent } from "@/lib/live/bus";
 import { dropCache, readCache, writeCache } from "@/lib/live/idb";
+import type { CachePolicy } from "@/lib/live/policy";
 import type { LiveTable } from "@/lib/live/tables";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -95,33 +96,71 @@ export type CachedResource<T> = {
 };
 
 /**
- * Fetch-with-cache for client panels.
+ * Shares one in-flight request between everything asking for the same key in
+ * the same moment. The address picker mounts more than once per page, and
+ * without this each copy opens its own request for the identical list.
+ */
+const inFlight = new Map<string, Promise<unknown>>();
+
+/**
+ * Blank the fields a policy refuses to persist, right before the copy is
+ * written to disk. The single cast is safe by construction: only nullable
+ * top-level fields are ever listed (`persistDrops` is keyed to `T`), so the
+ * trimmed object is still a valid `T`.
+ */
+export function projectForDisk<T>(
+  data: T,
+  drops: readonly string[] | undefined,
+): T {
+  if (!drops?.length || data === null || typeof data !== "object") return data;
+  const copy: Record<string, unknown> = { ...(data as Record<string, unknown>) };
+  for (const field of drops) copy[field] = null;
+  return copy as T;
+}
+
+function dedupedFetch<T>(key: string, run: () => Promise<T>): Promise<T> {
+  const existing = inFlight.get(key) as Promise<T> | undefined;
+  if (existing) return existing;
+  const promise = run().finally(() => {
+    inFlight.delete(key);
+  });
+  inFlight.set(key, promise);
+  return promise;
+}
+
+/**
+ * Fetch-with-cache for client panels, driven by a named policy.
  *
  * The point is to delete the skeleton on every visit after the first: a
  * cached copy paints immediately while the network revalidates underneath,
- * and Realtime pushes invalidate it the moment the data actually changes.
+ * and Realtime invalidates it the moment the data actually changes.
  *
- * `maxAgeMs` bounds how old a cached copy may be before it is ignored for
- * first paint. Keep it SHORT for anything a customer might act on — this app
- * must never present a stale compliance verdict as if it were current — and
- * remember `stale` is exposed precisely so the surface can say so.
+ * Callers do not choose a TTL or a scope — they name a policy from
+ * `src/lib/live/policy.ts`, where every caching decision in the product sits
+ * together and can be reviewed as a set. Anything verdict-bearing or secret
+ * has no policy, which is the enforcement.
  */
 export function useCachedResource<T>(
-  key: string,
+  policy: CachePolicy<T>,
   fetcher: () => Promise<T>,
   {
-    scope,
-    tables = null,
-    maxAgeMs = 5 * 60_000,
+    orgId,
+    id,
     enabled = true,
   }: {
-    /** Org id. Namespaces the cache so accounts never see each other's data. */
-    scope: string | null;
-    tables?: readonly LiveTable[] | null;
-    maxAgeMs?: number;
+    /** Required for `scope: "org"` policies; ignored for public ones. */
+    orgId?: string | null;
+    /** Distinguishes per-record caches, e.g. one vendor's documents. */
+    id?: string | null;
     enabled?: boolean;
-  },
+  } = {},
 ): CachedResource<T> {
+  const key = id ? `${policy.key}:${id}` : policy.key;
+  // A public policy carries no tenant boundary, so it needs no org to store
+  // under; an org policy without an org id simply does not persist.
+  const scope = policy.scope === "public" ? "public" : (orgId ?? null);
+  const { maxAgeMs, tables } = policy;
+  const drops = policy.persistDrops;
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(enabled);
   const [refreshing, setRefreshing] = useState(false);
@@ -150,12 +189,14 @@ export function useCachedResource<T>(
     const runId = ++runIdRef.current;
     setRefreshing(true);
     try {
-      const fresh = await fetcherRef.current();
+      const fresh = await dedupedFetch(key, () => fetcherRef.current());
       if (!mountedRef.current || runId !== runIdRef.current) return;
       setData(fresh);
       setStale(false);
       setError(null);
-      if (scope) void writeCache(scope, key, fresh);
+      // What reaches disk can be narrower than what reaches the screen —
+      // see the `persist` note in policy.ts.
+      if (scope) void writeCache(scope, key, projectForDisk(fresh, drops));
     } catch (e) {
       if (!mountedRef.current || runId !== runIdRef.current) return;
       setError(e instanceof Error ? e.message : "Could not load");
@@ -165,7 +206,7 @@ export function useCachedResource<T>(
         setLoading(false);
       }
     }
-  }, [enabled, key, scope]);
+  }, [enabled, key, scope, drops]);
 
   // First paint: cached copy if it is fresh enough, then always revalidate.
   useEffect(() => {
@@ -208,12 +249,12 @@ export function useCachedResource<T>(
           typeof next === "function"
             ? (next as (p: T | null) => T)(prev)
             : next;
-        if (scope) void writeCache(scope, key, value);
+        if (scope) void writeCache(scope, key, projectForDisk(value, drops));
         return value;
       });
       setStale(false);
     },
-    [key, scope],
+    [key, scope, drops],
   );
 
   return { data, loading, refreshing, stale, error, refetch: load, mutate };
