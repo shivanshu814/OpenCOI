@@ -54,6 +54,7 @@ const MARKETING_PREFIXES = [
   "/refund",
   "/help",
   "/about",
+  "/careers",
   "/free-audit",
   "/blog",
   "/glossary",

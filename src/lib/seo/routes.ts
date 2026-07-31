@@ -168,6 +168,14 @@ export const PUBLIC_ROUTES: readonly PublicRoute[] = [
     changeFrequency: "monthly",
     group: "Company",
   },
+  {
+    path: "/careers",
+    label: "Careers",
+    summary: "Open roles at CertShield.",
+    priority: 0.4,
+    changeFrequency: "weekly",
+    group: "Company",
+  },
 
   {
     path: "/terms",

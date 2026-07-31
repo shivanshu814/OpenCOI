@@ -529,3 +529,37 @@ export const billingCheckoutSchema = z.object({
   planId: z.string().max(60).optional(),
 });
 export type BillingCheckoutInput = z.infer<typeof billingCheckoutSchema>;
+
+/* ─────────────────────────────── careers ────────────────────────────── */
+
+/**
+ * Job application submission from /careers/[slug].
+ *
+ * Email-only capture (no DB persistence yet) — every field a reviewer would
+ * ask for in the first reply, none of the ones that guarantee attrition
+ * (resume upload, phone, work-auth interrogation). The honeypot is what
+ * catches naive form bots; real applicants leave it empty.
+ */
+export const careersApplySchema = z.object({
+  jobSlug: z
+    .string()
+    .trim()
+    .min(1, "Job is required.")
+    .max(60, "Job slug too long.")
+    .regex(/^[a-z][a-z0-9-]{0,58}[a-z0-9]$/, "Invalid job."),
+  name: requiredText(120, "Name"),
+  email: z.email("Enter a valid email."),
+  linkedinUrl: optionalText(300, "LinkedIn URL"),
+  location: optionalText(120, "Location"),
+  yearsExperience: z
+    .union([z.literal(""), z.coerce.number().int().min(0).max(60)])
+    .nullish(),
+  pitch: z
+    .string()
+    .trim()
+    .min(30, "Tell us a bit more — at least 30 characters.")
+    .max(2000, "Keep the pitch under 2000 characters."),
+  /** Honeypot — bots fill hidden fields, humans don't. Silently reject. */
+  companyWebsite: z.string().max(200).optional(),
+});
+export type CareersApplyInput = z.infer<typeof careersApplySchema>;
