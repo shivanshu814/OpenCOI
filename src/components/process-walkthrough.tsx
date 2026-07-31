@@ -520,7 +520,7 @@ function PortalScene() {
         <div className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5">
           <Link2 className="text-brand size-4 shrink-0" strokeWidth={2} />
           <span className="truncate text-[11px] font-medium text-slate-500">
-            getcertshield.vercel.app/portal/… · no login needed
+            getcertshield.app/portal/… · no login needed
           </span>
         </div>
       </SceneRow>
@@ -744,8 +744,8 @@ export function ProcessWalkthrough() {
             </span>
             <span className="mx-auto rounded-md bg-white px-6 py-0.5 text-[10px] font-medium text-slate-400 ring-1 ring-slate-100">
               {current.scene === "portal" || current.scene === "chat"
-                ? "getcertshield.vercel.app/portal"
-                : "getcertshield.vercel.app/app"}
+                ? "getcertshield.app/portal"
+                : "app.getcertshield.app/app"}
             </span>
             <span className="w-10" />
           </div>

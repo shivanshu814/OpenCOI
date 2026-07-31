@@ -16,7 +16,7 @@ export async function POST(
     return NextResponse.json({
       ok: true,
       demo: true,
-      url: "https://getcertshield.vercel.app/portal/demo-token",
+      url: "https://app.getcertshield.app/portal/demo-token",
       expiresAt: new Date(Date.now() + 30 * 864e5).toISOString(),
     });
   }

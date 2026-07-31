@@ -1,6 +1,6 @@
-/** B1: shared inbound domain — {token}@in.certshield.com */
+/** B1: shared inbound domain — {token}@in.getcertshield.app */
 
-export const DEFAULT_INBOUND_DOMAIN = "in.certshield.com";
+export const DEFAULT_INBOUND_DOMAIN = "in.getcertshield.app";
 
 export function inboundDomain(): string {
   return process.env.INBOUND_EMAIL_DOMAIN?.trim() || DEFAULT_INBOUND_DOMAIN;
@@ -17,7 +17,7 @@ export function parseIntakeTokenFromRecipients(
   const domain = inboundDomain().toLowerCase();
   for (const raw of addresses) {
     if (!raw) continue;
-    // "Name <token@in.certshield.com>" or bare address; may be comma-separated
+    // "Name <token@in.getcertshield.app>" or bare address; may be comma-separated
     for (const part of raw.split(/[,;]/)) {
       const angle = part.match(/<([^>]+)>/);
       const email = (angle?.[1] ?? part).trim().toLowerCase();

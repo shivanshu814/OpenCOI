@@ -1,13 +1,15 @@
 import { INK_BG, InkAtmosphere, SURFACE_BG } from "@/components/ink-atmosphere";
 import { LiveBadge, LiveOpsTicker } from "@/components/live-activity";
 import { MarketingShell } from "@/components/marketing-shell";
+import { pageMetadata } from "@/lib/seo/metadata";
 import Link from "next/link";
 
-export const metadata = {
+export const metadata = pageMetadata({
   title: "Subprocessors & DPA — CertShield",
   description:
     "The third-party subprocessors CertShield uses to operate the service, what data each handles, and how to request a Data Processing Agreement.",
-};
+  path: "/subprocessors",
+});
 
 type Row = {
   name: string;

@@ -12,7 +12,18 @@
     "ci": "npm run lint && npm run typecheck && npm test && npm run build && npm run smoke",
     "db:push": "supabase db push --yes",
     "load-test:1k": "tsx scripts/load-test-1k-vendors.ts",
-    "smoke": "tsx scripts/smoke-test.ts"
+    "indexnow": "tsx scripts/indexnow-ping.ts",
+    "smoke": "tsx scripts/smoke-test.ts",
+    "seo:crawl": "tsx scripts/seo/crawl.ts",
+    "seo:psi": "tsx scripts/seo/psi.ts",
+    "seo:lighthouse": "tsx scripts/seo/lighthouse.ts",
+    "seo:verify-site": "tsx scripts/seo/verify-site.ts",
+    "seo:gsc": "tsx scripts/seo/gsc.ts",
+    "seo:google-index": "tsx scripts/seo/google-index.ts",
+    "seo:ranks": "tsx scripts/seo/ranks.ts",
+    "seo:backlinks": "tsx scripts/seo/backlinks.ts",
+    "seo:audit": "npm run seo:crawl && npm run seo:psi && npm run seo:backlinks",
+    "seo:snapshots": "tsx scripts/seo/snapshots.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.113.0",

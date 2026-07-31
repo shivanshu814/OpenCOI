@@ -46,7 +46,7 @@ export function getOpenRouterClient(options?: {
 
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL?.trim() ||
-    "https://getcertshield.vercel.app";
+    "https://app.getcertshield.app";
 
   return new Anthropic({
     apiKey,

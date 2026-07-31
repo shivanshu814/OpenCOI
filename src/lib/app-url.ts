@@ -34,5 +34,5 @@ export function appBaseUrl(): string {
   const deploymentHost = clean(process.env.VERCEL_URL);
   if (deploymentHost) return withScheme(deploymentHost);
 
-  return "https://getcertshield.vercel.app";
+  return "https://app.getcertshield.app";
 }

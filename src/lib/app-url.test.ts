@@ -47,7 +47,10 @@ describe("appBaseUrl precedence", () => {
   });
 
   it("falls back to production when no env var is set", () => {
-    assert.equal(appBaseUrl(), "https://getcertshield.vercel.app");
+    // The owned app host, not the `*.vercel.app` alias it replaced: portal and
+    // magic-link URLs minted from this fallback are emailed to vendors and have
+    // to keep resolving after the Vercel alias is eventually retired.
+    assert.equal(appBaseUrl(), "https://app.getcertshield.app");
   });
 
   it("adds the scheme Vercel omits and never double-adds one", () => {

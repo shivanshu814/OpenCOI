@@ -30,18 +30,33 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
+import { JsonLd } from "@/components/json-ld";
+import { pageMetadata } from "@/lib/seo/metadata";
+import {
+  faqPageSchema,
+  graph,
+  softwareApplicationSchema,
+  webPageSchema,
+} from "@/lib/seo/schema";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-// Titles/descriptions are verbatim from docs/02-BRANDING_SEO.md §3 — `absolute`
-// stops the root layout's "%s · CertShield" template from appending to them.
-export const metadata: Metadata = {
-  title: {
-    absolute: "COI Tracking Software for Property Managers — CertShield",
-  },
+// Title/description verbatim from docs/02-BRANDING_SEO.md §3. `pageMetadata`
+// sets `title.absolute` so the root layout's "%s · CertShield" template cannot
+// append to it, and adds the canonical + OG/Twitter card.
+export const metadata: Metadata = pageMetadata({
+  title: "COI Tracking Software for Property Managers — CertShield",
   description:
     "AI reads vendor insurance certificates, flags gaps, and chases renewals automatically. Never work with an uninsured vendor again. From $99/mo.",
-};
+  path: "/",
+  keywords: [
+    "coi tracking software",
+    "certificate of insurance tracking software",
+    "vendor insurance tracking",
+    "coi compliance software",
+    "coi tracking for property managers",
+  ],
+});
 
 const faq = [
   {
@@ -70,41 +85,24 @@ const faq = [
   },
 ];
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Organization",
-      name: "CertShield",
-      url: "https://getcertshield.vercel.app",
-      description:
-        "CertShield is vendor insurance compliance software for US property managers and contractors. Its AI reads certificates of insurance (ACORD forms), verifies coverage limits, additional-insured endorsements, and expiration dates against each company's requirements, then automatically chases vendors and their insurance agents for renewals by email (English and Spanish). Every verdict is human-reviewed before publishing, with audit-ready document trails. CertShield replaces spreadsheet-based COI tracking at SMB pricing, from $99/month. Founded in 2026.",
-    },
-    {
-      "@type": "SoftwareApplication",
-      name: "CertShield",
-      applicationCategory: "BusinessApplication",
-      operatingSystem: "Web",
-      offers: {
-        "@type": "AggregateOffer",
-        lowPrice: "99",
-        highPrice: "499",
-        priceCurrency: "USD",
-        offerCount: 3,
-      },
-      description:
-        "AI vendor insurance compliance for US property managers and contractors. COIs read, verified, and chased automatically.",
-    },
-    {
-      "@type": "FAQPage",
-      mainEntity: faq.map((item) => ({
-        "@type": "Question",
-        name: item.q,
-        acceptedAnswer: { "@type": "Answer", text: item.a },
-      })),
-    },
-  ],
-};
+/**
+ * Home's own graph nodes. `Organization` and `WebSite` are NOT repeated here —
+ * `MarketingShell` emits them once for every marketing page, and the nodes
+ * below reference that same `@id`. The previous hand-written block declared a
+ * second Organization with `url: getcertshield.vercel.app`, which asserted a
+ * different company than the one the site is actually served from — exactly the
+ * entity split docs/02 §5.9 exists to prevent.
+ */
+const jsonLd = graph(
+  softwareApplicationSchema(),
+  webPageSchema({
+    title: "COI Tracking Software for Property Managers — CertShield",
+    description:
+      "AI reads vendor insurance certificates, flags gaps, and chases renewals automatically. Never work with an uninsured vendor again. From $99/mo.",
+    path: "/",
+  }),
+  faqPageSchema(faq),
+);
 
 const beforeItems = [
   "Certificates buried in email threads and shared drives",
@@ -331,10 +329,7 @@ const cardHover =
 export default function HomePage() {
   return (
     <MarketingShell>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <JsonLd data={jsonLd} />
 
       {/* 1. Hero — primary Free audit */}
       <section className={`relative overflow-hidden ${INK_BG}`}>
@@ -396,7 +391,7 @@ export default function HomePage() {
                 <Button
                   size="lg"
                   className={primaryCta}
-                  render={<Link href="/login" />}
+                  render={<Link href="/free-audit" />}
                 >
                   Get my free audit
                 </Button>
@@ -654,7 +649,7 @@ export default function HomePage() {
               <Button
                 size="sm"
                 className="bg-brand text-brand-foreground hover:bg-brand/90 font-semibold"
-                render={<Link href="/login" />}
+                render={<Link href="/free-audit" />}
               >
                 Get my free audit
               </Button>
@@ -850,7 +845,7 @@ export default function HomePage() {
                 every publish. Watch it run, or step through yourself.
               </p>
             </div>
-            <Button variant="outline" size="sm" render={<Link href="/login" />}>
+            <Button variant="outline" size="sm" render={<Link href="/free-audit" />}>
               Get my free audit
             </Button>
           </div>
@@ -965,7 +960,7 @@ export default function HomePage() {
                     variant="outline"
                     size="sm"
                     className="mt-6 self-start"
-                    render={<Link href="/login" />}
+                    render={<Link href="/free-audit" />}
                   >
                     Get my free audit
                   </Button>
@@ -1208,7 +1203,7 @@ export default function HomePage() {
               <Button
                 size="lg"
                 className={primaryCta}
-                render={<Link href="/login" />}
+                render={<Link href="/free-audit" />}
               >
                 Get my free audit
               </Button>

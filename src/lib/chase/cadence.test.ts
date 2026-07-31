@@ -124,7 +124,7 @@ describe("chase templates EN/ES", () => {
     orgName: "Demo PM",
     expirationDate: "2026-08-15",
     daysUntilExpiry: 23,
-    intakeEmail: "abc@in.certshield.com",
+    intakeEmail: "abc@in.getcertshield.app",
     portalUrl: "https://getcertshield.vercel.app/portal/test-token",
     agentName: "Harbor Insurance",
     physicalAddress: "CertShield · US",

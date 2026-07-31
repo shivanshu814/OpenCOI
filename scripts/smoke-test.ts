@@ -70,6 +70,59 @@ const PAGE_CHECKS: Check[] = [
   { path: "/terms" },
   { path: "/subprocessors" },
 
+  // ── SEO / AEO surfaces ──────────────────────────────────────────────
+  // Each check asserts the canonical tag, because a page that renders but has
+  // no canonical is the failure mode that costs rankings silently — nothing
+  // looks broken, the URL just competes with its own query-string variants.
+  {
+    path: "/about",
+    contains: ["About CertShield", 'rel="canonical"', "refuses to claim"],
+  },
+  {
+    path: "/free-audit",
+    contains: ["Free COI audit", 'rel="canonical"', "no card"],
+  },
+  {
+    path: "/blog",
+    contains: ["Definitions", "Guides", 'rel="canonical"'],
+  },
+  {
+    path: "/blog/cg-20-10-vs-cg-20-37",
+    contains: [
+      "CG 20 37",
+      "data-answer",
+      '"@type":"Article"',
+      '"@type":"FAQPage"',
+      'rel="canonical"',
+    ],
+  },
+  {
+    path: "/glossary",
+    contains: ["Waiver of subrogation", '"@type":"DefinedTermSet"'],
+  },
+  {
+    path: "/vendor-insurance-requirements",
+    contains: ["Roofing", "CG 20 37", "not advice"],
+  },
+  { path: "/compare", contains: ["myCOI", "TrustLayer", "Jones"] },
+  {
+    path: "/compare/mycoi-alternative",
+    // The "when to buy the competitor" section is the credibility of the whole
+    // page — if a rewrite ever drops it, this fails.
+    contains: [
+      "You have a dedicated risk or compliance function",
+      "quote-based",
+    ],
+  },
+  {
+    path: "/coi-tracking-for-property-managers",
+    contains: ["property managers", '"@type":"FAQPage"'],
+  },
+  {
+    path: "/subcontractor-insurance-tracking",
+    contains: ["Subcontractor insurance tracking", "completed operations"],
+  },
+
   // ── Workspace (demo mode) ───────────────────────────────────────────
   { path: "/app", contains: ["Dashboard"], scope: "demo-only" },
   {
@@ -132,6 +185,64 @@ const PAGE_CHECKS: Check[] = [
     absent: ["No vendors match"],
     scope: "demo-only",
   },
+];
+
+/**
+ * The machine-readable SEO/AEO surfaces.
+ *
+ * These are the files nobody ever looks at by eye, which is exactly why they
+ * need a test: a broken `sitemap.xml` or a `robots.txt` that started
+ * disallowing everything produces no visible symptom until traffic is gone
+ * weeks later. Each check asserts something that can only be true if the file
+ * was actually generated from live data.
+ */
+const SEO_FILE_CHECKS: Check[] = [
+  {
+    path: "/robots.txt",
+    contains: [
+      "Sitemap:",
+      // The AI-crawler allow-list is a deliberate business decision (docs/02
+      // §5) — if a future edit blocks these, GEO stops working silently.
+      "GPTBot",
+      "ClaudeBot",
+      "PerplexityBot",
+      "Google-Extended",
+      // Magic-link surfaces must stay out of the index.
+      "Disallow: /portal/",
+    ],
+    absent: ["Disallow: /\n\n"],
+  },
+  {
+    path: "/sitemap.xml",
+    contains: [
+      "<urlset",
+      "/vendor-insurance-requirements",
+      "/blog/cg-20-10-vs-cg-20-37",
+      "/compare/mycoi-alternative",
+    ],
+    // Auth and token surfaces must never appear in a sitemap.
+    absent: ["/portal/", "<loc>https://www.getcertshield.app/login</loc>"],
+  },
+  {
+    path: "/llms.txt",
+    contains: [
+      "What CertShield does NOT claim",
+      "mid-term",
+      // Generated from PLANS, so a price change that misses this file is
+      // impossible by construction — this asserts the generation happened.
+      "Starter: $99/mo",
+    ],
+  },
+  {
+    path: "/llms-full.txt",
+    contains: ["# Glossary", "Waiver of subrogation", "Choose myCOI when"],
+  },
+  {
+    path: "/blog/rss.xml",
+    contains: ["<rss", "<item>", "certificate of insurance"],
+    absent: ["&amp;amp;"],
+  },
+  { path: "/manifest.webmanifest", contains: ["CertShield"] },
 ];
 
 const SAMPLE_PDFS = [
@@ -264,6 +375,30 @@ async function checkPage(check: Check): Promise<void> {
   pass(label);
 }
 
+/**
+ * The dynamic social card.
+ *
+ * Checked by magic bytes rather than status code: `ImageResponse` failures
+ * (an unsupported CSS property, a colour space Satori cannot parse) surface as
+ * a 500 or as an HTML error body, never as a broken-looking PNG. Every OG tag
+ * on the site points at this route, so if it breaks, every shared link becomes
+ * a bare URL.
+ */
+async function checkOgImage(): Promise<void> {
+  const label = "/og?title=…";
+  const res = await fetch(`${BASE}/og?title=Smoke%20test&eyebrow=Check`);
+  if (res.status !== 200) {
+    fail(label, `expected HTTP 200, got ${res.status}`);
+    return;
+  }
+  const buf = Buffer.from(await res.arrayBuffer());
+  if (buf.subarray(1, 4).toString("latin1") !== "PNG") {
+    fail(label, "response is not a PNG (ImageResponse likely threw)");
+    return;
+  }
+  pass(`${label} (${Math.round(buf.byteLength / 1024)} KB)`);
+}
+
 async function checkSamplePdf(name: string): Promise<void> {
   const label = `/samples/${name}.pdf`;
   const res = await fetch(`${BASE}${label}`);
@@ -341,6 +476,10 @@ async function main(): Promise<void> {
       else skip(check.path, "needs demo mode; this target requires sign-in");
     }
 
+    console.log("\nSEO / AEO files");
+    for (const check of SEO_FILE_CHECKS) await checkPage(check);
+    await checkOgImage();
+
     console.log("\nSample COI library");
     for (const name of SAMPLE_PDFS) await checkSamplePdf(name);
 
@@ -359,7 +498,11 @@ async function main(): Promise<void> {
   }
 
   const total =
-    PAGE_CHECKS.length + SAMPLE_PDFS.length + API_CHECKS.length;
+    PAGE_CHECKS.length +
+    SEO_FILE_CHECKS.length +
+    1 + // the OG image
+    SAMPLE_PDFS.length +
+    API_CHECKS.length;
   const ran = total - skipped;
   console.log(
     `\n${ran - failures}/${ran} smoke checks passed` +

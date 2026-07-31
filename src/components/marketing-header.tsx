@@ -17,12 +17,20 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-/** Exactly four items — see docs/02-BRANDING_SEO.md. Help lives in the footer. */
+/**
+ * Exactly four items — see docs/02-BRANDING_SEO.md. Help, Security and the
+ * whole Learn/Compare surface live in the footer site index.
+ *
+ * "Free Audit" points at `/free-audit`, not `/login`: the offer is the highest
+ * intent thing on the site and it now has a page that can rank for it and be
+ * cited, rather than bouncing an interested visitor straight into a sign-in
+ * form they did not ask for.
+ */
 const nav = [
   { href: "/#product", label: "Product" },
   { href: "/pricing", label: "Pricing" },
-  { href: "/security", label: "Security" },
-  { href: "/login", label: "Free Audit" },
+  { href: "/blog", label: "Guides" },
+  { href: "/free-audit", label: "Free Audit" },
 ];
 
 function NavLink({

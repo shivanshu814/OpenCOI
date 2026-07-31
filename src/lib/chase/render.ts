@@ -70,4 +70,4 @@ export function renderChaseEmail(input: {
 
 export const DEFAULT_PHYSICAL_ADDRESS =
   process.env.CHASE_PHYSICAL_ADDRESS?.trim() ||
-  "CertShield · US operations · shivanshu814pathak@gmail.com";
+  "CertShield · US operations · hello@getcertshield.app";

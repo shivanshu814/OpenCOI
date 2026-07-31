@@ -1,0 +1,17 @@
+Vendor legal name,Trade / tier,Coverage line,Carrier,NAIC #,Policy number,Effective date,Expiration date,Each occurrence limit,Aggregate limit,Products-completed ops aggregate,Required limit met? (Y/N),AI ongoing ops on file? (Y/N),AI completed ops on file? (Y/N),Primary & non-contributory? (Y/N),Waiver of subrogation? (Y/N),Producer agency,Producer email,Certificate file link,Last verified date,Verified by,Notes
+Acme Roofing LLC,Roofing / High,General liability,Example Insurance Co,12345,GL-0000000,2026-01-01,2027-01-01,1000000,2000000,2000000,Y,Y,Y,Y,Y,Example Agency,agent@example-agency.com,,2026-07-31,,"Per-project aggregate requested; confirm no hot-work exclusion"
+Acme Roofing LLC,Roofing / High,Workers compensation,Example Insurance Co,12345,WC-0000000,2026-01-01,2027-01-01,Statutory,,,Y,N/A,N/A,N/A,Y,Example Agency,agent@example-agency.com,,2026-07-31,,"Check for owner-officer exclusion"
+Acme Roofing LLC,Roofing / High,Commercial auto,Example Insurance Co,12345,CA-0000000,2026-01-01,2027-01-01,1000000,,,Y,N/A,N/A,N/A,N,Example Agency,agent@example-agency.com,,2026-07-31,,
+Acme Roofing LLC,Roofing / High,Umbrella / excess,Example Insurance Co,12345,UMB-0000000,2026-01-01,2027-01-01,2000000,2000000,,Y,N/A,N/A,N/A,N,Example Agency,agent@example-agency.com,,2026-07-31,,"Confirm it follows form over GL"
+,,,,,,,,,,,,,,,,,,,,,
+# HOW TO USE,,,,,,,,,,,,,,,,,,,,,
+# 1. One row per vendor PER COVERAGE LINE - policies do not renew together.,,,,,,,,,,,,,,,,,,,,,
+# 2. Add a 'Days to expiry' column: =IF(H2="";"";H2-TODAY())  [use commas in Excel],,,,,,,,,,,,,,,,,,,,,
+# 3. Add a 'Status' column: =IF(H2="";"MISSING";IF(H2<TODAY();"EXPIRED";IF(H2-TODAY()<=30;"EXPIRING";"OK"))),,,,,,,,,,,,,,,,,,,,,
+# 4. Conditional-format Status: red EXPIRED/MISSING - amber EXPIRING - green OK.,,,,,,,,,,,,,,,,,,,,,
+# 5. Sort by 'Days to expiry' ascending and open it every Monday. The sheet cannot email anyone.,,,,,,,,,,,,,,,,,,,,,
+# 6. Chase the PRODUCER (the agency) with the vendor copied - not the vendor alone.,,,,,,,,,,,,,,,,,,,,,
+# 7. 'AI' columns mean ADDITIONAL INSURED - and only mark Y if you have seen the endorsement page.,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,
+# Free template from CertShield - https://www.getcertshield.app/blog/coi-tracking-spreadsheet-template,,,,,,,,,,,,,,,,,,,,,
+# Document review assistance - not legal - insurance - or professional advice.,,,,,,,,,,,,,,,,,,,,,

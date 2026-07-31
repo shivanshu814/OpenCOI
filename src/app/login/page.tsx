@@ -101,7 +101,7 @@ function LoginForm() {
       window.location.hostname !== "localhost" &&
       window.location.hostname !== "127.0.0.1"
         ? window.location.origin
-        : "https://getcertshield.vercel.app")
+        : "https://app.getcertshield.app")
     ).replace(/\/$/, "");
 
     // The callback reads this to send the user back where they were headed.

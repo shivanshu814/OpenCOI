@@ -481,10 +481,10 @@ export function renderDemoChase(input: {
       orgName: input.orgName ?? "Demo Property Management",
       expirationDate: input.expirationDate ?? "2026-08-15",
       daysUntilExpiry: input.daysUntilExpiry ?? 23,
-      intakeEmail: input.intakeEmail ?? "demo@in.certshield.com",
+      intakeEmail: input.intakeEmail ?? "demo@in.getcertshield.app",
       portalUrl:
         input.portalUrl ??
-        "https://getcertshield.vercel.app/portal/demo-token",
+        "https://app.getcertshield.app/portal/demo-token",
       agentName: null,
       physicalAddress: DEFAULT_PHYSICAL_ADDRESS,
     },

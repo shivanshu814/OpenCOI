@@ -2,17 +2,32 @@ import { CheckoutButton } from "@/components/checkout-button";
 import { INK_BG, InkAtmosphere, SURFACE_BG } from "@/components/ink-atmosphere";
 import { LiveOpsTicker } from "@/components/live-activity";
 import { MarketingShell } from "@/components/marketing-shell";
+import { JsonLd } from "@/components/json-ld";
 import { PLANS } from "@/lib/billing/plans";
+import { pageMetadata } from "@/lib/seo/metadata";
+import {
+  breadcrumbSchema,
+  faqPageSchema,
+  graph,
+  softwareApplicationSchema,
+  webPageSchema,
+} from "@/lib/seo/schema";
 import { Check } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-// Verbatim from docs/02-BRANDING_SEO.md §3; `absolute` bypasses the title template.
-export const metadata: Metadata = {
-  title: { absolute: "CertShield Pricing — COI Tracking from $99/month" },
+// Verbatim from docs/02-BRANDING_SEO.md §3.
+export const metadata: Metadata = pageMetadata({
+  title: "CertShield Pricing — COI Tracking from $99/month",
   description:
     "Simple pricing for vendor insurance tracking: Starter $99, Pro $249, Business $499. No annual contract. 2-minute setup, free COI audit included.",
-};
+  path: "/pricing",
+  keywords: [
+    "coi tracking software pricing",
+    "certificate of insurance software cost",
+    "coi software $99",
+  ],
+});
 
 const faq = [
   {
@@ -33,15 +48,22 @@ const faq = [
   },
 ];
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: faq.map((item) => ({
-    "@type": "Question",
-    name: item.q,
-    acceptedAnswer: { "@type": "Answer", text: item.a },
-  })),
-};
+const jsonLd = graph(
+  webPageSchema({
+    title: "CertShield Pricing — COI Tracking from $99/month",
+    description:
+      "Simple pricing for vendor insurance tracking: Starter $99, Pro $249, Business $499. No annual contract.",
+    path: "/pricing",
+  }),
+  breadcrumbSchema([
+    { name: "Home", path: "/" },
+    { name: "Pricing", path: "/pricing" },
+  ]),
+  // The price band belongs on the pricing page too, not only on Home — this is
+  // the URL an answer engine lands on for "how much does COI software cost".
+  softwareApplicationSchema(),
+  faqPageSchema(faq),
+);
 
 export default async function PricingPage({
   searchParams,
@@ -53,10 +75,7 @@ export default async function PricingPage({
 
   return (
     <MarketingShell>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <JsonLd data={jsonLd} />
 
       <section className={`relative overflow-hidden ${INK_BG}`}>
         <InkAtmosphere variant="top" />
@@ -145,7 +164,7 @@ export default async function PricingPage({
           <p className="text-muted-foreground mt-8 text-sm">
             Prefer a free look first?{" "}
             <Link
-              href="/login"
+              href="/free-audit"
               className="text-foreground font-medium underline-offset-2 hover:underline"
             >
               Request a free 3-cert audit

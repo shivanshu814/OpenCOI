@@ -223,7 +223,7 @@ function statusStyles(status: string) {
 }
 
 function PreviewChrome({
-  title = "getcertshield.vercel.app/app",
+  title = "app.getcertshield.app/app",
   liveClock,
 }: {
   title?: string;
@@ -870,7 +870,7 @@ export function ExtractionPreviewCard({
 
   return (
     <PreviewShell className={className} glow={glow}>
-      <PreviewChrome title="getcertshield.vercel.app/app/review" />
+      <PreviewChrome title="app.getcertshield.app/app/review" />
 
       {sim ? (
         <div className="h-0.5 w-full bg-slate-100">

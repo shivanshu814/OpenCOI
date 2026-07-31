@@ -1,14 +1,23 @@
 import { INK_BG, InkAtmosphere, SURFACE_BG } from "@/components/ink-atmosphere";
 import { LiveOpsTicker } from "@/components/live-activity";
+import { JsonLd } from "@/components/json-ld";
 import { MarketingShell } from "@/components/marketing-shell";
+import { pageMetadata } from "@/lib/seo/metadata";
+import {
+  breadcrumbSchema,
+  faqPageSchema,
+  graph,
+  webPageSchema,
+} from "@/lib/seo/schema";
 import type { Metadata } from "next";
 
-// Verbatim from docs/02-BRANDING_SEO.md §3; `absolute` bypasses the title template.
-export const metadata: Metadata = {
-  title: { absolute: "Security & Data Protection — CertShield" },
+// Verbatim from docs/02-BRANDING_SEO.md §3.
+export const metadata: Metadata = pageMetadata({
+  title: "Security & Data Protection — CertShield",
   description:
     "US-hosted, encrypted at rest and in transit, strict data isolation. How CertShield protects your vendor and insurance data.",
-};
+  path: "/security",
+});
 
 const QUESTIONS: { q: string; a: string }[] = [
   {
@@ -56,6 +65,23 @@ const QUESTIONS: { q: string; a: string }[] = [
 export default function SecurityPage() {
   return (
     <MarketingShell>
+      {/* Security answers are exactly the shape a buyer asks an answer engine
+          ("where does CertShield store data?"), so they ship as FAQPage too. */}
+      <JsonLd
+        data={graph(
+          webPageSchema({
+            title: "Security & Data Protection — CertShield",
+            description:
+              "US-hosted, encrypted at rest and in transit, strict data isolation.",
+            path: "/security",
+          }),
+          breadcrumbSchema([
+            { name: "Home", path: "/" },
+            { name: "Security", path: "/security" },
+          ]),
+          faqPageSchema(QUESTIONS),
+        )}
+      />
       <section className={`relative overflow-hidden ${INK_BG}`}>
         <InkAtmosphere variant="top" />
         <div className="relative mx-auto max-w-3xl px-4 pt-14 pb-12 sm:px-6 md:pt-20 md:pb-14">
