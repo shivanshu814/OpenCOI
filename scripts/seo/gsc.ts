@@ -30,6 +30,13 @@ import {
 } from "./google-auth";
 import { SITE, mapLimit, sitemapUrls, today, writeReport } from "./lib";
 
+/**
+ * The Search Console API is split across two hosts/versions, and mixing them
+ * up returns a Google *frontend* 404 (an HTML error page, not a JSON API
+ * error) — which reads like an auth or property problem and is not.
+ *   • Search Analytics + sitemaps → webmasters/v3
+ *   • URL Inspection             → searchconsole.googleapis.com/v1
+ */
 const API = "https://searchconsole.googleapis.com";
 const WMX = "https://www.googleapis.com/webmasters/v3";
 
@@ -119,7 +126,7 @@ async function topQueries(token: string, out: string[]) {
     });
     const res = await gapi<{ rows?: Row[] }>(
       token,
-      `${API}/v1/sites/${encodeURIComponent(PROPERTY)}/searchAnalytics/query`,
+      `${WMX}/sites/${encodeURIComponent(PROPERTY)}/searchAnalytics/query`,
       { method: "POST", body },
     );
     if (isErr(res)) {

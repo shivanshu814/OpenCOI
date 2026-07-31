@@ -437,7 +437,7 @@ export async function fetchGoogleStatus(
     // 2. 28-day totals. GSC lags ~2 days; asking for today returns nothing.
     const day = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
     const totalsRes = await fetch(
-      `https://searchconsole.googleapis.com/v1/sites/${encodeURIComponent(property)}/searchAnalytics/query`,
+      `https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(property)}/searchAnalytics/query`,
       {
         method: "POST",
         headers: authHeaders,
