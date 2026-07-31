@@ -5,6 +5,7 @@ import type { PlanId } from "@/lib/billing/plans";
 import {
   notifyApiError,
   notifyCaughtError,
+  notifySuccess,
   notifyWarning,
 } from "@/lib/ui/toast";
 import { cn } from "@/lib/utils";
@@ -19,6 +20,15 @@ type Props = {
   variant?: "default" | "outline" | "secondary";
   className?: string;
   size?: "default" | "sm" | "lg";
+  /**
+   * When true, the click PATCHes the existing subscription in place with
+   * prorated billing instead of opening a new Paddle overlay. Without
+   * this branch, an "Upgrade to Business" click would create a second
+   * subscription and double-bill the customer.
+   */
+  changeInPlace?: boolean;
+  /** Shown in the confirm dialog for changeInPlace clicks. */
+  planName?: string;
 };
 
 export function CheckoutButton({
@@ -27,6 +37,8 @@ export function CheckoutButton({
   variant = "default",
   className,
   size = "lg",
+  changeInPlace = false,
+  planName,
 }: Props) {
   const router = useRouter();
   const [paddle, setPaddle] = useState<Paddle | undefined>();
@@ -53,6 +65,48 @@ export function CheckoutButton({
   }, [token, env]);
 
   async function onClick() {
+    // Change-in-place branch: PATCH the existing sub instead of opening a
+    // new checkout. Confirmation matters here because a downgrade is a
+    // destructive user action ("did I mean to give up features?"), and an
+    // upgrade produces an immediate prorated charge on their card.
+    if (changeInPlace) {
+      const name = planName ?? planId;
+      const ok = window.confirm(
+        `Change your plan to ${name}? Any price difference is prorated and billed immediately.`,
+      );
+      if (!ok) return;
+      setBusy(true);
+      try {
+        const res = await fetch("/api/billing/change-plan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ planId }),
+        });
+        const data = (await res.json()) as {
+          ok?: boolean;
+          noop?: boolean;
+          planName?: string;
+          message?: string;
+          error?: string;
+        };
+        if (!res.ok) {
+          notifyApiError(data, "Plan change failed");
+          return;
+        }
+        notifySuccess(
+          data.noop
+            ? (data.message ?? "You are already on this plan.")
+            : `Plan changed to ${data.planName ?? name}.`,
+        );
+        router.refresh();
+      } catch (err) {
+        notifyCaughtError(err, "Plan change failed");
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+
     setBusy(true);
     try {
       const res = await fetch("/api/billing/checkout", {

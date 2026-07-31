@@ -178,6 +178,15 @@ export default async function BillingSettingsPage() {
             const isRecommended = plan.id === "pro" && !isCurrent;
             const isPrimaryCta = upgradeId === plan.id;
             const featured = isCurrent || isRecommended || isPrimaryCta;
+            // Plans are ordered by price in PLANS; a lower index than the
+            // current plan means this card sits below the subscribed tier.
+            // Labelling that "Choose Starter" makes the destructive action
+            // read as neutral — call it "Downgrade" so the meaning matches.
+            const currentIdx = currentId
+              ? PLANS.findIndex((p) => p.id === currentId)
+              : -1;
+            const planIdx = PLANS.findIndex((p) => p.id === plan.id);
+            const isDowngrade = currentIdx >= 0 && planIdx < currentIdx;
 
             return (
               <div
@@ -241,12 +250,24 @@ export default async function BillingSettingsPage() {
                   ) : (
                   <CheckoutButton
                     planId={plan.id}
+                    planName={plan.name}
+                    // Change-in-place when the org already has a live sub.
+                    // Anything else (canceled, past_due, none) falls back
+                    // to the standard overlay checkout so the user can
+                    // create a fresh subscription cleanly.
+                    changeInPlace={
+                      !isCurrent &&
+                      !!currentId &&
+                      (subStatus === "active" || subStatus === "trialing")
+                    }
                     label={
                       isCurrent
                         ? "Current plan"
-                        : isPrimaryCta
-                          ? `Upgrade to ${plan.name}`
-                          : `Choose ${plan.name}`
+                        : isDowngrade
+                          ? `Downgrade to ${plan.name}`
+                          : isPrimaryCta
+                            ? `Upgrade to ${plan.name}`
+                            : `Choose ${plan.name}`
                     }
                     variant={
                       isCurrent
