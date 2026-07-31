@@ -251,6 +251,7 @@ export default async function BillingSettingsPage() {
                   <CheckoutButton
                     planId={plan.id}
                     planName={plan.name}
+                    paddleCustomerId={session?.paddleCustomerId ?? null}
                     // Change-in-place when the org already has a live sub.
                     // Anything else (canceled, past_due, none) falls back
                     // to the standard overlay checkout so the user can

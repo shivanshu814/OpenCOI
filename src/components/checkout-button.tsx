@@ -29,6 +29,16 @@ type Props = {
   changeInPlace?: boolean;
   /** Shown in the confirm dialog for changeInPlace clicks. */
   planName?: string;
+  /**
+   * Paddle customer ID (`ctm_...`) once the org has completed at least one
+   * checkout. Passed to Paddle.Initialize as `pwCustomer.id` so Paddle Retain
+   * can attribute in-checkout events to the right customer for dunning and
+   * churn analytics. Absent (null) for signed-out visitors and orgs that
+   * have never transacted — Paddle simply skips Retain wiring in that case.
+   *
+   * MUST be the Paddle customer ID, not our internal user or org id.
+   */
+  paddleCustomerId?: string | null;
 };
 
 export function CheckoutButton({
@@ -39,6 +49,7 @@ export function CheckoutButton({
   size = "lg",
   changeInPlace = false,
   planName,
+  paddleCustomerId,
 }: Props) {
   const router = useRouter();
   const [paddle, setPaddle] = useState<Paddle | undefined>();
@@ -56,13 +67,19 @@ export function CheckoutButton({
     void initializePaddle({
       token,
       environment: env,
+      // Only pass pwCustomer when we actually have a Paddle customer id.
+      // Passing `{ id: undefined }` still counts as "set" to Paddle.js and
+      // logs noisy warnings in the console for signed-out visitors.
+      ...(paddleCustomerId
+        ? { pwCustomer: { id: paddleCustomerId } }
+        : {}),
     }).then((instance) => {
       if (!cancelled) setPaddle(instance);
     });
     return () => {
       cancelled = true;
     };
-  }, [token, env]);
+  }, [token, env, paddleCustomerId]);
 
   async function onClick() {
     // Change-in-place branch: PATCH the existing sub instead of opening a

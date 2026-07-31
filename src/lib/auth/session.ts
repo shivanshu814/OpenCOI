@@ -19,6 +19,13 @@ export type SessionOrg = {
   brandColor: string | null;
   /** White-label logo (https URL) — replaces the CertShield mark in the shell. */
   logoUrl: string | null;
+  /**
+   * Paddle customer ID (`ctm_...`) once the org has completed at least one
+   * checkout. Surfaced here so Paddle.Initialize({ pwCustomer: { id } }) can
+   * bind the checkout overlay to Paddle Retain analytics — dunning, churn
+   * prediction, in-checkout messaging.
+   */
+  paddleCustomerId: string | null;
 };
 
 type OrgRow = {
@@ -30,6 +37,7 @@ type OrgRow = {
   subscription_status: string | null;
   brand_primary_color: string | null;
   logo_url: string | null;
+  paddle_customer_id: string | null;
 };
 
 function toSession(
@@ -52,6 +60,7 @@ function toSession(
     subscriptionStatus: org.subscription_status,
     brandColor: sanitizeHexColor(org.brand_primary_color),
     logoUrl: sanitizeLogoUrl(org.logo_url),
+    paddleCustomerId: org.paddle_customer_id,
   };
 }
 
@@ -87,7 +96,7 @@ export const getSessionOrg = cache(async (): Promise<SessionOrg | null> => {
     const { data: org, error: orgErr } = await supabase
       .from("orgs")
       .select(
-        "id, name, intake_token, onboarding_completed_at, plan, subscription_status, brand_primary_color, logo_url",
+        "id, name, intake_token, onboarding_completed_at, plan, subscription_status, brand_primary_color, logo_url, paddle_customer_id",
       )
       .eq("id", membership.org_id)
       .maybeSingle();
@@ -120,7 +129,7 @@ export const getSessionOrg = cache(async (): Promise<SessionOrg | null> => {
     const { data: joinedOrg } = await supabase
       .from("orgs")
       .select(
-        "id, name, intake_token, onboarding_completed_at, plan, subscription_status, brand_primary_color, logo_url",
+        "id, name, intake_token, onboarding_completed_at, plan, subscription_status, brand_primary_color, logo_url, paddle_customer_id",
       )
       .eq("id", invitedOrgId as string)
       .maybeSingle();
@@ -163,7 +172,7 @@ export const getSessionOrg = cache(async (): Promise<SessionOrg | null> => {
       const { data: org } = await supabase
         .from("orgs")
         .select(
-          "id, name, intake_token, onboarding_completed_at, plan, subscription_status, brand_primary_color, logo_url",
+          "id, name, intake_token, onboarding_completed_at, plan, subscription_status, brand_primary_color, logo_url, paddle_customer_id",
         )
         .eq("id", retryMem.org_id)
         .maybeSingle();
@@ -182,7 +191,7 @@ export const getSessionOrg = cache(async (): Promise<SessionOrg | null> => {
   const { data: orgRow } = await supabase
     .from("orgs")
     .select(
-      "id, name, intake_token, onboarding_completed_at, plan, subscription_status, brand_primary_color, logo_url",
+      "id, name, intake_token, onboarding_completed_at, plan, subscription_status, brand_primary_color, logo_url, paddle_customer_id",
     )
     .eq("id", orgId)
     .maybeSingle();
@@ -201,6 +210,7 @@ export const getSessionOrg = cache(async (): Promise<SessionOrg | null> => {
       subscriptionStatus: null,
       brandColor: null,
       logoUrl: null,
+      paddleCustomerId: null,
     };
   }
 
