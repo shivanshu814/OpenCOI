@@ -1,12 +1,17 @@
 import { INK_BG, InkAtmosphere, SURFACE_BG } from "@/components/ink-atmosphere";
 import { LiveOpsTicker } from "@/components/live-activity";
+import { JsonLd } from "@/components/json-ld";
 import { MarketingShell } from "@/components/marketing-shell";
+import { pageMetadata } from "@/lib/seo/metadata";
+import { breadcrumbSchema, graph, webPageSchema } from "@/lib/seo/schema";
 import Link from "next/link";
 
-export const metadata = {
-  title: "Help — CertShield",
-  description: "How to use CertShield: upload, review, chase, portal, API.",
-};
+export const metadata = pageMetadata({
+  title: "Help & Support — CertShield COI Tracking Documentation",
+  description:
+    "How to use CertShield — upload a COI, review verdicts, chase renewals, the vendor portal, and the API. Answers, guides, and support links.",
+  path: "/help",
+});
 
 const SECTIONS = [
   {
@@ -38,6 +43,20 @@ const SECTIONS = [
 export default function HelpPage() {
   return (
     <MarketingShell>
+      <JsonLd
+        data={graph(
+          webPageSchema({
+            title: "Help — CertShield",
+            description:
+              "How to use CertShield: upload a COI, review and publish verdicts, chase renewals, the vendor portal, and the API.",
+            path: "/help",
+          }),
+          breadcrumbSchema([
+            { name: "Home", path: "/" },
+            { name: "Help", path: "/help" },
+          ]),
+        )}
+      />
       <section className={`relative overflow-hidden ${INK_BG}`}>
         <InkAtmosphere variant="top" />
         <div className="relative mx-auto max-w-3xl px-4 pt-14 pb-12 sm:px-6 md:pt-20 md:pb-14">

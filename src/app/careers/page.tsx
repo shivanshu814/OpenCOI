@@ -6,9 +6,9 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 export const metadata = pageMetadata({
-  title: "Careers — CertShield",
+  title: "Careers — Open Roles at CertShield COI Tracking Startup",
   description:
-    "Open roles at CertShield. Pre-launch AI COI tracking startup building for US property managers and general contractors.",
+    "Join CertShield: pre-launch AI COI tracking for US property managers and general contractors. Open sales role, remote, commission-only uncapped.",
   path: "/careers",
 });
 
@@ -58,7 +58,7 @@ export default function CareersPage() {
             >
               hello@getcertshield.app
             </a>{" "}
-            anyway — we're small enough to make room for the right person.
+            anyway — we&rsquo;re small enough to make room for the right person.
           </p>
         </div>
       </section>
@@ -99,7 +99,7 @@ export default function CareersPage() {
           >
             hello@getcertshield.app
           </a>{" "}
-          with what you'd do here and why it fits.
+          with what you&rsquo;d do here and why it fits.
         </p>
       </main>
     </MarketingShell>

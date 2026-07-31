@@ -60,12 +60,12 @@ export function CareersApplyForm({ jobSlug }: { jobSlug: string }) {
       <div className="bg-card space-y-3 rounded-xl border border-border/80 p-6 shadow-xs">
         <p className="text-sm font-medium">Thanks — application received.</p>
         <p className="text-muted-foreground text-sm leading-relaxed">
-          I read every application myself. If it's a fit, you'll hear from{" "}
+          I read every application myself. If it&rsquo;s a fit, you&rsquo;ll hear from{" "}
           <span className="text-foreground font-medium">
             hello@getcertshield.app
           </span>{" "}
-          within 3 days. If not, I'll still send a short reply — I hate being
-          ghosted and won't do it to you.
+          within 3 days. If not, I&rsquo;ll still send a short reply — I hate being
+          ghosted and won&rsquo;t do it to you.
         </p>
       </div>
     );
@@ -120,7 +120,7 @@ export function CareersApplyForm({ jobSlug }: { jobSlug: string }) {
 
       <div className="space-y-1.5">
         <label htmlFor="pitch" className="text-sm font-medium">
-          Why you'll crush this role
+          Why you&rsquo;ll crush this role
           <span className="text-brand ml-0.5">*</span>
         </label>
         <textarea

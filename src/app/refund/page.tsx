@@ -7,7 +7,7 @@ import Link from "next/link";
 export const metadata = pageMetadata({
   title: "Refund & Cancellation Policy — CertShield",
   description:
-    "How to cancel your CertShield subscription and when refunds apply. Paddle is the merchant of record; cancellation and refund requests are honoured within a clear, published policy.",
+    "How to cancel your CertShield subscription and when refunds apply. Paddle merchant of record; clear published policy, first-invoice refund window.",
   path: "/refund",
 });
 
