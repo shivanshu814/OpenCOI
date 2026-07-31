@@ -1,13 +1,15 @@
 import { INK_BG, InkAtmosphere, SURFACE_BG } from "@/components/ink-atmosphere";
 import { LiveBadge, LiveOpsTicker } from "@/components/live-activity";
 import { MarketingShell } from "@/components/marketing-shell";
+import { pageMetadata } from "@/lib/seo/metadata";
 import Link from "next/link";
 
-export const metadata = {
+export const metadata = pageMetadata({
   title: "Terms of Service — CertShield",
   description:
     "CertShield terms of service: document review assistance, Paddle billing, liability cap, and acceptable use.",
-};
+  path: "/terms",
+});
 
 const SECTIONS = [
   {
@@ -17,6 +19,10 @@ const SECTIONS = [
   {
     title: "Billing & liability",
     body: "Service is sold via Paddle (merchant of record). Liability for paid service is capped at fees paid in the prior 12 months. No warranty of compliance outcomes or guaranteed detection of mid-term cancellations.",
+  },
+  {
+    title: "Refunds & cancellation",
+    body: "You can cancel any time from Settings → Billing; access continues to the end of the paid period. First invoice is fully refundable within 14 days on request; later refunds are considered case by case. Full details on the Refund page linked below.",
   },
   {
     title: "Acceptable use",
@@ -76,12 +82,19 @@ export default function TermsPage() {
           </a>
           . Also see{" "}
           <Link
+            href="/refund"
+            className="text-foreground font-medium underline-offset-2 hover:underline"
+          >
+            Refund
+          </Link>
+          ,{" "}
+          <Link
             href="/privacy"
             className="text-foreground font-medium underline-offset-2 hover:underline"
           >
             Privacy
-          </Link>{" "}
-          and{" "}
+          </Link>
+          , and{" "}
           <Link
             href="/security"
             className="text-foreground font-medium underline-offset-2 hover:underline"

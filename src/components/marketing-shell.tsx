@@ -1,25 +1,42 @@
 import { BrandMark } from "@/components/certshield-logo";
 import { CursorGlint } from "@/components/cursor-glint";
 import { DisclaimerFooter } from "@/components/disclaimer-footer";
+import { GoogleAnalytics } from "@/components/google-analytics";
+import { JsonLd } from "@/components/json-ld";
 import { MarketingHeader } from "@/components/marketing-header";
 import { SmoothScroll } from "@/components/smooth-scroll";
+import { routesByGroup } from "@/lib/seo/routes";
+import { graph, organizationSchema, websiteSchema } from "@/lib/seo/schema";
+import { ORG } from "@/lib/seo/site";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-
-/** Footer carries the header's four items plus Help, which the header drops. */
-const nav = [
-  { href: "/#product", label: "Product" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/security", label: "Security" },
-  { href: "/login", label: "Free Audit" },
-  { href: "/help", label: "Help" },
-];
 
 export { BrandMark } from "@/components/certshield-logo";
 
 export function MarketingShell({ children }: { children: React.ReactNode }) {
+  const groups = routesByGroup();
+
   return (
     <div className="bg-background flex min-h-full flex-col">
+      {/*
+        The Organization + WebSite entity, emitted once per marketing page.
+        It lives here rather than in the root layout because the root layout
+        also wraps the authenticated workspace and the vendor portal, and a
+        company entity asserted on a magic-link page is noise. Pages add their
+        own nodes (Article, FAQPage, …) and reference this one by @id, so the
+        graph resolves to one company rather than thirty.
+      */}
+      <JsonLd data={graph(organizationSchema(), websiteSchema())} />
+
+      {/*
+        GA4 lives here, not in the root layout, for the same reason as the
+        entity graph — and one sharper one: the root layout wraps `/portal`,
+        `/sign` and `/confirm`, whose URLs carry a vendor's one-time token.
+        gtag reports the full URL, so a global mount would hand those tokens
+        to Google. Marketing surfaces have no such secret in the path.
+      */}
+      <GoogleAnalytics />
+
       {/* Inertia scrolling for marketing surfaces only — the app keeps native. */}
       <SmoothScroll />
       {/* Trailing cursor ring — companion to the native cursor, never a replacement. */}
@@ -37,37 +54,79 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
           }}
           aria-hidden
         />
-        <div className="relative mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-4 px-4 py-10 text-sm sm:px-6">
-          <div className="space-y-2">
-            <BrandMark markSize={24} wordmarkClassName="text-white text-sm" />
-            <p className="max-w-xs text-xs leading-relaxed text-white/40">
-              Never work with an uninsured vendor again.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-white/55">
-            {nav.map((item) => (
+        {/*
+          A real site index, not a five-link row.
+          Two jobs: crawlers reach every indexable page from any page (nothing
+          orphaned, and internal links are the cheapest ranking lever we have),
+          and a reader who lands on a definition post from a search result can
+          see the whole surface without going back.
+        */}
+        <div className="relative mx-auto max-w-6xl px-4 py-12 sm:px-6">
+          <div className="flex flex-col gap-10 lg:flex-row lg:justify-between">
+            <div className="space-y-3 lg:max-w-xs">
+              <BrandMark markSize={24} wordmarkClassName="text-white text-sm" />
+              <p className="text-xs leading-relaxed text-white/40">
+                {ORG.tagline}
+              </p>
               <Link
-                key={item.href}
-                href={item.href}
-                className="from-brand to-brand bg-gradient-to-r bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat transition-[background-size,color] duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] hover:bg-[length:100%_1px] hover:text-white"
+                href="/pricing"
+                className="hover:text-brand group inline-flex items-center gap-1 text-sm font-medium text-white transition-colors"
               >
-                {item.label}
+                See pricing
+                <ArrowRight
+                  className="size-3.5 transition-transform duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:translate-x-1"
+                  strokeWidth={2.25}
+                  aria-hidden
+                />
               </Link>
-            ))}
-            <Link href="/login" className="transition-colors hover:text-white">
-              Sign in
-            </Link>
-            <Link
-              href="/pricing"
-              className="group inline-flex items-center gap-1 font-medium text-white transition-colors hover:text-brand"
+              {/*
+                Address surfaced on every page — Paddle verification checks
+                that a real contact is one click from the homepage, and
+                mail apps + spam filters look for a visible reply-to when
+                deciding whether a domain looks legitimate.
+              */}
+              <a
+                href="mailto:hello@getcertshield.app"
+                className="block text-xs text-white/40 transition-colors hover:text-white"
+              >
+                hello@getcertshield.app
+              </a>
+            </div>
+
+            <nav
+              aria-label="Site"
+              className="grid flex-1 gap-8 sm:grid-cols-3 lg:max-w-3xl lg:grid-cols-5"
             >
-              See pricing
-              <ArrowRight
-                className="size-3.5 transition-transform duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:translate-x-1"
-                strokeWidth={2.25}
-                aria-hidden
-              />
-            </Link>
+              {groups.map((group) => (
+                <div key={group.group} className="space-y-3">
+                  <p className="text-[0.7rem] font-semibold tracking-[0.14em] text-white/35 uppercase">
+                    {group.group}
+                  </p>
+                  <ul className="space-y-2 text-sm text-white/55">
+                    {group.routes.map((route) => (
+                      <li key={route.path}>
+                        <Link
+                          href={route.path}
+                          className="from-brand to-brand bg-gradient-to-r bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat transition-[background-size,color] duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] hover:bg-[length:100%_1px] hover:text-white"
+                        >
+                          {route.label}
+                        </Link>
+                      </li>
+                    ))}
+                    {group.group === "Product" ? (
+                      <li>
+                        <Link
+                          href="/login"
+                          className="transition-colors hover:text-white"
+                        >
+                          Sign in
+                        </Link>
+                      </li>
+                    ) : null}
+                  </ul>
+                </div>
+              ))}
+            </nav>
           </div>
         </div>
         <DisclaimerFooter className="relative border-white/10 bg-transparent text-white/40 [&_a]:text-white/50 [&_a:hover]:text-white" />

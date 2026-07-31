@@ -30,15 +30,38 @@ function isAppPath(path: string): boolean {
 /** Marketing surfaces: only ever served from the apex/www. */
 function isMarketingPath(path: string): boolean {
   if (path === "/") return true;
-  return [
-    "/pricing",
-    "/security",
-    "/privacy",
-    "/terms",
-    "/subprocessors",
-    "/help",
-  ].some((p) => path === p || path.startsWith(`${p}/`));
+  return MARKETING_PREFIXES.some(
+    (p) => path === p || path.startsWith(`${p}/`),
+  );
 }
+
+/**
+ * Every marketing prefix, mirrored from `lib/seo/routes.ts`.
+ *
+ * Deliberately duplicated rather than imported: this module runs inside the
+ * proxy on every request, and `routes.ts` is a much larger object graph that
+ * would be pulled into that bundle for no benefit. The cost of the duplication
+ * is that a new marketing page must be added in both places — the symptom of
+ * forgetting is that `app.getcertshield.app/new-page` serves a second copy of
+ * the page instead of redirecting, i.e. duplicate content for crawlers.
+ */
+const MARKETING_PREFIXES = [
+  "/pricing",
+  "/security",
+  "/privacy",
+  "/terms",
+  "/subprocessors",
+  "/refund",
+  "/help",
+  "/about",
+  "/free-audit",
+  "/blog",
+  "/glossary",
+  "/compare",
+  "/vendor-insurance-requirements",
+  "/coi-tracking-for-property-managers",
+  "/subcontractor-insurance-tracking",
+];
 
 /**
  * Paths that must answer identically on BOTH hosts — moving them would break
