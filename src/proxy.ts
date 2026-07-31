@@ -1,3 +1,4 @@
+import { hostRedirect } from "@/lib/hosts";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -18,6 +19,21 @@ function isAuthedApi(path: string): boolean {
   return true;
 }
 
+/**
+ * Only these paths need a Supabase round trip. The matcher below is broad
+ * (it has to be, so the host split can act on marketing URLs too), so this
+ * guard is what keeps `/`, `/pricing` and friends free of an auth call they
+ * never had before.
+ */
+function needsSession(path: string): boolean {
+  return (
+    path === "/login" ||
+    path === "/app" ||
+    path.startsWith("/app/") ||
+    path.startsWith("/api/")
+  );
+}
+
 function isValidSupabaseUrl(value: string | undefined): value is string {
   const raw = value?.trim();
   if (!raw) return false;
@@ -32,12 +48,28 @@ function isValidSupabaseUrl(value: string | undefined): value is string {
   }
 }
 
-export async function middleware(request: NextRequest) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+export async function proxy(request: NextRequest) {
+  const path = request.nextUrl.pathname;
 
   const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-pathname", request.nextUrl.pathname);
+  requestHeaders.set("x-pathname", path);
+
+  // Host split runs before anything else: a request on the wrong hostname is
+  // answered with a redirect, never with a page. 308 (not 307/302) so the
+  // method is preserved and crawlers treat it as permanent.
+  const target = hostRedirect(
+    request.headers.get("host"),
+    path,
+    request.nextUrl.search,
+  );
+  if (target) return NextResponse.redirect(target, 308);
+
+  if (!needsSession(path)) {
+    return NextResponse.next({ request: { headers: requestHeaders } });
+  }
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
 
   // Demo / misconfigured: never throw inside Edge middleware.
   if (!isValidSupabaseUrl(url) || !key) {
@@ -52,10 +84,7 @@ export async function middleware(request: NextRequest) {
   // to pay for a `getUser()` network round trip to Supabase Auth on every
   // call anyway — pure latency on the vendor-facing portal, which is the one
   // surface where we control none of the client's network.
-  if (
-    isPublicApi(request.nextUrl.pathname) ||
-    request.nextUrl.pathname.startsWith("/api/geo")
-  ) {
+  if (isPublicApi(path) || path.startsWith("/api/geo")) {
     return NextResponse.next({
       request: { headers: requestHeaders },
     });
@@ -90,11 +119,10 @@ export async function middleware(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser();
 
-    const path = request.nextUrl.pathname;
     const isApp = path.startsWith("/app");
-    const needsAuth = isApp || isAuthedApi(path);
+    const requiresAuth = isApp || isAuthedApi(path);
 
-    if (needsAuth && !user) {
+    if (requiresAuth && !user) {
       if (path.startsWith("/api/")) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
@@ -107,7 +135,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/app", request.url));
     }
   } catch (err) {
-    console.error("[middleware] supabase session refresh failed", err);
+    console.error("[proxy] supabase session refresh failed", err);
     return NextResponse.next({
       request: { headers: requestHeaders },
     });
@@ -117,10 +145,10 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
+  // Broad by design: the host split has to be able to redirect marketing URLs
+  // (`/`, `/pricing`) that the old auth-only matcher never saw. Static assets
+  // and image optimisation are excluded so they stay on the fast path.
   matcher: [
-    "/app/:path*",
-    "/login",
-    // Refresh session + gate cookie-auth APIs (exclude static assets)
-    "/api/:path*",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|txt|xml|webmanifest)$).*)",
   ],
 };

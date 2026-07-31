@@ -20,7 +20,7 @@ const SECTIONS = [
   },
   {
     title: "CCPA",
-    body: "California residents may request access or deletion of personal information by emailing shivanshu814pathak@gmail.com. We do not sell personal information.",
+    body: "California residents may request access or deletion of personal information by emailing hello@getcertshield.app. We do not sell personal information.",
   },
   {
     title: "Retention",
@@ -90,9 +90,9 @@ export default function PrivacyPage() {
           Privacy requests:{" "}
           <a
             className="text-foreground font-medium underline-offset-2 hover:underline"
-            href="mailto:shivanshu814pathak@gmail.com"
+            href="mailto:hello@getcertshield.app"
           >
-            shivanshu814pathak@gmail.com
+            hello@getcertshield.app
           </a>
           . Also see{" "}
           <Link

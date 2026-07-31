@@ -141,9 +141,9 @@ export default function SubprocessorsPage() {
             customers who need one. Email{" "}
             <a
               className="text-foreground font-medium underline-offset-2 hover:underline"
-              href="mailto:shivanshu814pathak@gmail.com"
+              href="mailto:hello@getcertshield.app"
             >
-              shivanshu814pathak@gmail.com
+              hello@getcertshield.app
             </a>{" "}
             and we will send the current DPA for signature. Material changes to
             this subprocessor list are reflected here.
