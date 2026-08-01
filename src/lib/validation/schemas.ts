@@ -583,3 +583,18 @@ export const careersApplySchema = z.object({
   companyWebsite: z.string().max(200).optional(),
 });
 export type CareersApplyInput = z.infer<typeof careersApplySchema>;
+
+/* ───────────────────────────── lead magnets ───────────────────────────── */
+
+/**
+ * Public lead capture for the COI spreadsheet template download.
+ * Keeps validation shared between client and API route.
+ */
+export const templateDownloadLeadSchema = z.object({
+  email: z.email("Enter a valid email."),
+  /** Honeypot — bots fill hidden fields, humans don't. */
+  companyWebsite: z.string().max(200).optional(),
+});
+export type TemplateDownloadLeadInput = z.infer<
+  typeof templateDownloadLeadSchema
+>;

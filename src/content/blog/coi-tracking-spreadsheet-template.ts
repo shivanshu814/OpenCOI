@@ -5,9 +5,9 @@ export const post: Post = {
   title: "Free COI Tracking Spreadsheet Template (CSV)",
   h1: "Free COI tracking spreadsheet template",
   description:
-    "A free certificate of insurance tracking spreadsheet with the columns that actually matter — plus the formulas for expiry alerts. No email required.",
+    "A free certificate of insurance tracking spreadsheet with the columns that actually matter — plus the formulas for expiry alerts.",
   answer:
-    "A usable COI tracking spreadsheet needs one row per vendor per coverage line, with the insured's legal name, carrier and NAIC number, policy number, effective and expiration dates, each required limit, which endorsements are on file, and the producer's contact details. Download the template below, free and with no email required.",
+    "A usable COI tracking spreadsheet needs one row per vendor per coverage line, with the insured's legal name, carrier and NAIC number, policy number, effective and expiration dates, each required limit, which endorsements are on file, and the producer's contact details. Enter your email below to unlock the free template instantly.",
   published: "2026-07-31",
   category: "Templates",
   keywords: [
@@ -20,9 +20,9 @@ export const post: Post = {
   body: [
     {
       kind: "cta",
-      text: "The template is a CSV — open it in Excel, Google Sheets or Numbers. No signup, no email gate.",
-      href: "/downloads/coi-tracking-template.csv",
-      label: "Download the CSV template",
+      text: "The template is a CSV — open it in Excel, Google Sheets or Numbers.",
+      href: "#template-download",
+      label: "Unlock the CSV template",
     },
     { kind: "h2", text: "What is in it" },
     {
@@ -95,7 +95,7 @@ export const post: Post = {
   faq: [
     {
       q: "Is the COI tracking template really free?",
-      a: "Yes, and there is no email gate on it. It is a plain CSV that opens in Excel, Google Sheets or Numbers.",
+      a: "Yes. It is free, and the file is a plain CSV that opens in Excel, Google Sheets or Numbers.",
     },
     {
       q: "Why one row per coverage line instead of one row per vendor?",

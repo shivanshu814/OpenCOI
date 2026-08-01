@@ -3,6 +3,7 @@ import { JsonLd } from "@/components/json-ld";
 import { AnswerBlock, MarketingHero } from "@/components/marketing-hero";
 import { MarketingShell } from "@/components/marketing-shell";
 import { ProseBlocks, h2Headings } from "@/components/prose-blocks";
+import { TemplateDownloadCapture } from "@/components/template-download-capture";
 import { getPost, posts } from "@/content/blog";
 import { pageMetadata, ogImageUrl } from "@/lib/seo/metadata";
 import {
@@ -58,6 +59,7 @@ export default async function BlogPostPage({
   const related = post.related
     .map((s) => getPost(s))
     .filter((p): p is NonNullable<typeof p> => Boolean(p));
+  const isTemplateDownloadPost = post.slug === "coi-tracking-spreadsheet-template";
 
   return (
     <MarketingShell>
@@ -109,6 +111,8 @@ export default async function BlogPostPage({
       <main className={`${SURFACE_BG}`}>
         <div className="mx-auto max-w-3xl space-y-8 px-4 py-12 sm:px-6 md:py-16">
           <AnswerBlock>{post.answer}</AnswerBlock>
+
+          {isTemplateDownloadPost ? <TemplateDownloadCapture /> : null}
 
           {headings.length > 2 ? (
             <nav
