@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import * as Sentry from "@sentry/nextjs";
+import { reportClientError } from "@/lib/lazy-sentry";
 import { TriangleAlert } from "lucide-react";
 import { useEffect } from "react";
 
@@ -21,7 +21,7 @@ export default function AppError({
   reset: () => void;
 }) {
   useEffect(() => {
-    Sentry.captureException(error);
+    reportClientError(error);
     console.error("[app-error]", error);
   }, [error]);
 

@@ -36,9 +36,17 @@ export function GoogleAnalytics() {
 
   return (
     <>
+      {/*
+        `lazyOnload`, not `afterInteractive`: gtag is ~55 KB that has no
+        business inside the load window PSI scores — page_view still fires,
+        just after `load` instead of during hydration. The init inline script
+        stays `afterInteractive` so the consent defaults and the dataLayer
+        queue exist before gtag.js arrives; order between the two is preserved
+        because gtag.js drains whatever the queue holds when it lands.
+      */}
       <Script
         id="ga4-src"
-        strategy="afterInteractive"
+        strategy="lazyOnload"
         src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
       />
       <Script id="ga4-init" strategy="afterInteractive">

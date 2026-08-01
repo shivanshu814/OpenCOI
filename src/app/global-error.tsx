@@ -1,12 +1,16 @@
 "use client";
 
-import * as Sentry from "@sentry/nextjs";
+import { reportClientError } from "@/lib/lazy-sentry";
 import { useEffect } from "react";
 
 /**
  * Root error boundary — catches errors thrown in the root layout that the
  * per-segment `error.tsx` boundaries cannot. Reports to Sentry (no-op without a
  * DSN) and renders a minimal standalone document.
+ *
+ * `reportClientError`, not a static Sentry import — error boundaries ship in
+ * the initial bundle of every page, so a static import here would put the
+ * whole SDK back into the load path (lib/lazy-sentry.ts).
  */
 export default function GlobalError({
   error,
@@ -16,7 +20,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    Sentry.captureException(error);
+    reportClientError(error);
     console.error("[global-error]", error);
   }, [error]);
 
