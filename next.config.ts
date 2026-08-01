@@ -46,6 +46,15 @@ const nextConfig: NextConfig = {
       dynamic: 30,
       static: 180,
     },
+    /**
+     * `inlineCss` was tried here (2026-08-01) to kill the ~900ms of
+     * render-blocking CSS PSI measured, and REJECTED on measurement: the
+     * documented style duplication (<style> tag + RSC payload) took the
+     * /about document from 17 KB to 122 KB gzip — a 7× bigger critical
+     * download to save one parallel 35 KB request. Net loss on the throttled
+     * mobile profile it was meant to help. Re-evaluate only if Next ships it
+     * without the RSC-payload duplication.
+     */
   },
   async headers() {
     return [
