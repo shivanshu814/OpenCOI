@@ -68,10 +68,14 @@ const jsonLd = graph(
 export default async function PricingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ plan?: string }>;
+  searchParams: Promise<{ plan?: string; promo?: string }>;
 }) {
   const params = await searchParams;
   const highlight = params.plan;
+  const promo =
+    params.promo && /^[a-zA-Z0-9]{1,32}$/.test(params.promo)
+      ? params.promo.toUpperCase()
+      : null;
 
   return (
     <MarketingShell>
@@ -93,6 +97,14 @@ export default async function PricingPage({
             Starter $99, Pro $249, Business $499. No annual contract. 2-minute
             setup, free COI audit included.
           </p>
+          {promo ? (
+            <p className="mt-4 inline-flex items-center gap-2 rounded-md border border-brand/40 bg-brand/10 px-3 py-1.5 text-sm text-white">
+              <span className="text-brand font-semibold">Promo {promo}</span>
+              <span className="text-white/70">
+                will be applied automatically at checkout.
+              </span>
+            </p>
+          ) : null}
         </div>
       </section>
 
@@ -135,6 +147,7 @@ export default async function PricingPage({
                       label={`Choose ${plan.name}`}
                       variant={featured ? "default" : "outline"}
                       className="w-full"
+                      discountCode={promo}
                     />
                   </div>
                   <ul className="mt-6 space-y-2 border-t pt-5 text-sm leading-relaxed">

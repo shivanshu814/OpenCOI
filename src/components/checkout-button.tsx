@@ -39,7 +39,19 @@ type Props = {
    * MUST be the Paddle customer ID, not our internal user or org id.
    */
   paddleCustomerId?: string | null;
+  /**
+   * Promo code to pre-apply at checkout (e.g. from a `?promo=` landing link).
+   * Invalid-looking values are dropped client-side; Paddle still validates
+   * the code server-side, so an expired/unknown code simply isn't applied.
+   */
+  discountCode?: string | null;
 };
+
+/** Paddle discount codes are letters+numbers, up to 32 chars. */
+function sanitizeDiscountCode(code: string | null | undefined): string | null {
+  if (!code) return null;
+  return /^[a-zA-Z0-9]{1,32}$/.test(code) ? code : null;
+}
 
 export function CheckoutButton({
   planId,
@@ -50,6 +62,7 @@ export function CheckoutButton({
   changeInPlace = false,
   planName,
   paddleCustomerId,
+  discountCode,
 }: Props) {
   const router = useRouter();
   const [paddle, setPaddle] = useState<Paddle | undefined>();
@@ -133,9 +146,9 @@ export function CheckoutButton({
       });
 
       if (res.status === 401) {
-        router.push(
-          `/login?next=${encodeURIComponent(`/pricing?plan=${planId}`)}`,
-        );
+        const promo = sanitizeDiscountCode(discountCode);
+        const next = `/pricing?plan=${planId}${promo ? `&promo=${promo}` : ""}`;
+        router.push(`/login?next=${encodeURIComponent(next)}`);
         return;
       }
 
@@ -171,6 +184,7 @@ export function CheckoutButton({
 
       paddle.Checkout.open({
         items: [{ priceId: data.priceId, quantity: 1 }],
+        discountCode: sanitizeDiscountCode(discountCode),
         customData: data.customData,
         customer: data.customerEmail
           ? { email: data.customerEmail }
