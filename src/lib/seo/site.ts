@@ -84,6 +84,10 @@ export const SAME_AS: readonly string[] = [
 export const VERIFICATION = {
   google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?.trim() || undefined,
   bing: process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION?.trim() || undefined,
+  // LaunchZone domain-ownership token. Not sensitive (it's meant to appear
+  // publicly in HTML meta), so hardcoded rather than pushed through env —
+  // one less thing to keep in sync across Vercel envs for a one-time verify.
+  launchzone: "6f37792c732227cbbf52c4333e90296c",
 } as const;
 
 /**

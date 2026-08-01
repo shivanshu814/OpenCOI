@@ -88,9 +88,16 @@ export const metadata: Metadata = {
   },
   verification: {
     ...(VERIFICATION.google ? { google: VERIFICATION.google } : {}),
-    ...(VERIFICATION.bing
-      ? { other: { "msvalidate.01": VERIFICATION.bing } }
-      : {}),
+    // Every non-Google verifier goes through `other` — Next merges the map
+    // straight into <meta name="{key}" content="{value}"> tags. Bing wants
+    // msvalidate.01; LaunchZone wants launchzone-verification. Both are
+    // one-off ownership proofs that stay in the HTML forever.
+    other: {
+      ...(VERIFICATION.bing ? { "msvalidate.01": VERIFICATION.bing } : {}),
+      ...(VERIFICATION.launchzone
+        ? { "launchzone-verification": VERIFICATION.launchzone }
+        : {}),
+    },
   },
   alternates: {
     types: {
