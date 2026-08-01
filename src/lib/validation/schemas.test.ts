@@ -17,6 +17,7 @@ import {
   propertyUpdateSchema,
   requirementRuleSchema,
   smsOptInSchema,
+  templateDownloadLeadSchema,
   teamInviteSchema,
   teamSettingsSchema,
   validationErrorBody,
@@ -481,6 +482,19 @@ describe("billing checkout", () => {
     assert.equal(billingCheckoutSchema.safeParse({}).success, true);
     assert.equal(billingCheckoutSchema.safeParse({ planId: "pro" }).success, true);
     assert.equal(billingCheckoutSchema.safeParse({ planId: "x".repeat(61) }).success, false);
+  });
+});
+
+describe("lead magnet capture", () => {
+  it("accepts a valid email", () => {
+    assert.equal(
+      templateDownloadLeadSchema.safeParse({ email: "ops@vendor.com" }).success,
+      true,
+    );
+  });
+
+  it("rejects a malformed email", () => {
+    assert.equal(templateDownloadLeadSchema.safeParse({ email: "ops@" }).success, false);
   });
 });
 
