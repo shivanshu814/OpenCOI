@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { initializePaddle, type Paddle } from "@paddle/paddle-js";
 import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 type Props = {
   planId: PlanId;
@@ -63,6 +63,47 @@ function sanitizeDiscountCode(code: string | null | undefined): string | null {
   return /^[a-zA-Z0-9]{1,32}$/.test(code) ? code : null;
 }
 
+/**
+ * Paddle.js, initialized on intent instead of on mount.
+ *
+ * The old `useEffect` version ran `initializePaddle` the moment any
+ * CheckoutButton rendered, which executes Paddle's whole CDN payload inside
+ * the load window — PSI measured /pricing at 1480ms Total Blocking Time,
+ * the single worst page on the site, on a visit where most people never
+ * open a checkout. First hover/focus (or the click itself) now pays that
+ * cost instead, off the load path.
+ *
+ * Module-level memo, not per-component state: /pricing renders three
+ * buttons, and each initializing its own Paddle would triple the work and
+ * trip Paddle's duplicate-script warnings. First caller's `pwCustomer`
+ * wins — every button on a page passes the same org's customer id, so the
+ * distinction has no observable effect.
+ */
+let paddlePromise: Promise<Paddle | undefined> | null = null;
+
+function ensurePaddle(paddleCustomerId?: string | null): Promise<Paddle | undefined> {
+  const token = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
+  if (!token) return Promise.resolve(undefined);
+  if (!paddlePromise) {
+    paddlePromise = initializePaddle({
+      token,
+      environment:
+        process.env.NEXT_PUBLIC_PADDLE_ENV === "production"
+          ? "production"
+          : "sandbox",
+      // Only pass pwCustomer when we actually have a Paddle customer id.
+      // Passing `{ id: undefined }` still counts as "set" to Paddle.js and
+      // logs noisy warnings in the console for signed-out visitors.
+      ...(paddleCustomerId ? { pwCustomer: { id: paddleCustomerId } } : {}),
+    }).catch(() => {
+      // A failed CDN fetch must not cache forever — the next intent retries.
+      paddlePromise = null;
+      return undefined;
+    });
+  }
+  return paddlePromise;
+}
+
 export function CheckoutButton({
   planId,
   label = "Start now",
@@ -75,35 +116,15 @@ export function CheckoutButton({
   discountCode,
 }: Props) {
   const router = useRouter();
-  const [paddle, setPaddle] = useState<Paddle | undefined>();
   const [busy, setBusy] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const token = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
-  const env =
-    process.env.NEXT_PUBLIC_PADDLE_ENV === "production"
-      ? "production"
-      : "sandbox";
 
-  useEffect(() => {
-    if (!token) return;
-    let cancelled = false;
-    void initializePaddle({
-      token,
-      environment: env,
-      // Only pass pwCustomer when we actually have a Paddle customer id.
-      // Passing `{ id: undefined }` still counts as "set" to Paddle.js and
-      // logs noisy warnings in the console for signed-out visitors.
-      ...(paddleCustomerId
-        ? { pwCustomer: { id: paddleCustomerId } }
-        : {}),
-    }).then((instance) => {
-      if (!cancelled) setPaddle(instance);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [token, env, paddleCustomerId]);
+  /** Warm Paddle up on hover/focus so the click usually finds it ready. */
+  function warmUp() {
+    if (!changeInPlace) void ensurePaddle(paddleCustomerId);
+  }
 
   async function performPlanChange() {
     const name = planName ?? planId;
@@ -188,8 +209,11 @@ export function CheckoutButton({
         return;
       }
 
+      // First interaction without a prior hover (mobile tap) pays the CDN
+      // fetch here, behind the button's busy spinner — not in the load window.
+      const paddle = await ensurePaddle(paddleCustomerId);
       if (!paddle || !data.priceId) {
-        notifyWarning("Paddle is still loading — try again in a second.");
+        notifyWarning("Paddle could not load — check your connection and try again.");
         return;
       }
 
@@ -220,6 +244,8 @@ export function CheckoutButton({
         pendingGlyph="card"
         disabled={busy}
         onClick={onClick}
+        onPointerEnter={warmUp}
+        onFocus={warmUp}
       >
         {busy ? (
           // PendingGlyph on the button — no second spinner here.
