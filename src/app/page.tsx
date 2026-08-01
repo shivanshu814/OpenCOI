@@ -352,8 +352,18 @@ export default function HomePage() {
             Only the exit range animates, so load/LCP see a static hero. */}
         <div className="cs-scroll-recede relative mx-auto grid max-w-6xl items-center gap-x-14 gap-y-12 px-4 pt-16 pb-20 sm:px-6 md:pt-24 md:pb-28 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,24rem)]">
           <div>
+            {/*
+              The eyebrow leads with the app name so Google's OAuth-consent
+              reviewer bot and any AI/answer engine crawling the h1 area
+              picks up "CertShield" as the product name unambiguously. Their
+              automated verifier reads h1 + immediate context, and a bare
+              category label like "COI tracking for property managers" made
+              them flag the app name as "not matching the homepage" even
+              though "CertShield" appears 73× elsewhere on the page.
+            */}
             <p className="text-brand cs-fade-rise text-xs font-semibold tracking-[0.18em] uppercase">
-              COI tracking for property managers &amp; contractors
+              CertShield <span className="text-brand/60">·</span> COI tracking
+              for property managers &amp; contractors
             </p>
             <h1
               className="cs-rise-in mt-5 text-4xl leading-[1.08] font-semibold tracking-tight text-balance text-white md:text-5xl lg:text-[3.25rem]"
