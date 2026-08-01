@@ -44,7 +44,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // Role pages under /careers — sourced from the same list the careers page
   // renders, so a new role cannot exist without appearing here (Ahrefs
   // 2026-08-01: "indexable page not in sitemap" on /careers/sales).
-  const roleEntries: MetadataRoute.Sitemap = ROLES.map((role) => ({
+  // A role may ALSO be promoted into PUBLIC_ROUTES for the footer inlink and
+  // llms.txt (PR #5 did this for /careers/sales); those are skipped here so
+  // the sitemap never lists one URL twice. This list is the safety net, the
+  // route map is the promotion.
+  const staticPaths = new Set(PUBLIC_ROUTES.map((route) => route.path));
+  const roleEntries: MetadataRoute.Sitemap = ROLES.filter(
+    (role) => !staticPaths.has(role.href),
+  ).map((role) => ({
     url: absoluteUrl(role.href),
     lastModified: SITE_LAST_MODIFIED,
     changeFrequency: "monthly",
