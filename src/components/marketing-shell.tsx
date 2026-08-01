@@ -91,6 +91,26 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
               >
                 hello@getcertshield.app
               </a>
+              {/*
+                Product Hunt's official badge for our launch page (post
+                1212021). PH is one of the two live profiles in `SAME_AS` —
+                the visible link and the JSON-LD assert the same entity.
+              */}
+              <a
+                href="https://www.producthunt.com/products/certshield?utm_source=badge-featured&utm_medium=badge"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block opacity-80 transition-opacity hover:opacity-100"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1212021&theme=dark"
+                  alt="CertShield on Product Hunt"
+                  width={250}
+                  height={54}
+                  loading="lazy"
+                />
+              </a>
             </div>
 
             <nav

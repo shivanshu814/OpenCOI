@@ -59,13 +59,19 @@ export const ORG = {
 /**
  * `sameAs` for the Organization entity.
  *
- * DELIBERATELY EMPTY. docs/02 §1 reserves LinkedIn `/company/certshield`,
- * X `@certshieldhq` and YouTube `@certshield`, but none of the three exists yet
- * (checked: all 404). Listing dead profiles is worse than listing none — it
- * splits the entity instead of consolidating it. Add each URL here the day the
- * profile goes live, and it flows into JSON-LD everywhere automatically.
+ * Only profiles that actually exist. docs/02 §1 reserves LinkedIn
+ * `/company/certshield`, X `@certshieldhq` and YouTube `@certshield`, but none
+ * of the three exists yet (checked: all 404). Listing dead profiles is worse
+ * than listing none — it splits the entity instead of consolidating it. Add
+ * each URL here the day the profile goes live, and it flows into JSON-LD
+ * everywhere automatically.
  */
-export const SAME_AS: readonly string[] = [];
+export const SAME_AS: readonly string[] = [
+  // Live 2026-08-01 (post_id 1212021).
+  "https://www.producthunt.com/products/certshield",
+  // Live earlier; profile links back to the site.
+  "https://www.indiehackers.com/product/certshield",
+];
 
 /** Search-engine verification tokens. Empty string = tag omitted (docs/02 §5.8). */
 export const VERIFICATION = {
