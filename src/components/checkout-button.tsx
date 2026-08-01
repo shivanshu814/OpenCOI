@@ -1,5 +1,15 @@
 "use client";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import type { PlanId } from "@/lib/billing/plans";
 import {
@@ -67,6 +77,7 @@ export function CheckoutButton({
   const router = useRouter();
   const [paddle, setPaddle] = useState<Paddle | undefined>();
   const [busy, setBusy] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const token = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
   const env =
@@ -94,46 +105,46 @@ export function CheckoutButton({
     };
   }, [token, env, paddleCustomerId]);
 
+  async function performPlanChange() {
+    const name = planName ?? planId;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/billing/change-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planId }),
+      });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        noop?: boolean;
+        planName?: string;
+        message?: string;
+        error?: string;
+      };
+      if (!res.ok) {
+        notifyApiError(data, "Plan change failed");
+        return;
+      }
+      notifySuccess(
+        data.noop
+          ? (data.message ?? "You are already on this plan.")
+          : `Plan changed to ${data.planName ?? name}.`,
+      );
+      router.refresh();
+    } catch (err) {
+      notifyCaughtError(err, "Plan change failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function onClick() {
     // Change-in-place branch: PATCH the existing sub instead of opening a
     // new checkout. Confirmation matters here because a downgrade is a
     // destructive user action ("did I mean to give up features?"), and an
     // upgrade produces an immediate prorated charge on their card.
     if (changeInPlace) {
-      const name = planName ?? planId;
-      const ok = window.confirm(
-        `Change your plan to ${name}? Any price difference is prorated and billed immediately.`,
-      );
-      if (!ok) return;
-      setBusy(true);
-      try {
-        const res = await fetch("/api/billing/change-plan", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ planId }),
-        });
-        const data = (await res.json()) as {
-          ok?: boolean;
-          noop?: boolean;
-          planName?: string;
-          message?: string;
-          error?: string;
-        };
-        if (!res.ok) {
-          notifyApiError(data, "Plan change failed");
-          return;
-        }
-        notifySuccess(
-          data.noop
-            ? (data.message ?? "You are already on this plan.")
-            : `Plan changed to ${data.planName ?? name}.`,
-        );
-        router.refresh();
-      } catch (err) {
-        notifyCaughtError(err, "Plan change failed");
-      } finally {
-        setBusy(false);
-      }
+      setConfirmOpen(true);
       return;
     }
 
@@ -199,29 +210,57 @@ export function CheckoutButton({
   }
 
   return (
-    <Button
-      type="button"
-      variant={variant}
-      size={size}
-      className={cn(className, className?.includes("w-full") && "w-full")}
-      pending={busy}
-      pendingGlyph="card"
-      disabled={busy}
-      onClick={onClick}
-    >
-      {busy ? (
-        // PendingGlyph on the button — no second spinner here.
-        "Opening…"
-      ) : (
-        <>
-          {label}
-          <ArrowRight
-            data-icon="inline-end"
-            className="size-4"
-            strokeWidth={2.25}
-          />
-        </>
-      )}
-    </Button>
+    <>
+      <Button
+        type="button"
+        variant={variant}
+        size={size}
+        className={cn(className, className?.includes("w-full") && "w-full")}
+        pending={busy}
+        pendingGlyph="card"
+        disabled={busy}
+        onClick={onClick}
+      >
+        {busy ? (
+          // PendingGlyph on the button — no second spinner here.
+          "Opening…"
+        ) : (
+          <>
+            {label}
+            <ArrowRight
+              data-icon="inline-end"
+              className="size-4"
+              strokeWidth={2.25}
+            />
+          </>
+        )}
+      </Button>
+      {changeInPlace ? (
+        <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                Change plan to {planName ?? planId}?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Any price difference is prorated and billed immediately to
+                your card on file.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  setConfirmOpen(false);
+                  void performPlanChange();
+                }}
+              >
+                Change plan
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      ) : null}
+    </>
   );
 }

@@ -91,7 +91,7 @@ const PAGE_CHECKS: Check[] = [
     contains: [
       "CG 20 37",
       "data-answer",
-      '"@type":"Article"',
+      '"@type":"BlogPosting"',
       '"@type":"FAQPage"',
       'rel="canonical"',
     ],

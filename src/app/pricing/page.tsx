@@ -1,4 +1,5 @@
 import { CheckoutButton } from "@/components/checkout-button";
+import { CheckoutLegalNote } from "@/components/checkout-legal-note";
 import { INK_BG, InkAtmosphere, SURFACE_BG } from "@/components/ink-atmosphere";
 import { LiveOpsTicker } from "@/components/live-activity";
 import { MarketingShell } from "@/components/marketing-shell";
@@ -173,6 +174,8 @@ export default async function PricingPage({
               );
             })}
           </div>
+
+          <CheckoutLegalNote className="mt-6 text-center" />
 
           <p className="text-muted-foreground mt-8 text-sm">
             Prefer a free look first?{" "}

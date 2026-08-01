@@ -12,6 +12,7 @@ import {
   billingCheckoutSchema,
   validationErrorBody,
 } from "@/lib/validation/schemas";
+import { ApiError } from "@paddle/paddle-node-sdk";
 import { NextResponse } from "next/server";
 
 /**
@@ -115,11 +116,39 @@ export async function POST(request: Request) {
   }
 
   const paddle = getPaddleServer();
-  const updated = await paddle.subscriptions.update(subscriptionId, {
-    items: [{ priceId: resolved.priceId, quantity: 1 }],
-    prorationBillingMode: "prorated_immediately",
-    onPaymentFailure: "prevent_change",
-  });
+  let updated;
+  try {
+    updated = await paddle.subscriptions.update(subscriptionId, {
+      items: [{ priceId: resolved.priceId, quantity: 1 }],
+      prorationBillingMode: "prorated_immediately",
+      onPaymentFailure: "prevent_change",
+    });
+  } catch (err) {
+    if (err instanceof ApiError) {
+      // entity_not_found: the stored subscription id doesn't exist in the
+      // current Paddle environment. Happens when an org subscribed during
+      // sandbox testing and prod later switched to the live API key — the
+      // sandbox sub id is dead data in live. Re-checkout creates a real one.
+      if (err.code === "entity_not_found" || err.code === "not_found") {
+        return NextResponse.json(
+          {
+            error:
+              "Your subscription record was created in a test billing environment and can't be changed here. Please complete checkout again to start a live subscription, or contact support.",
+            paddleCode: err.code,
+          },
+          { status: 409 },
+        );
+      }
+      return NextResponse.json(
+        {
+          error: `Plan change was rejected by billing: ${err.detail || err.code}`,
+          paddleCode: err.code,
+        },
+        { status: 502 },
+      );
+    }
+    throw err;
+  }
 
   // The subscription.updated webhook will sync the DB (plans, status, period).
   // Returning the fresh Paddle state lets the UI show the change immediately

@@ -1,4 +1,6 @@
+import { CancelPlanButton } from "@/components/cancel-plan-button";
 import { CheckoutButton } from "@/components/checkout-button";
+import { CheckoutLegalNote } from "@/components/checkout-legal-note";
 import {
   PageFrame,
   PageHeader,
@@ -150,6 +152,19 @@ export default async function BillingSettingsPage() {
               (missing client token / price IDs). Upgrade buttons will explain
               the fallback — founder can invoice manually until KYC clears.
             </p>
+          </CardFooter>
+        ) : currentPlan &&
+          isAdmin &&
+          session &&
+          ["active", "trialing", "past_due"].includes(
+            (subStatus ?? "").toLowerCase(),
+          ) ? (
+          <CardFooter className="flex items-center justify-between gap-3 border-t sm:px-6">
+            <p className="text-muted-foreground text-xs leading-relaxed">
+              Canceling stops billing — your COI data and audit trail stay
+              intact.
+            </p>
+            <CancelPlanButton planName={currentPlan.name} />
           </CardFooter>
         ) : null}
       </Card>
@@ -312,6 +327,8 @@ export default async function BillingSettingsPage() {
             );
           })}
         </div>
+
+        <CheckoutLegalNote />
       </section>
 
       <PageSecondary className="space-y-1.5 max-w-none">

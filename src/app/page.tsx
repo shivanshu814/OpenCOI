@@ -1,4 +1,5 @@
 import { CheckoutButton } from "@/components/checkout-button";
+import { CheckoutLegalNote } from "@/components/checkout-legal-note";
 import { ChecksMarquee } from "@/components/checks-marquee";
 import { CountUp } from "@/components/count-up";
 import { EmberField } from "@/components/ember-field";
@@ -1162,6 +1163,7 @@ export default function HomePage() {
               </SpotlightCard>
             ))}
           </Stagger>
+          <CheckoutLegalNote className="mt-6 text-center" />
         </div>
       </section>
 

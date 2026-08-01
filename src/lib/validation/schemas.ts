@@ -530,6 +530,26 @@ export const billingCheckoutSchema = z.object({
 });
 export type BillingCheckoutInput = z.infer<typeof billingCheckoutSchema>;
 
+export const CANCEL_REASONS = [
+  "too_expensive",
+  "missing_features",
+  "not_enough_vendors",
+  "switching_tool",
+  "no_longer_needed",
+  "other",
+] as const;
+
+export const billingCancelSchema = z.object({
+  /**
+   * next_billing_period = keep access until the paid period ends (default UX).
+   * immediately = Paddle cancels now and prorates a refund for unused time.
+   */
+  effectiveFrom: z.enum(["next_billing_period", "immediately"]),
+  reason: z.enum(CANCEL_REASONS),
+  feedback: z.string().trim().max(2000).optional(),
+});
+export type BillingCancelInput = z.infer<typeof billingCancelSchema>;
+
 /* ─────────────────────────────── careers ────────────────────────────── */
 
 /**
