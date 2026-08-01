@@ -185,6 +185,15 @@ export const PUBLIC_ROUTES: readonly PublicRoute[] = [
     changeFrequency: "weekly",
     group: "Company",
   },
+  {
+    path: "/careers/sales",
+    label: "Sales role",
+    summary:
+      "Open sales role — commission-only and uncapped, remote with US-friendly hours, outbound to US property managers and small general contractors.",
+    priority: 0.35,
+    changeFrequency: "weekly",
+    group: "Company",
+  },
 
   {
     path: "/terms",
