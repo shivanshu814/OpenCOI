@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { latestPostDate, posts } from "@/content/blog";
+import { ROLES } from "@/content/careers";
 import { PUBLIC_ROUTES } from "@/lib/seo/routes";
 import { absoluteUrl } from "@/lib/seo/site";
 
@@ -40,5 +41,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
-  return [...staticEntries, ...postEntries];
+  // Role pages under /careers — sourced from the same list the careers page
+  // renders, so a new role cannot exist without appearing here (Ahrefs
+  // 2026-08-01: "indexable page not in sitemap" on /careers/sales).
+  const roleEntries: MetadataRoute.Sitemap = ROLES.map((role) => ({
+    url: absoluteUrl(role.href),
+    lastModified: SITE_LAST_MODIFIED,
+    changeFrequency: "monthly",
+    priority: 0.4,
+  }));
+
+  return [...staticEntries, ...postEntries, ...roleEntries];
 }

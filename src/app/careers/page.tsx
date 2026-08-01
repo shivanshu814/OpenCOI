@@ -1,5 +1,6 @@
 import { INK_BG, InkAtmosphere, SURFACE_BG } from "@/components/ink-atmosphere";
 import { LiveBadge, LiveOpsTicker } from "@/components/live-activity";
+import { ROLES } from "@/content/careers";
 import { MarketingShell } from "@/components/marketing-shell";
 import { pageMetadata } from "@/lib/seo/metadata";
 import { ArrowRight } from "lucide-react";
@@ -15,17 +16,9 @@ export const metadata = pageMetadata({
 /**
  * Kept intentionally short. Startup with one open role and no cargo-culted
  * "our values" block — we're a solo founder pre-launch, so honesty about the
- * stage does more than a corporate pitch.
+ * stage does more than a corporate pitch. Roles live in `content/careers.ts`
+ * so the sitemap lists every role page too.
  */
-const ROLES = [
-  {
-    slug: "sales",
-    title: "Sales — outbound to US property managers",
-    location: "Remote (US-friendly hours preferred)",
-    comp: "Commission-only, uncapped",
-    href: "/careers/sales",
-  },
-] as const;
 
 export default function CareersPage() {
   return (
