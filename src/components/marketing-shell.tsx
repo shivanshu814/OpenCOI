@@ -112,40 +112,49 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
                 />
               </a>
               {/*
-                "Listed on" strip — plain facts, no achievement claims.
-                Every profile here is live and also asserted in `SAME_AS`.
-                Earned-only rule: rating/award badges (G2, Capterra, SF
-                achievements) may only be added once actually earned.
+                "Listed on" strip — official directory badges, plain facts,
+                no achievement claims. Every profile here is live and also
+                asserted in `SAME_AS`. Earned-only rule: rating/award badges
+                (G2, Capterra, SF achievements) may only be added once
+                actually earned.
               */}
-              <p className="text-xs text-white/40">
-                Listed on{" "}
-                <a
-                  href="https://www.producthunt.com/products/certshield"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/60 transition-colors hover:text-white"
-                >
-                  Product Hunt
-                </a>
-                {" · "}
-                <a
-                  href="https://www.saashub.com/certshield"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/60 transition-colors hover:text-white"
-                >
-                  SaaSHub
-                </a>
-                {" · "}
-                <a
-                  href="https://sourceforge.net/projects/certshield/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/60 transition-colors hover:text-white"
-                >
-                  SourceForge
-                </a>
-              </p>
+              <div className="space-y-2">
+                <p className="text-[0.7rem] font-semibold tracking-[0.14em] text-white/35 uppercase">
+                  Listed on
+                </p>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                  <a
+                    href="https://www.saashub.com/certshield"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block opacity-80 transition-opacity hover:opacity-100"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="https://cdn-b.saashub.com/img/badges/approved-color.png"
+                      alt="CertShield listed on SaaSHub"
+                      width={120}
+                      height={40}
+                      loading="lazy"
+                    />
+                  </a>
+                  <a
+                    href="https://sourceforge.net/projects/certshield/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block opacity-80 transition-opacity hover:opacity-100"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="https://sourceforge.net/sflogo.php?type=18&group_id=4121819"
+                      alt="CertShield listed on SourceForge"
+                      width={133}
+                      height={21}
+                      loading="lazy"
+                    />
+                  </a>
+                </div>
+              </div>
             </div>
 
             <nav
