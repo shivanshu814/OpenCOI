@@ -79,6 +79,18 @@ const PAGE_CHECKS: Check[] = [
     contains: ["About CertShield", 'rel="canonical"', "refuses to claim"],
   },
   {
+    // Dedicated OAuth brand-verification homepage — h1 must be the exact
+    // consent-screen app name, and the Google data-use disclosure must stay.
+    path: "/google",
+    contains: [
+      ">CertShield<",
+      "How CertShield uses Google user data",
+      "Limited Use",
+      "/privacy",
+      'rel="canonical"',
+    ],
+  },
+  {
     path: "/free-audit",
     contains: ["Free COI audit", 'rel="canonical"', "no card"],
   },

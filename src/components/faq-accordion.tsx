@@ -1,3 +1,11 @@
+"use client";
+
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import Link from "next/link";
 
 export type FaqEntry = {
@@ -6,23 +14,22 @@ export type FaqEntry = {
   link?: { href: string; label: string };
 };
 
+/**
+ * Homepage FAQ. Uses the shared Base UI accordion — never native
+ * `<details>/<summary>`, which the smoke gate rejects on `/` and which
+ * animate differently per browser.
+ */
 export function FaqAccordion({ items }: { items: readonly FaqEntry[] }) {
   return (
-    <div className="divide-border/60 border-border/60 divide-y border-y">
+    <Accordion className="divide-border/60 border-border/60 divide-y border-y">
       {items.map((item) => (
-        <details key={item.q} className="group">
-          <summary className="marker:hidden list-none cursor-pointer py-5 text-sm font-semibold tracking-tight outline-none">
-            <span className="flex items-start justify-between gap-4">
-              <span>{item.q}</span>
-              <span
-                aria-hidden
-                className="text-muted-foreground mt-0.5 shrink-0 text-base transition-transform duration-200 group-open:rotate-45"
-              >
-                +
-              </span>
-            </span>
-          </summary>
-          <div className="text-muted-foreground -mt-1 pb-5 text-sm leading-relaxed">
+        <AccordionItem
+          key={item.q}
+          value={item.q}
+          className="border-border/60 border-b-0"
+        >
+          <AccordionTrigger>{item.q}</AccordionTrigger>
+          <AccordionContent>
             {item.a}
             {item.link ? (
               <>
@@ -36,9 +43,9 @@ export function FaqAccordion({ items }: { items: readonly FaqEntry[] }) {
                 .
               </>
             ) : null}
-          </div>
-        </details>
+          </AccordionContent>
+        </AccordionItem>
       ))}
-    </div>
+    </Accordion>
   );
 }

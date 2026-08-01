@@ -169,6 +169,15 @@ export const PUBLIC_ROUTES: readonly PublicRoute[] = [
     group: "Company",
   },
   {
+    path: "/google",
+    label: "Google sign-in",
+    summary:
+      "CertShield application home for Google OAuth — what the product does and how Google account data is used for sign-in.",
+    priority: 0.3,
+    changeFrequency: "yearly",
+    group: "Company",
+  },
+  {
     path: "/careers",
     label: "Careers",
     summary: "Open roles at CertShield.",

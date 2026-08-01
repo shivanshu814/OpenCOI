@@ -14,11 +14,15 @@ export const metadata = pageMetadata({
 const SECTIONS = [
   {
     title: "What we collect",
-    body: "Account email and name from sign-up; organization profile you fill in during onboarding; vendor contact data you upload; the PDFs you or your vendors send us; extraction metadata (cost, latency, confidence, model version) so we can debug bad verdicts; audit events for every document, verdict, and message; IP address and user-agent on every request for abuse and rate-limit control. Billing information is collected by Paddle, not by us — we never see full card numbers.",
+    body: "Account email and name from sign-up (including when you use Sign in with Google); organization profile you fill in during onboarding; vendor contact data you upload; the PDFs you or your vendors send us; extraction metadata (cost, latency, confidence, model version) so we can debug bad verdicts; audit events for every document, verdict, and message; IP address and user-agent on every request for abuse and rate-limit control. Billing information is collected by Paddle, not by us — we never see full card numbers.",
   },
   {
     title: "How we use it",
     body: "To provide the service you paid for and nothing else. Extract fields from COIs, run compliance checks, send chase emails to your vendors, generate reports for you, and keep the workspace working. We do not use your data or your vendors' documents to train AI models — the extraction models we use are commercial APIs, not ours, and are configured with the no-training option enabled. We do not sell or rent personal data. We do not run behavioural advertising.",
+  },
+  {
+    title: "Google sign-in",
+    body: "If you choose Sign in with Google, we receive your Google account email and basic profile name solely to create or look up your CertShield workspace account and keep you signed in. We do not access Gmail, Drive, Calendar, or Contacts. CertShield's use of information received from Google APIs adheres to the Google API Services User Data Policy, including the Limited Use requirements. You can revoke access in your Google Account settings at any time.",
   },
   {
     title: "Where data lives",
@@ -72,7 +76,7 @@ export default function PrivacyPage() {
             />
           </div>
           <p className="mt-3 text-sm leading-relaxed text-white/60">
-            Last updated: 2026-07-23 · US data only · no model training on your
+            Last updated: 2026-08-01 · US data only · no model training on your
             PDFs
           </p>
         </div>
