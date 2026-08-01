@@ -153,6 +153,30 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
                       loading="lazy"
                     />
                   </a>
+                  {/*
+                    LaunchZone badge — their verifier crawls this site's
+                    homepage and common pages looking for the exact <a href
+                    → launchzone.co/p/getcertshield> pattern. Marketing shell
+                    renders on every public page, so one insert here satisfies
+                    the check everywhere. The link is dofollow (default): we
+                    only need to add rel=nofollow if we later decide against
+                    that, but there is no reason to.
+                  */}
+                  <a
+                    href="https://launchzone.co/p/getcertshield"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block opacity-80 transition-opacity hover:opacity-100"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="https://launchzone.co/badge.svg"
+                      alt="Find us on LaunchZone"
+                      width={154}
+                      height={54}
+                      loading="lazy"
+                    />
+                  </a>
                 </div>
               </div>
             </div>
