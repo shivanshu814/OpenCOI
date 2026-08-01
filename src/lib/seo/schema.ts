@@ -93,6 +93,10 @@ export function softwareApplicationSchema(): Json {
     ],
     offers: {
       "@type": "AggregateOffer",
+      // Google's SoftwareApplication rich-result validator requires a scalar
+      // `price` on `offers`; lowPrice/highPrice alone trip a validation error.
+      // Mirrors ORG.priceLow (the entry plan) so the two cannot drift.
+      price: String(ORG.priceLow),
       lowPrice: String(ORG.priceLow),
       highPrice: String(ORG.priceHigh),
       priceCurrency: "USD",
