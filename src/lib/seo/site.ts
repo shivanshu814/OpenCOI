@@ -46,6 +46,9 @@ export const ORG = {
   boilerplate:
     "CertShield is vendor insurance compliance software for US property managers and contractors. Its AI reads certificates of insurance (ACORD forms), verifies coverage limits, additional-insured endorsements, and expiration dates against each company's requirements, then automatically chases vendors and their insurance agents for renewals by email (English and Spanish). Every verdict is human-reviewed before publishing, with audit-ready document trails. CertShield replaces spreadsheet-based COI tracking at SMB pricing, from $99/month. Founded in 2026.",
   foundingDate: "2026",
+  /** Entity signal for answer engines — ties the Organization to the person
+   *  answering on Reddit/LinkedIn under the same name (docs/02 §5.7, §5.9). */
+  founder: "Shivanshu Pathak",
   email: "hello@getcertshield.app",
   areaServed: "US",
   priceLow: 99,

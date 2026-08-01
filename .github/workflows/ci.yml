@@ -44,6 +44,11 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      # Static SEO/AEO gate on the typed content — title/description bands,
+      # 40–60 word answer blocks, keyword targeting, forbidden claims.
+      - name: Content lint
+        run: npm run seo:content
+
       - name: Production build
         run: npm run build
 

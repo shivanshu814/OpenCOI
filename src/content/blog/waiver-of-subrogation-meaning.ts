@@ -7,7 +7,7 @@ export const post: Post = {
   description:
     "A waiver of subrogation stops your vendor's insurer from suing you after it pays a claim. What the endorsement does and how to verify it on a certificate.",
   answer:
-    "A waiver of subrogation is an endorsement in which an insurer gives up its right to recover, from a named third party, money it has paid on a claim. On a vendor's policy, a waiver in your favor means that after the insurer pays for a loss caused by that vendor, it cannot turn around and sue you to get the money back.",
+    "A waiver of subrogation is an endorsement in which an insurer gives up its right to recover, from a named third party, money it has paid on a claim. On a vendor's policy, a waiver in your favor means that after the insurer pays for a loss caused by that vendor, it cannot sue you to get that money back.",
   published: "2026-07-31",
   category: "Definitions",
   keywords: [

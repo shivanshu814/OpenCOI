@@ -7,7 +7,7 @@ export const post: Post = {
   description:
     "A certificate of insurance is a one-page summary of a vendor's coverage. What ACORD 25 proves, what it does not, and how to read every box on it.",
   answer:
-    "A certificate of insurance (COI) is a one-page summary of an insurance policy, almost always issued on the ACORD 25 form. It lists the insured business, its carriers, policy numbers, coverage types, limits and expiration dates. It is evidence that coverage existed on the date it was issued — it is not the policy, and it grants no rights by itself.",
+    "A certificate of insurance (COI) is a one-page summary of an insurance policy, usually issued on the ACORD 25 form. It lists the insured business, its carriers, policy numbers, coverage types, limits and expiration dates. It is evidence that coverage existed on the date it was issued — it is not the policy, and it grants no rights by itself.",
   published: "2026-07-31",
   category: "Definitions",
   keywords: [

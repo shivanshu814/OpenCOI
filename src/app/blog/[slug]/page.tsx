@@ -70,6 +70,8 @@ export default async function BlogPostPage({
             published: post.published,
             updated: post.updated,
             keywords: post.keywords,
+            images: [ogImageUrl(post.h1, post.category)],
+            type: "BlogPosting",
           }),
           webPageSchema({
             title: post.title,

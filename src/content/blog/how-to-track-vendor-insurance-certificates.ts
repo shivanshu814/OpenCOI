@@ -155,5 +155,6 @@ export const post: Post = {
     "what-to-check-on-a-certificate-of-insurance",
     "coi-tracking-spreadsheet-template",
     "how-much-insurance-should-a-contractor-have",
+    "vendor-coi-expired-what-to-do",
   ],
 };

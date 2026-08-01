@@ -180,7 +180,7 @@ export const PUBLIC_ROUTES: readonly PublicRoute[] = [
   {
     path: "/terms",
     label: "Terms",
-    summary: "Terms of service.",
+    summary: "Terms of service for the CertShield subscription and website.",
     priority: 0.3,
     changeFrequency: "yearly",
     group: "Legal",

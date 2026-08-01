@@ -36,6 +36,7 @@ export function organizationSchema(): Json {
     description: ORG.boilerplate,
     slogan: ORG.tagline,
     foundingDate: ORG.foundingDate,
+    founder: { "@type": "Person", name: ORG.founder },
     areaServed: { "@type": "Country", name: "United States" },
     knowsAbout: [
       "Certificate of insurance tracking",
@@ -133,6 +134,8 @@ export function articleSchema({
   published,
   updated,
   keywords,
+  images,
+  type = "Article",
 }: {
   title: string;
   description: string;
@@ -140,10 +143,17 @@ export function articleSchema({
   published: string;
   updated?: string;
   keywords?: readonly string[];
+  /** Site-relative or absolute. Google's Article docs want `image` on every
+   *  article — without it the rich result is text-only. The per-page `/og`
+   *  card (1200×630) is always available, so there is no excuse to omit it. */
+  images?: readonly string[];
+  /** `BlogPosting` for blog posts; Google treats the subtypes equally but the
+   *  more precise type costs nothing. */
+  type?: "Article" | "BlogPosting";
 }): Json {
   const url = absoluteUrl(path);
   return {
-    "@type": "Article",
+    "@type": type,
     "@id": `${url}#article`,
     headline: title,
     description,
@@ -155,6 +165,7 @@ export function articleSchema({
     author: { "@id": ORG_ID },
     publisher: { "@id": ORG_ID },
     isPartOf: { "@id": WEBSITE_ID },
+    ...(images?.length ? { image: images.map((i) => absoluteUrl(i)) } : {}),
     ...(keywords?.length ? { keywords: keywords.join(", ") } : {}),
   };
 }

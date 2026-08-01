@@ -7,7 +7,7 @@ export const post: Post = {
   description:
     "A 12-point checklist for reviewing a vendor COI: entity names, limits, dates, endorsements, carrier rating, and the traps on page two.",
   answer:
-    "Check twelve things on every certificate: the insured's exact legal entity, your entity as certificate holder, every required coverage line, each limit against your requirement, both policy effective and expiration dates, additional insured endorsements for ongoing and completed operations, primary and non-contributory wording, waiver of subrogation, carrier admitted status and rating, the producer's contact details, the description of operations, and whether the endorsement pages are actually attached.",
+    "Check twelve things on every certificate: the insured's exact legal entity, your entity as certificate holder, required coverage lines, limits against your requirements, policy effective and expiration dates, additional insured endorsements for ongoing and completed operations, primary and non-contributory wording, waiver of subrogation, carrier admitted status and rating, producer contact details, description of operations, and that endorsement pages are attached.",
   published: "2026-07-31",
   category: "Guides",
   keywords: [

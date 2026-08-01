@@ -31,6 +31,7 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      - run: npm run seo:content
       - run: npm run build
       # Boots the app in demo mode and asserts every route renders with the
       # expected content. Blocks the deploy on request-time failures that

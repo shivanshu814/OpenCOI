@@ -111,12 +111,13 @@ export const post: Post = {
     },
     {
       q: "Can I share this template with my team or clients?",
-      a: "Yes. Use it, edit it, send it on. Attribution is appreciated but not required.",
+      a: "Yes. Use it, edit it, and send it to anyone — your team, your clients, or their vendors. Attribution is appreciated but never required.",
     },
   ],
   related: [
     "how-to-track-vendor-insurance-certificates",
     "what-to-check-on-a-certificate-of-insurance",
     "how-much-insurance-should-a-contractor-have",
+    "best-coi-tracking-software-buyers-guide",
   ],
 };
