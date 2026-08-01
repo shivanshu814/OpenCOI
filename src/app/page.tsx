@@ -480,13 +480,52 @@ export default function HomePage() {
         <ChecksMarquee className="relative" />
       </section>
 
+      {/*
+        Explicit "About CertShield" band. Two reasons this exists as its own
+        section, not just as body text:
+         1. Google's OAuth-consent branding compliance bot rejects the site
+            twice for HOMEPAGE_HAS_SUFFICIENT_CONTENT + APP_NAME_CONSISTENT
+            even with the app name in the h1 and 2,258 words on the page.
+            The bot looks for a semantic h2 that names the product and
+            explains it in the same block; that's what this is.
+         2. It's a legitimately useful above-the-fold summary for a first-
+            time reader who doesn't yet know what CertShield is. The
+            marketing tagline in the hero doesn't do that job — it hooks
+            an existing pain, doesn't introduce the product.
+      */}
+      <section className={`${SURFACE_BG} border-b border-border/60`}>
+        <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 md:py-12">
+          <h2 className="text-xl font-semibold tracking-tight md:text-2xl">
+            About CertShield
+          </h2>
+          <p className="text-muted-foreground mt-3 text-base leading-relaxed md:text-lg">
+            CertShield is vendor insurance compliance software for US property
+            managers and small general contractors. Its AI reads certificates
+            of insurance (ACORD 25 forms), verifies coverage limits,
+            additional-insured endorsements and expiration dates against each
+            company&rsquo;s requirements, then automatically chases vendors and
+            their insurance agents for renewals by email in English and
+            Spanish. Every verdict is reviewed by a human before it publishes,
+            with audit-ready document trails. CertShield replaces
+            spreadsheet-based COI tracking at SMB pricing, from $99/month.
+          </p>
+        </div>
+      </section>
+
       {/* 2. Plain-English explainer — assume the reader has never heard "COI". */}
       <section className={`${SURFACE_BG} border-b border-border/60`}>
         <div className="cs-scroll-rise mx-auto max-w-6xl px-4 py-14 sm:px-6 md:py-16">
           <Reveal className="max-w-3xl">
             <SectionEyebrow>In plain English</SectionEyebrow>
+            {/*
+              This h2 names the app on purpose. Google's OAuth-consent
+              branding bot reads h1 + h2 tags to check APP_NAME_CONSISTENT
+              and HOMEPAGE_HAS_SUFFICIENT_CONTENT — a bare "What this does"
+              tests negative for both. Naming CertShield here gives the bot
+              a semantic anchor it can match to the OAuth app name.
+            */}
             <h2 className="mt-3 text-2xl font-semibold tracking-tight md:text-3xl">
-              <WordReveal text={"What this actually does"} />
+              <WordReveal text={"What CertShield actually does"} />
             </h2>
             <p className="mt-5 text-lg leading-snug font-medium md:text-xl">
               You hire{" "}
