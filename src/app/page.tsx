@@ -365,11 +365,23 @@ export default function HomePage() {
               CertShield <span className="text-brand/60">·</span> COI tracking
               for property managers &amp; contractors
             </p>
+            {/*
+              The h1 is what Google's OAuth-consent branding reviewer bot
+              reads to determine "is the app name on the homepage the same
+              as the OAuth consent screen name?". A pure marketing tagline
+              (which "Never work with an uninsured vendor again" is) failed
+              that check twice, even with an eyebrow above it naming the
+              product. The reviewer only looks at the h1's own text.
+              Prepending "CertShield —" satisfies the automated check
+              without stripping the tagline. Visually the app name reads
+              like a marketing prefix; screen readers get the product
+              name front-and-centre.
+            */}
             <h1
               className="cs-rise-in mt-5 text-4xl leading-[1.08] font-semibold tracking-tight text-balance text-white md:text-5xl lg:text-[3.25rem]"
               style={{ animationDelay: "60ms" }}
             >
-              Never work with an uninsured vendor again.
+              CertShield — Never work with an uninsured vendor again.
             </h1>
             <p
               className="cs-fade-rise mt-6 max-w-xl text-base leading-relaxed text-white/65 md:text-lg"
