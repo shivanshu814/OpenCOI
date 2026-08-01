@@ -32,19 +32,24 @@ export function loadSentry(): Promise<SentryModule | null> {
     return loading;
   }
 
-  loading = import("@sentry/nextjs").then((Sentry) => {
-    Sentry.init({
-      dsn,
-      environment:
-        process.env.NEXT_PUBLIC_VERCEL_ENV ?? process.env.NODE_ENV ?? "development",
-      tracesSampleRate: Number(
-        process.env.NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE ?? "0.1",
-      ),
-      replaysSessionSampleRate: 0,
-      replaysOnErrorSampleRate: 0,
-    });
-    return Sentry;
-  });
+  loading = import("@sentry/nextjs")
+    .then((Sentry) => {
+      Sentry.init({
+        dsn,
+        environment:
+          process.env.NEXT_PUBLIC_VERCEL_ENV ?? process.env.NODE_ENV ?? "development",
+        tracesSampleRate: Number(
+          process.env.NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE ?? "0.1",
+        ),
+        replaysSessionSampleRate: 0,
+        replaysOnErrorSampleRate: 0,
+      });
+      return Sentry;
+    })
+    // A failed chunk fetch (offline, network blip) must degrade to "no
+    // telemetry this session" — a cached rejection here would instead surface
+    // as unhandled-rejection noise from every later report call.
+    .catch(() => null);
   return loading;
 }
 
