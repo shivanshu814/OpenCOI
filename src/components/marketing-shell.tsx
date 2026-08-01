@@ -111,6 +111,41 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
                   loading="lazy"
                 />
               </a>
+              {/*
+                "Listed on" strip — plain facts, no achievement claims.
+                Every profile here is live and also asserted in `SAME_AS`.
+                Earned-only rule: rating/award badges (G2, Capterra, SF
+                achievements) may only be added once actually earned.
+              */}
+              <p className="text-xs text-white/40">
+                Listed on{" "}
+                <a
+                  href="https://www.producthunt.com/products/certshield"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/60 transition-colors hover:text-white"
+                >
+                  Product Hunt
+                </a>
+                {" · "}
+                <a
+                  href="https://www.saashub.com/certshield"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/60 transition-colors hover:text-white"
+                >
+                  SaaSHub
+                </a>
+                {" · "}
+                <a
+                  href="https://sourceforge.net/projects/certshield/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/60 transition-colors hover:text-white"
+                >
+                  SourceForge
+                </a>
+              </p>
             </div>
 
             <nav

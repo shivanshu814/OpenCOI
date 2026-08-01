@@ -71,6 +71,13 @@ export const SAME_AS: readonly string[] = [
   "https://www.producthunt.com/products/certshield",
   // Live earlier; profile links back to the site.
   "https://www.indiehackers.com/product/certshield",
+  // Live 2026-08-01 (project id 4121819). Profile link only — achievement
+  // badges are earn-gated on SourceForge and none are earned yet, so no
+  // badge appears in the footer (fake social proof would undercut the
+  // "honest about limits" positioning).
+  "https://sourceforge.net/projects/certshield/",
+  // Live 2026-08-01; listed-on link in the footer.
+  "https://www.saashub.com/certshield",
 ];
 
 /** Search-engine verification tokens. Empty string = tag omitted (docs/02 §5.8). */
