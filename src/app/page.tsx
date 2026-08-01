@@ -71,6 +71,10 @@ const faq = [
   {
     q: "How is this different from myCOI / TrustLayer / Jones?",
     a: "Same category of protection, built for your size: they're $8–25K/year enterprise contracts with sales processes; we're $99–499/month, live in a day, no annual lock-in, and the AI does the reading instead of an outsourced review team.",
+    link: {
+      href: "/blog/best-coi-tracking-software-buyers-guide",
+      label: "See what to compare before you buy",
+    },
   },
   {
     q: "What's included at $99?",
@@ -791,7 +795,9 @@ export default function HomePage() {
         />
         <div className="relative mx-auto grid max-w-6xl items-center gap-x-14 gap-y-10 px-4 py-16 sm:px-6 md:py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
           <div>
-            <SectionEyebrow>The part everyone misses</SectionEyebrow>
+            <SectionEyebrow>
+              The part everyone misses on a COI: endorsements
+            </SectionEyebrow>
             <h2 className="mt-4 text-2xl font-semibold tracking-tight text-balance text-white md:text-3xl">
               The certificate page isn&apos;t the whole story.
             </h2>
@@ -799,7 +805,14 @@ export default function HomePage() {
               A certificate is a summary page. The wording that actually
               protects you lives on separate forms attached behind it — and
               that&apos;s the part busy staff skip. These are the four questions
-              we answer on every certificate, on every plan.
+              we answer on every certificate, on every plan.{" "}
+              <Link
+                href="/blog/cg-20-10-vs-cg-20-37"
+                className="text-brand-2 font-medium underline underline-offset-4"
+              >
+                See CG 20 10 vs CG 20 37 in plain English
+              </Link>
+              .
             </p>
             {/* Four questions, then the catch. Staggering them means the reader
                 arrives at each check one at a time instead of facing a wall. */}
