@@ -121,5 +121,6 @@ export const post: Post = {
     "how-to-track-vendor-insurance-certificates",
     "cg-20-10-vs-cg-20-37",
     "what-is-a-certificate-of-insurance",
+    "vendor-coi-expired-what-to-do",
   ],
 };

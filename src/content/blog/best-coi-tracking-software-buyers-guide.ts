@@ -140,5 +140,6 @@ export const post: Post = {
     "how-to-track-vendor-insurance-certificates",
     "what-to-check-on-a-certificate-of-insurance",
     "coi-tracking-spreadsheet-template",
+    "vendor-coi-expired-what-to-do",
   ],
 };
