@@ -92,6 +92,42 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
                 hello@getcertshield.app
               </a>
               {/*
+                Instagram — the one social profile that exists (docs/02 §1,
+                live 2026-08-27). Inline SVG rather than an icon-library
+                import: lucide dropped brand glyphs, and a 24px mark is not
+                worth a dependency. The visible link and the `SAME_AS` entry
+                assert the same entity, which is the whole point of §5.9.
+              */}
+              <a
+                href="https://www.instagram.com/certshieldhq/"
+                target="_blank"
+                rel="noopener noreferrer me"
+                aria-label="CertShield on Instagram"
+                className="inline-flex items-center gap-2 text-xs text-white/40 transition-colors hover:text-white"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={1.75}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="size-4"
+                  aria-hidden
+                >
+                  <rect x="2" y="2" width="20" height="20" rx="5" />
+                  <circle cx="12" cy="12" r="4" />
+                  <circle
+                    cx="17.5"
+                    cy="6.5"
+                    r="1.15"
+                    fill="currentColor"
+                    stroke="none"
+                  />
+                </svg>
+                @certshieldhq
+              </a>
+              {/*
                 Product Hunt's official badge for our launch page (post
                 1212021). PH is one of the two live profiles in `SAME_AS` —
                 the visible link and the JSON-LD assert the same entity.

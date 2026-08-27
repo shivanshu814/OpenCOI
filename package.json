@@ -29,6 +29,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.113.0",
     "@base-ui/react": "^1.6.0",
+    "@intercom/messenger-js-sdk": "^0.0.20",
     "@paddle/paddle-js": "^1.6.4",
     "@paddle/paddle-node-sdk": "^3.8.0",
     "@sentry/nextjs": "^10.67.0",

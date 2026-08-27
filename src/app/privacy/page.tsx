@@ -30,7 +30,7 @@ const SECTIONS = [
   },
   {
     title: "Who we share it with (subprocessors)",
-    body: "The vendors below process personal data on our behalf, each contractually bound to only use it to deliver their service. A full list with locations and purposes lives on the Subprocessors page: Vercel (hosting, US), Supabase (Postgres + storage, US), OpenRouter / Anthropic (AI extraction, US), Resend (outbound email, US), Postmark (inbound email — deferred until requested), Paddle (billing, merchant of record, US/UK), Cloudflare (DNS + email routing, global), Sentry (error tracking, US), Inngest (background jobs, US).",
+    body: "The vendors below process personal data on our behalf, each contractually bound to only use it to deliver their service. A full list with locations and purposes lives on the Subprocessors page: Vercel (hosting, US), Supabase (Postgres + storage, US), OpenRouter / Anthropic (AI extraction, US), Resend (outbound email, US), Postmark (inbound email — deferred until requested), Paddle (billing, merchant of record, US/UK), Cloudflare (DNS + email routing, global), Sentry (error tracking, US), Inngest (background jobs, US), Intercom (in-app support chat for signed-in users, US).",
   },
   {
     title: "Your rights",

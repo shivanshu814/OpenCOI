@@ -1316,7 +1316,7 @@ export default function HomePage() {
             >
               Book 15 minutes
             </a>{" "}
-            — weekdays, 9am–1pm ET.
+            — your timezone, your slot.
           </p>
         </div>
       </section>

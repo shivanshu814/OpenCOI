@@ -198,7 +198,7 @@ export default async function PricingPage({
             >
               Book 15 minutes
             </a>{" "}
-            — weekdays, 9am–1pm ET.
+            — your timezone, your slot.
           </p>
         </div>
       </section>

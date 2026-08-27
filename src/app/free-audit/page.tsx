@@ -157,7 +157,7 @@ export default function FreeAuditPage() {
           <p className="text-muted-foreground -mt-8 text-sm">
             The report needs no call — emailing three certificates is the whole
             process. Book the call only if you want the flags walked through: 15
-            minutes, weekdays, 9am–1pm US Eastern.
+            minutes, in your timezone, whatever slot suits you.
           </p>
 
           <section className="space-y-4">

@@ -73,6 +73,12 @@ const SUBPROCESSORS: Row[] = [
     data: "Error metadata, request context",
     region: "US",
   },
+  {
+    name: "Intercom",
+    purpose: "In-app support chat (signed-in users only)",
+    data: "Account email, organisation name, chat messages",
+    region: "US",
+  },
 ];
 
 export default function SubprocessorsPage() {
@@ -125,7 +131,9 @@ export default function SubprocessorsPage() {
                     <td className="text-muted-foreground px-4 py-3">
                       {r.purpose}
                     </td>
-                    <td className="text-muted-foreground px-4 py-3">{r.data}</td>
+                    <td className="text-muted-foreground px-4 py-3">
+                      {r.data}
+                    </td>
                     <td className="text-muted-foreground px-4 py-3">
                       {r.region}
                     </td>
