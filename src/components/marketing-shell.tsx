@@ -2,11 +2,13 @@ import { BrandMark } from "@/components/certshield-logo";
 import { CursorGlint } from "@/components/cursor-glint";
 import { DisclaimerFooter } from "@/components/disclaimer-footer";
 import { GoogleAnalytics } from "@/components/google-analytics";
+import { IntercomMessenger } from "@/components/intercom-messenger";
 import { JsonLd } from "@/components/json-ld";
 import { MarketingHeader } from "@/components/marketing-header";
 import { SmoothScroll } from "@/components/smooth-scroll";
 import { routesByGroup } from "@/lib/seo/routes";
 import { graph, organizationSchema, websiteSchema } from "@/lib/seo/schema";
+import { INTERCOM_APP_ID } from "@/lib/intercom";
 import { ORG } from "@/lib/seo/site";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
@@ -36,6 +38,19 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
         to Google. Marketing surfaces have no such secret in the path.
       */}
       <GoogleAnalytics />
+      {/*
+        Anonymous-visitor messenger. No identity, no secret, no user_hash —
+        Intercom keeps the thread in a cookie, which is the mode their
+        installer calls "for website visitors without logins".
+
+        It costs bytes on the marketing pages, which the 2026-08-01 JS diet
+        was fighting to protect, so it is deliberately idle-deferred inside
+        the component and never blocks first paint. The trade was made
+        knowingly: pre-revenue, a visitor who will type a question but will
+        not send documents to a stranger is worth more than the last few
+        points of a Lighthouse score. Revisit if PSI regresses materially.
+      */}
+      <IntercomMessenger allowAnonymous appId={INTERCOM_APP_ID} />
 
       {/* Inertia scrolling for marketing surfaces only — the app keeps native. */}
       <SmoothScroll />
