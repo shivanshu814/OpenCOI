@@ -1,4 +1,5 @@
 import { CheckoutButton } from "@/components/checkout-button";
+import { BOOKING_URL } from "@/lib/seo/site";
 import { CheckoutLegalNote } from "@/components/checkout-legal-note";
 import { INK_BG, InkAtmosphere, SURFACE_BG } from "@/components/ink-atmosphere";
 import { LiveOpsTicker } from "@/components/live-activity";
@@ -186,6 +187,18 @@ export default async function PricingPage({
               Request a free 3-cert audit
             </Link>{" "}
             — no card required.
+          </p>
+          <p className="text-muted-foreground mt-2 text-sm">
+            Want a plan recommendation for your vendor count?{" "}
+            <a
+              href={BOOKING_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-foreground font-medium underline-offset-2 hover:underline"
+            >
+              Book 15 minutes
+            </a>{" "}
+            — weekdays, 9am–1pm ET.
           </p>
         </div>
       </section>

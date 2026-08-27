@@ -3,7 +3,7 @@ import { JsonLd } from "@/components/json-ld";
 import { AnswerBlock, MarketingHero } from "@/components/marketing-hero";
 import { MarketingShell } from "@/components/marketing-shell";
 import { Button } from "@/components/ui/button";
-import { ORG } from "@/lib/seo/site";
+import { BOOKING_URL, ORG } from "@/lib/seo/site";
 import { pageMetadata } from "@/lib/seo/metadata";
 import {
   breadcrumbSchema,
@@ -137,10 +137,28 @@ export default function FreeAuditPage() {
             >
               Email three certificates
             </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              render={
+                <a
+                  href={BOOKING_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                />
+              }
+            >
+              Book a 15-minute review call
+            </Button>
             <Button variant="outline" size="lg" render={<Link href="/login" />}>
               Or run them yourself in the app
             </Button>
           </div>
+          <p className="text-muted-foreground -mt-8 text-sm">
+            The report needs no call — emailing three certificates is the whole
+            process. Book the call only if you want the flags walked through: 15
+            minutes, weekdays, 9am–1pm US Eastern.
+          </p>
 
           <section className="space-y-4">
             <h2 className="text-xl font-semibold tracking-tight">

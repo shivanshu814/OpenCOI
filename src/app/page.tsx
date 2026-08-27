@@ -19,6 +19,7 @@ import { TypedText } from "@/components/typed-text";
 import { WordReveal } from "@/components/word-reveal";
 import { ExtractionPreviewCard } from "@/components/product-preview";
 import { Button } from "@/components/ui/button";
+import { BOOKING_URL } from "@/lib/seo/site";
 import {
   Building2,
   Check,
@@ -500,14 +501,14 @@ export default function HomePage() {
           </h2>
           <p className="text-muted-foreground mt-3 text-base leading-relaxed md:text-lg">
             CertShield is vendor insurance compliance software for US property
-            managers and small general contractors. Its AI reads certificates
-            of insurance (ACORD 25 forms), verifies coverage limits,
+            managers and small general contractors. Its AI reads certificates of
+            insurance (ACORD 25 forms), verifies coverage limits,
             additional-insured endorsements and expiration dates against each
             company&rsquo;s requirements, then automatically chases vendors and
-            their insurance agents for renewals by email in English and
-            Spanish. Every verdict is reviewed by a human before it publishes,
-            with audit-ready document trails. CertShield replaces
-            spreadsheet-based COI tracking at SMB pricing, from $99/month.
+            their insurance agents for renewals by email in English and Spanish.
+            Every verdict is reviewed by a human before it publishes, with
+            audit-ready document trails. CertShield replaces spreadsheet-based
+            COI tracking at SMB pricing, from $99/month.
           </p>
         </div>
       </section>
@@ -920,7 +921,11 @@ export default function HomePage() {
                 every publish. Watch it run, or step through yourself.
               </p>
             </div>
-            <Button variant="outline" size="sm" render={<Link href="/free-audit" />}>
+            <Button
+              variant="outline"
+              size="sm"
+              render={<Link href="/free-audit" />}
+            >
               Get my free audit
             </Button>
           </div>
@@ -1293,6 +1298,25 @@ export default function HomePage() {
           </div>
           <p className="mt-5 text-sm text-white/45">
             Live in a day. No annual contract.
+          </p>
+          {/*
+            Booking is deliberately a text link, not a third button: docs/04 §1
+            keeps ONE offer everywhere (the free 3-cert audit) until $10K MRR,
+            and a competing "book a call" button is the classic way that rule
+            gets broken. This serves the buyer who will not send documents to a
+            stranger without talking first, without outranking the audit.
+          */}
+          <p className="mt-2 text-sm text-white/45">
+            Rather talk first?{" "}
+            <a
+              href={BOOKING_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-white/70 underline underline-offset-2 hover:text-white"
+            >
+              Book 15 minutes
+            </a>{" "}
+            — weekdays, 9am–1pm ET.
           </p>
         </div>
       </section>

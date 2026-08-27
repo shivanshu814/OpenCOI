@@ -57,11 +57,34 @@ export const ORG = {
 } as const;
 
 /**
+ * Google Calendar appointment schedule — the "Free COI Audit — Review Call
+ * (15 min)" booking page.
+ *
+ * Lives here for the same reason every other URL does: it appears in more than
+ * one place over time (free-audit CTA, nurture emails, email signature), and a
+ * hand-templated scheduling URL is exactly the kind of string that drifts.
+ *
+ * Deliberately NOT Google's `scheduling-button-script.js` or their iframe
+ * embed. The button script is a third-party synchronous script on whatever page
+ * carries it, which is the same weight problem the 2026-08-01 marketing JS diet
+ * just removed; the iframe is a 600px unstylable frame that can become the LCP
+ * element and cannot be made to look like the rest of the site. A plain link to
+ * the same URL loses nothing — Google's booking page opens either way.
+ *
+ * Override exists so a move to Cal.com (docs/03 lists it in the tool stack)
+ * is one env var, not a code change.
+ */
+export const BOOKING_URL =
+  process.env.NEXT_PUBLIC_BOOKING_URL?.trim() ||
+  "https://calendar.google.com/calendar/appointments/schedules/AcZssZ3IDjLYNa11JcAk4gLMCgmbkRj7VR3LPrZej9gsSX4NpYGnEyRZqlsth35k-YDQT7xW9ztIVd5x?gv=true";
+
+/**
  * `sameAs` for the Organization entity.
  *
- * Only profiles that actually exist. docs/02 §1 reserves LinkedIn
- * `/company/certshield`, X `@certshieldhq` and YouTube `@certshield`, but none
- * of the three exists yet (checked: all 404). Listing dead profiles is worse
+ * Only profiles that actually exist. Instagram `@certshieldhq` went live
+ * 2026-08-27 and is listed. docs/02 §1 also reserves LinkedIn
+ * `/company/certshield`, X `@certshieldhq` and YouTube `@certshield` — none of
+ * those three exists yet (checked: all 404). Listing dead profiles is worse
  * than listing none — it splits the entity instead of consolidating it. Add
  * each URL here the day the profile goes live, and it flows into JSON-LD
  * everywhere automatically.
@@ -76,8 +99,14 @@ export const SAME_AS: readonly string[] = [
   // badge appears in the footer (fake social proof would undercut the
   // "honest about limits" positioning).
   "https://sourceforge.net/projects/certshield/",
-  // Live 2026-08-01; listed-on link in the footer.
+  // Live 2026-08-01. Footer badge removed 2026-08-27; the profile and this
+  // entity assertion stay.
   "https://www.saashub.com/certshield",
+  // Live 2026-08-27 — the first real social profile. docs/02 §1 reserved
+  // LinkedIn /company/certshield, X @certshieldhq and YouTube @certshield;
+  // Instagram @certshieldhq is the one that actually exists, so it is the one
+  // listed. Add the others the day each goes live, per the §7 rule.
+  "https://www.instagram.com/certshieldhq/",
 ];
 
 /** Search-engine verification tokens. Empty string = tag omitted (docs/02 §5.8). */

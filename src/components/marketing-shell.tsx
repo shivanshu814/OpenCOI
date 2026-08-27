@@ -113,46 +113,19 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
               </a>
               {/*
                 "Listed on" strip — official directory badges, plain facts,
-                no achievement claims. Every profile here is live and also
-                asserted in `SAME_AS`. Earned-only rule: rating/award badges
+                no achievement claims. Earned-only rule: rating/award badges
                 (G2, Capterra, SF achievements) may only be added once
-                actually earned.
+                actually earned. The SaaSHub and SourceForge badges were
+                removed 2026-08-27 (founder call: two third-party image
+                loads for a visual the page did not need). Both profiles are
+                still live and still asserted in `SAME_AS`, which is where
+                the entity/SEO value actually lives.
               */}
               <div className="space-y-2">
                 <p className="text-[0.7rem] font-semibold tracking-[0.14em] text-white/35 uppercase">
                   Listed on
                 </p>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                  <a
-                    href="https://www.saashub.com/certshield"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block opacity-80 transition-opacity hover:opacity-100"
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src="https://cdn-b.saashub.com/img/badges/approved-color.png"
-                      alt="CertShield listed on SaaSHub"
-                      width={120}
-                      height={40}
-                      loading="lazy"
-                    />
-                  </a>
-                  <a
-                    href="https://sourceforge.net/projects/certshield/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block opacity-80 transition-opacity hover:opacity-100"
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src="https://sourceforge.net/sflogo.php?type=18&group_id=4121819"
-                      alt="CertShield listed on SourceForge"
-                      width={133}
-                      height={21}
-                      loading="lazy"
-                    />
-                  </a>
                   {/*
                     LaunchZone badge — their verifier crawls this site's
                     homepage and common pages looking for the exact <a href
